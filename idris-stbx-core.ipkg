@@ -1,0 +1,8 @@
+package idris-stbx-core
+
+modules = Category,
+          MonoidalCategory
+
+sourcedir = src
+
+pkgs = contrib
