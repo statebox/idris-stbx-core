@@ -1,7 +1,7 @@
 module Category
 
-export
-interface Category object (morphism : object -> object -> Type) where
+public export
+interface Category object (morphism : object -> object -> Type) | morphism where
   identity : (a : object) -> morphism a a
   compose : morphism a b -> morphism b c -> morphism a c
   identityLeft : (f : morphism a b) -> compose (identity a) f = f
