@@ -1,4 +1,4 @@
-module PreorderAsCategory.idr
+module PreorderAsCategory
 
 import Category
 
@@ -24,7 +24,7 @@ ass : UniquePreorder t po => (a, b, c, d : t) -> (f : po a b) -> (g : po b c) ->
 ass a b c d f g h = unique a d (transitive a b d f (transitive b c d g h)) (transitive a c d (transitive a b c f g) h)
 
 UniquePreorder t po => Category t po where
-  identity = identity
+  identity = PreorderAsCategory.identity
   compose {a} {b} {c} = compose a b c
   identityLeft {a} {b} {f} = identityLeft a b f
   identityRight {a} {b} {f} = identityRight a b f

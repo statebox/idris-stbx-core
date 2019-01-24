@@ -24,7 +24,7 @@ associativity : VerifiedMonoid monoid => (f : MonoidMorphism monoid x y) -> (g :
 associativity (MkMonoidMorphism _ _ a) (MkMonoidMorphism _ _ b) (MkMonoidMorphism _ _ c) = cong {f = MkMonoidMorphism _ _} (semigroupOpIsAssociative a b c)
 
 VerifiedMonoid monoid => Category Unit (MonoidMorphism monoid) where
-  identity = identity
+  identity = MonoidAsCategory.identity
   compose = compose
   identityLeft = identityLeft
   identityRight = identityRight
