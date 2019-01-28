@@ -5,27 +5,46 @@ import Category
 -- contrib
 import Interfaces.Verified
 
-data MonoidMorphism : (monoid : Type) -> (x, y: Unit) -> Type where
-  MkMonoidMorphism : (x, y : Unit) -> monoid -> MonoidMorphism monoid x y
+%access public export
+%default total
 
-identity : VerifiedMonoid monoid => (x : Unit) -> MonoidMorphism monoid x x
-identity x = MkMonoidMorphism x x Algebra.neutral
+MonoidMorphism : (monoid : Type) -> Unit -> Unit -> Type
+MonoidMorphism monoid _ _ = monoid
 
-compose : VerifiedMonoid monoid => MonoidMorphism monoid x y -> MonoidMorphism monoid y z -> MonoidMorphism monoid x z
-compose (MkMonoidMorphism _ _ a) (MkMonoidMorphism _ _ b) = (MkMonoidMorphism _ _ (a <+> b))
+identity : (VerifiedMonoid monoid) => (a : Unit) -> MonoidMorphism monoid a a
+identity _ = Algebra.neutral
 
-identityLeft : VerifiedMonoid monoid => (f : MonoidMorphism monoid x y) -> compose (identity x) f = f
-identityLeft (MkMonoidMorphism _ _ a) = cong {f = MkMonoidMorphism _ _} (monoidNeutralIsNeutralR a)
+compose : (VerifiedMonoid monoid)
+  => {a, b, c : Unit}
+  -> (f : MonoidMorphism monoid a b)
+  -> (g : MonoidMorphism monoid b c)
+  -> MonoidMorphism monoid a c
+compose f g = f <+> g
 
-identityRight : VerifiedMonoid monoid => (f : MonoidMorphism monoid x y) -> compose f (identity y) = f
-identityRight (MkMonoidMorphism _ _ a) = cong {f = MkMonoidMorphism _ _} (monoidNeutralIsNeutralL a)
+leftIdentity : (VerifiedMonoid monoid)
+  => (f : monoid)
+  -> Algebra.neutral <+> f = f
+leftIdentity f = monoidNeutralIsNeutralR f
 
-associativity : VerifiedMonoid monoid => (f : MonoidMorphism monoid x y) -> (g : MonoidMorphism monoid y z) -> (h : MonoidMorphism monoid z w) -> compose f (compose g h) = compose (compose f g) h
-associativity (MkMonoidMorphism _ _ a) (MkMonoidMorphism _ _ b) (MkMonoidMorphism _ _ c) = cong {f = MkMonoidMorphism _ _} (semigroupOpIsAssociative a b c)
+rightIdentity : (VerifiedMonoid monoid)
+  => (f : monoid)
+  -> f <+> Algebra.neutral = f
+rightIdentity f = monoidNeutralIsNeutralL f
 
-VerifiedMonoid monoid => Category Unit (MonoidMorphism monoid) where
-  identity = MonoidAsCategory.identity
-  compose = compose
-  identityLeft = identityLeft
-  identityRight = identityRight
-  associativity = associativity
+associativity : (VerifiedMonoid monoid)
+  => (f, g, h : monoid)
+  -> f <+> (g <+> h) = (f <+> g) <+> h
+associativity f g h = semigroupOpIsAssociative f g h
+
+monoidAsCategory : VerifiedMonoid monoid => VerifiedCategory () (MonoidMorphism monoid)
+monoidAsCategory {monoid} =
+  MkVerifiedCategory
+    (MkCategory
+      {obj = ()}
+      {mor = MonoidMorphism monoid}
+      (identity {monoid})
+      (compose {a = ()} {b = ()} {c = ()} {monoid})
+    )
+    (\_, _, f => leftIdentity f)
+    (\_, _, f => rightIdentity f)
+    (\_, _, _, _, f, g, h => associativity f g h)
