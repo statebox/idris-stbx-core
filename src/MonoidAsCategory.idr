@@ -15,11 +15,11 @@ identity : (VerifiedMonoid monoid) => (a : Unit) -> MonoidMorphism monoid a a
 identity _ = Algebra.neutral
 
 compose : (VerifiedMonoid monoid)
-  => {a, b, c : Unit}
+  => (a, b, c : Unit)
   -> (f : MonoidMorphism monoid a b)
   -> (g : MonoidMorphism monoid b c)
   -> MonoidMorphism monoid a c
-compose f g = f <+> g
+compose a b c f g = f <+> g
 
 leftIdentity : (VerifiedMonoid monoid)
   => (f : monoid)
@@ -43,7 +43,7 @@ monoidAsCategory {monoid} =
       {obj = ()}
       {mor = MonoidMorphism monoid}
       (identity {monoid})
-      (compose {a = ()} {b = ()} {c = ()} {monoid})
+      (compose {monoid})
     )
     (\_, _, f => leftIdentity f)
     (\_, _, f => rightIdentity f)

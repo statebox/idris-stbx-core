@@ -5,27 +5,42 @@ import Category
 -- contrib
 import Decidable.Order
 
+%access public export
+%default total
+
 interface Preorder t po => UniquePreorder t (po : t -> t -> Type) where
   unique : (a, b : t) -> (f, g : po a b) -> f = g
 
-identity : Preorder t po => (a : t) -> po a a
-identity = reflexive
+leftIdentity : UniquePreorder t po
+  => (a, b : t)
+  -> (f : po a b)
+  -> LeftIdentity f (MkCategory {obj = t} {mor = po} Decidable.Order.reflexive Decidable.Order.transitive)
+leftIdentity a b f = unique a b (Decidable.Order.transitive a a b (Decidable.Order.reflexive a) f) f
 
-compose : Preorder t po => (a, b, c : t) -> po a b -> po b c -> po a c
-compose = transitive
+rightIdentity : UniquePreorder t po
+  => (a, b : t)
+  -> (f : po a b)
+  -> RightIdentity f (MkCategory {obj = t} {mor = po} Decidable.Order.reflexive Decidable.Order.transitive)
+rightIdentity a b f = unique a b (Decidable.Order.transitive a b b f (Decidable.Order.reflexive b)) f
 
-identityLeft : UniquePreorder t po => (a, b : t) -> (f : po a b) -> compose a a b (identity a) f = f
-identityLeft a b f = unique a b (compose a a b (identity a) f) f
+associativity : UniquePreorder t po
+  => (a, b, c, d : t)
+  -> (f : po a b)
+  -> (g : po b c)
+  -> (h : po c d)
+  -> Associativity {f} {g} {h} (MkCategory {obj = t} {mor = po} Decidable.Order.reflexive Decidable.Order.transitive)
+associativity a b c d f g h = unique a d
+  (Decidable.Order.transitive a b d f (Decidable.Order.transitive b c d g h))
+  (Decidable.Order.transitive a c d (Decidable.Order.transitive a b c f g) h)
 
-identityRight : UniquePreorder t po => (a, b : t) -> (f : po a b) -> compose a b b f (identity b) = f
-identityRight a b f = unique a b (compose a b b f (identity b)) f
-
-ass : UniquePreorder t po => (a, b, c, d : t) -> (f : po a b) -> (g : po b c) -> (h : po c d) -> transitive a b d f (transitive b c d g h) = transitive a c d (transitive a b c f g) h
-ass a b c d f g h = unique a d (transitive a b d f (transitive b c d g h)) (transitive a c d (transitive a b c f g) h)
-
-UniquePreorder t po => Category t po where
-  identity = PreorderAsCategory.identity
-  compose {a} {b} {c} = compose a b c
-  identityLeft {a} {b} {f} = identityLeft a b f
-  identityRight {a} {b} {f} = identityRight a b f
-  associativity {a} {b} {c} {d} {f} {g} {h} = ass a b c d f g h
+preorderAsCategory : UniquePreorder t po => VerifiedCategory t po
+preorderAsCategory {t} {po} = MkVerifiedCategory
+  (MkCategory
+    {obj = t}
+    {mor = po}
+    reflexive
+    transitive
+  )
+  (leftIdentity {t} {po})
+  (rightIdentity {t} {po})
+  (associativity {t} {po})

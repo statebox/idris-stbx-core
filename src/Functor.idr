@@ -46,11 +46,11 @@ FunctorRespectsComposition :
   -> (cat2 : VerifiedCategory obj2 mor2)
   -> CFunctor cat1 cat2
   -> Type
-FunctorRespectsComposition f g
+FunctorRespectsComposition {a} {b} {c} f g
   (MkVerifiedCategory (MkCategory _ compose1) _ _ _)
   (MkVerifiedCategory (MkCategory _ compose2) _ _ _)
-  (MkCFunctor _ mapMor)
-  = mapMor (compose1 f g) = compose2 (mapMor f) (mapMor g)
+  (MkCFunctor mapObj mapMor)
+  = mapMor (compose1 a b c f g) = compose2 (mapObj a) (mapObj b) (mapObj c) (mapMor f) (mapMor g)
 
 data VerifiedCFunctor : VerifiedCategory obj1 mor1 -> VerifiedCategory obj2 mor2 -> Type where
   MkVerifiedCFunctor :
