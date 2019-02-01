@@ -50,3 +50,6 @@ data VerifiedCategory : (obj : Type) -> (mor : obj -> obj -> Type) -> Type where
     -> ((a, b : obj) -> (f : mor a b) -> RightIdentity f cat)
     -> ((a, b, c, d : obj) -> (f : mor a b) -> (g : mor b c) -> (h : mor c d) -> Associativity {f} {g} {h} cat)
     -> VerifiedCategory obj mor
+
+innerCategory : VerifiedCategory obj mor -> Category obj mor
+innerCategory (MkVerifiedCategory cat _ _ _) = cat

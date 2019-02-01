@@ -1,4 +1,4 @@
-module MonoidAsCategory
+module Monoid.MonoidAsCategory
 
 import Category
 

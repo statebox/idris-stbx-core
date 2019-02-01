@@ -14,7 +14,7 @@ data CFunctor : VerifiedCategory obj1 mor1 -> VerifiedCategory obj2 mor2 -> Type
     -> {mor2 : obj2 -> obj2 -> Type}
     -> {cat2 : VerifiedCategory obj2 mor2}
     -> (mapObj : obj1 -> obj2)
-    -> (mapMor : {a, b : obj1} -> mor1 a b -> mor2 (mapObj a) (mapObj b))
+    -> (mapMor : (a, b : obj1) -> mor1 a b -> mor2 (mapObj a) (mapObj b))
     -> CFunctor cat1 cat2
 
 FunctorRespectsIdentity :
@@ -32,7 +32,7 @@ FunctorRespectsIdentity
   (MkVerifiedCategory (MkCategory identity1 _) _ _ _)
   (MkVerifiedCategory (MkCategory identity2 _) _ _ _)
   (MkCFunctor mapObj mapMor)
-  = mapMor (identity1 a) = identity2 (mapObj a)
+  = mapMor a a (identity1 a) = identity2 (mapObj a)
 
 FunctorRespectsComposition :
      {obj1 : Type}
@@ -50,7 +50,7 @@ FunctorRespectsComposition {a} {b} {c} f g
   (MkVerifiedCategory (MkCategory _ compose1) _ _ _)
   (MkVerifiedCategory (MkCategory _ compose2) _ _ _)
   (MkCFunctor mapObj mapMor)
-  = mapMor (compose1 a b c f g) = compose2 (mapObj a) (mapObj b) (mapObj c) (mapMor f) (mapMor g)
+  = mapMor a c (compose1 a b c f g) = compose2 (mapObj a) (mapObj b) (mapObj c) (mapMor a b  f) (mapMor b c g)
 
 data VerifiedCFunctor : VerifiedCategory obj1 mor1 -> VerifiedCategory obj2 mor2 -> Type where
   MkVerifiedCFunctor :

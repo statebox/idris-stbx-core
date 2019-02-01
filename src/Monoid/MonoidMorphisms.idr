@@ -1,6 +1,4 @@
-module MonoidMorphism
-
-import MonoidAsCategory
+module Monoid.MonoidMorphism
 
 -- contrib
 import Interfaces.Verified
