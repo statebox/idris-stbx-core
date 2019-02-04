@@ -4,7 +4,9 @@ module WiringDiagram.WiringDiagram
 -- https://www.youtube.com/watch?v=dEDtaJhgQOY
 
 import Category
+import Functor
 import Utils
+import Idris.TypesAsCategory
 
 %access public export
 %default total
@@ -56,8 +58,12 @@ identity a = MkWiringDiagramMorphism fst id
 
 -- this componition and identity form a category
 
-wiringDiagramCategory : Category (Type, Type) WiringDiagramMorphism
-wiringDiagramCategory = MkCategory identity compose
+wiringDiagramCategory : VerifiedCategory (Type, Type) WiringDiagramMorphism
+wiringDiagramCategory = MkVerifiedCategory
+  (MkCategory identity compose)
+  ?leftIdentity
+  ?rightIdentity
+  ?associativity
 
 -- the tensor product between object is given by parallel placement of boxes
 
@@ -79,3 +85,33 @@ unit = ((), ())
 
 serial : (a, b, c : Type) -> WiringDiagramMorphism ((a, b), (b, c)) (a, c)
 serial a b c = MkWiringDiagramMorphism (map fst) snd
+
+-- there is a functor W_(-) : FC -> SMC from finitely complete categories to symmetric monoidal categories.
+-- maps any finitely complete category C to W_C
+-- maps finitely product preserving functor K : C -> D to a strong symmetric monoidal functor W_K : W_C -> W_D
+-- W_K (X_1, X_2) = (K X_1, K X_2)
+-- W_K (\phi_1, \phi_2) = (k Y_1 \times K Y_2 ~> K (Y_1 \times Y_2) -> K X_1, K \phi_2 : K X_2 -> K Y_2)
+-- this is changing the types of the wires
+
+-- SEMANTICS
+-- A lax monoidal functor (W_C, \tensor, I) -> (Cat, \times, 1) takes boxes and assigns a category of inhabitants
+-- X = (X_1, X_2) -> F X
+-- given a wiring diagram \phi, F X \times F Y \times F Z -- laxator -> F (X \tensor Y \tensor Z) -> F \phi
+
+-- Standard types and functions do not work with this
+
+-- functionsFunctorOnObjects : (Type, Type) -> Type
+-- functionsFunctorOnObjects (a, b) = a -> b
+--
+-- functionsFunctorOnMorphisms : (a, b : (Type, Type)) -> WiringDiagramMorphism a b -> ((functionsFunctorOnObjects a) -> (functionsFunctorOnObjects b))
+-- functionsFunctorOnMorphisms
+--   (a1, a2)
+--   (b1, b2)
+--   (MkWiringDiagramMorphism f1 f2)
+--   g
+--   = ?functionsFunctorOnMorphisms_rhs_2 -- we have only a b_1, we need also an a_2 to apply f_1
+--
+-- functionsFunctor : CFunctor WiringDiagram.wiringDiagramCategory TypesAsCategory.typesAsCategory
+-- functionsFunctor = MkCFunctor
+--   functionsFunctorOnObjects
+--   functionsFunctorOnMorphisms
