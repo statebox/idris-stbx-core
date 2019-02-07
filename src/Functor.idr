@@ -17,6 +17,20 @@ data CFunctor : VerifiedCategory obj1 mor1 -> VerifiedCategory obj2 mor2 -> Type
     -> (mapMor : (a, b : obj1) -> mor1 a b -> mor2 (mapObj a) (mapObj b))
     -> CFunctor cat1 cat2
 
+mapObj :
+     {cat1 : VerifiedCategory obj1 mor1}
+  -> {cat2 : VerifiedCategory obj2 mor2}
+  -> CFunctor cat1 cat2
+  -> (obj1 -> obj2)
+mapObj (MkCFunctor mapObj _) = mapObj
+
+mapMor :
+     {cat1 : VerifiedCategory obj1 mor1}
+  -> {cat2 : VerifiedCategory obj2 mor2}
+  -> (fun : CFunctor cat1 cat2)
+  -> (a, b : obj1) -> mor1 a b -> mor2 (mapObj fun a) (mapObj fun b)
+mapMor (MkCFunctor _ mapMor) = mapMor
+
 FunctorRespectsIdentity :
      {obj1 : Type}
   -> {mor1 : obj1 -> obj1 -> Type}

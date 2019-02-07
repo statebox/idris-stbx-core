@@ -3,6 +3,9 @@ module ProductCategory
 import Category
 import Utils
 
+%access public export
+%default total
+
 data ProductMorphism :
      {mor1 : obj1 -> obj1 -> Type}
   -> {mor2 : obj2 -> obj2 -> Type}
