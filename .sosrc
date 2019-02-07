@@ -1,0 +1,5 @@
+- patterns:
+  - .*\.idr
+  - idris-stbx-core.ipkg
+  commands:
+  - idris --checkpkg idris-stbx-core.ipkg --V2 
