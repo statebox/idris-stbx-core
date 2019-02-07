@@ -1,7 +1,25 @@
 package idris-stbx-core
 
-modules = Category,
-          MonoidalCategory
+modules =
+  Idris.TypesAsCategory,
+  Monoid.MonoidAsCategory,
+  Monoid.MonoidMorphismAsFunctor,
+  Monoid.MonoidMorphisms,
+  PointedTypes.PointedTypesCategory,
+  Preorder.MonotoneMapAsFunctor,
+  Preorder.MonotoneMaps,
+  Preorder.PreorderAsCategory,
+  Preorder.UniquePreorder,
+  WiringDiagram.DiscreteDynamicalSystem,
+  WiringDiagram.WiringDiagram,
+  WiringDiagram.WiringDiagramAlgebra,
+  Category,
+  Functor,
+  PetriNet,
+  ProductCategory,
+  StrictMonoidalCategory,
+  SymmetricMonoidalCategory,
+  Utils
 
 sourcedir = src
 
