@@ -1,21 +1,33 @@
 .PHONY=pdf code all clean exec
 
 MAIN=main
+AUX=auxiliary
+SOURCES=sources
+BINARIES=build
 
 all: pdf code binary exec
 
 pdf:
-	lhs2tex -o ${MAIN}.tex ${MAIN}.lidr
-	latexmk -pdf ${MAIN}.tex
-
+	lhs2tex -o ${SOURCES}/${MAIN}.tex ${MAIN}.lidr
+	latexmk -pdf ${SOURCES}/${MAIN}.tex -outdir=${AUX}
+	mv ${AUX}/${MAIN}.pdf ${BINARIES}/
 code:
-	lhs2TeX --newcode -o ${MAIN}.idr ${MAIN}.lidr
+	lhs2TeX --newcode -o ${SOURCES}/${MAIN}.idr ${MAIN}.lidr
 
 binary:
-	idris ${MAIN}.idr -o ${MAIN}
+	idris ${SOURCES}/${MAIN}.idr -o ${BINARIES}/${MAIN}
 
 exec:
-	./${MAIN}
+	.${BINARIES}/${MAIN}
 
-clean:
-	rm -f ${MAIN}.ibc ${MAIN}.idr ${MAIN}.tex ${MAIN}.ptb ${MAIN}.log ${MAIN}.aux ${MAIN}.fdb_latexmk ${MAIN}.fls ${MAIN} ${MAIN}.pdf
+cleanAuxiliary:
+	rm -f ${AUX}/*
+
+cleanAll:
+	rm -f ${AUX}/* ${SOURCES}/* ${BINARIES}/*
+
+cleanSources:
+	rm -f ${SOURCES}/*
+
+cleanBinaries:
+	rm  -f ${BINARIES}/*
