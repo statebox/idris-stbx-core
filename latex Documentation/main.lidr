@@ -4,7 +4,7 @@
 \usepackage{amssymb}
 \usepackage{mathtools}
 \usepackage{xcolor}
-
+\usepackage[margin=1in]{geometry}
 
 %include polycode.fmt
 %include style.fmt
