@@ -8,9 +8,10 @@ BINARIES=build
 all: pdf code binary exec
 
 pdf:
-	lhs2tex -o ${SOURCES}/${MAIN}.tex ${MAIN}.lidr
+	lhs2TeX -o ${SOURCES}/${MAIN}.tex ${MAIN}.lidr
 	latexmk -pdf ${SOURCES}/${MAIN}.tex -outdir=${AUX}
 	mv ${AUX}/${MAIN}.pdf ${BINARIES}/
+
 code:
 	lhs2TeX --newcode -o ${SOURCES}/${MAIN}.idr ${MAIN}.lidr
 
