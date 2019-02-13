@@ -17,9 +17,8 @@ FunctionRespectsIdentity : (VerifiedMonoid monoid1, VerifiedMonoid monoid2)
   -> Type
 FunctionRespectsIdentity f = f (Algebra.neutral) = Algebra.neutral
 
-data MorphismOfMonoids : Type -> Type -> Type where
-  MkMorphismOfMonoids : (VerifiedMonoid monoid1, VerifiedMonoid monoid2)
-    => (f : monoid1 -> monoid2)
-    -> ((a, b : monoid1) -> FunctionRespectsOperation a b f)
-    -> FunctionRespectsIdentity f
-    -> MorphismOfMonoids monoid1 monoid2
+record MorphismOfMonoids domain codomain where
+  constructor MkMorphismOfMonoids
+  func : domain -> codomain
+  funcRespOp : (VerifiedSemigroup domain, VerifiedSemigroup codomain) => (a, b : domain) -> FunctionRespectsOperation a b func
+  funcRespId : (VerifiedMonoid domain, VerifiedMonoid codomain) => FunctionRespectsIdentity func
