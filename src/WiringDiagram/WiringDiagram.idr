@@ -21,12 +21,10 @@ import Idris.TypesAsCategory
 -- \phi_1 : Y_1 \times X_2 -> X_1
 -- \phi_2 : X_2 -> Y_2
 
-data WiringDiagramMorphism : (Type, Type) -> (Type, Type) -> Type where
-  MkWiringDiagramMorphism :
-       {a, b : (Type, Type)}
-    -> ((fst b, snd a) -> fst a)
-    -> (snd a -> snd b)
-    -> WiringDiagramMorphism a b
+record WiringDiagramMorphism (a : (Type, Type)) (b :(Type, Type)) where
+  constructor MkWiringDiagramMorphism
+  f1 : (fst b, snd a) -> fst a
+  f2 : (snd a -> snd b)
 
 -- composition between two morphisms \phi = (\phi_1, \phi_2) : (X_1, X_2) -> (Y_1, Y_2) and \psi = (\psi_1, \psi_2) : (Y_1, Y_2) -> (Z_1, Z_2) is given by
 -- (\phi ; \psi)_1 = 1 \times \Delta ; 1 \times \phi_2 \times 1 ; \psi_2 \times id ; \phi_2
@@ -58,9 +56,12 @@ identity a = MkWiringDiagramMorphism fst id
 
 -- this componition and identity form a category
 
-wiringDiagramCategory : VerifiedCategory (Type, Type) WiringDiagramMorphism
-wiringDiagramCategory = MkVerifiedCategory
-  (MkCategory identity compose)
+wiringDiagramCategory : Category
+wiringDiagramCategory = MkCategory
+  (Type, Type)
+  WiringDiagramMorphism
+  identity
+  compose
   ?leftIdentity
   ?rightIdentity
   ?associativity

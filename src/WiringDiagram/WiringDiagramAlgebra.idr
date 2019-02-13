@@ -35,12 +35,10 @@ import WiringDiagram.WiringDiagram
 pointedTensor : PointedObject -> PointedObject -> PointedObject
 pointedTensor (a' ** x) (b' ** y) = ((a', b') ** (x, y))
 
-data PointedWiringDiagramMorphism : (PointedObject, PointedObject) -> (PointedObject, PointedObject) -> Type where
-  MkPointedWiringDiagramMorphism :
-       {a, b : (PointedObject, PointedObject)}
-    -> PointedMorphism (pointedTensor (fst b) (snd a)) (fst a)
-    -> PointedMorphism (snd a) (snd b)
-    -> PointedWiringDiagramMorphism a b
+record PointedWiringDiagramMorphism (a : (PointedObject, PointedObject)) (b : (PointedObject, PointedObject)) where
+  constructor MkPointedWiringDiagramMorphism
+  f1 : PointedMorphism (pointedTensor (fst b) (snd a)) (fst a)
+  f2 : PointedMorphism (snd a) (snd b)
 
 pointedFunctorOnObjects : (a : (PointedObject, PointedObject)) -> Type
 pointedFunctorOnObjects (a1, a2) = PointedMorphism a1 a2
@@ -50,12 +48,10 @@ pointedFunctorOnMorphisms
   ((a1' ** x1), (a2' ** x2))
   ((b1' ** y1), (b2' ** y2))
   (MkPointedWiringDiagramMorphism
-    (MkPointedMorphism (y1, x2) x1 f1 f1x1y1x2)
-    (MkPointedMorphism x2 y2 f2 f2x2y2)
+    (MkPointedMorphism f1 f1x1y1x2)
+    (MkPointedMorphism f2 f2x2y2)
   )
-  (MkPointedMorphism x1 x2 g gx1x2)
+  (MkPointedMorphism g gx1x2)
   = MkPointedMorphism
-    y1
-    y2
     (\z => (f2 . g . f1) (z, x2))
     (trans (cong {f = f2} (trans (cong {f = g} f1x1y1x2) gx1x2)) f2x2y2)
