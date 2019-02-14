@@ -17,9 +17,9 @@ record StrictMonoidalCategory where
   tensorIsAssociativeObj : (a, b, c : obj cat) -> let mo = mapObj tensor in
                            mo (a, mo (b, c)) = mo (mo (a, b), c)
   tensorIsAssociativeMor : (a, b, c, d, e, f : obj cat)
-                        -> (g : mor cat a b)
-                        -> (h : mor cat c d)
-                        -> (k : mor cat e f)
+                        -> (g : <cat> a ~> b)
+                        -> (h : <cat> c ~> d)
+                        -> (k : <cat> e ~> f)
                         -> let
                              mo = mapObj tensor
                              mm = mapMor tensor
