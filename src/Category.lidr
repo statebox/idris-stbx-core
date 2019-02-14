@@ -5,33 +5,33 @@ Before starting to develop the Statebox dependently typed core, we need to imple
 We start with the most basic thing we can do, namely the definition of category. First things first, we start by defining our module.
 %
 %
-\begin{code}
-module Category
 
-%access public export
-%default total
-\end{code}
+> module Category
+>
+> %access public export
+> %default total
+
 %
 Then, we implement the basic elements a category consists of.
 %
 %
-\begin{code}
-record Category where
-  constructor MkCategory
-  obj           : Type
-  mor           : obj -> obj -> Type
-  identity      : (a : obj) -> mor a a
-  compose       : (a, b, c : obj) -> (f : mor a b) -> (g : mor b c) -> mor a c
-  leftIdentity  : (a, b : obj) -> (f : mor a b) -> compose a a b (identity a) f = f
-  rightIdentity : (a, b : obj) -> (f : mor a b) -> compose a b b f (identity b) = f
-  associativity : (a, b, c, d : obj)
-               -> (f : mor a b)
-               -> (g : mor b c)
-               -> (h : mor c d)
-               -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
-\end{code}
+
+> record Category where
+>   constructor MkCategory
+>   obj           : Type
+>   mor           : obj -> obj -> Type
+>   identity      : (a : obj) -> mor a a
+>   compose       : (a, b, c : obj) -> (f : mor a b) -> (g : mor b c) -> mor a c
+>   leftIdentity  : (a, b : obj) -> (f : mor a b) -> compose a a b (identity a) f = f
+>   rightIdentity : (a, b : obj) -> (f : mor a b) -> compose a b b f (identity b) = f
+>   associativity : (a, b, c, d : obj)
+>                -> (f : mor a b)
+>                -> (g : mor b c)
+>                -> (h : mor c d)
+>                -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
+
 %
-Let's look at this implementation more in detail, starting from line one. 
+Let's look at this implementation more in detail, starting from line one.
 %
 %
 \begin{spec}
@@ -47,7 +47,7 @@ We define a category as a type, to be precise a |record|. A record type allows t
   mor           : obj -> obj -> Type
 \end{spec}
 %
-The main ingredients to model are objects and morphisms: We give objects a type |obj| and morphisms a type |obj -> obj -> Type| -- that is, morphisms are interpreted as functions that take two objects representing domain and codomain and return a type. 
+The main ingredients to model are objects and morphisms: We give objects a type |obj| and morphisms a type |obj -> obj -> Type| -- that is, morphisms are interpreted as functions that take two objects representing domain and codomain and return a type.
 
 Furthermore, the constructor |MkCategory| asks to determine:
 %
@@ -59,7 +59,7 @@ Furthermore, the constructor |MkCategory| asks to determine:
   \end{spec}
   Which is a function that, for each object $a$, returns a morphism $a \to a$.
 
-  \item For each couple of morphisms such that their domain and codomain match up, their composition. This is represented by 
+  \item For each couple of morphisms such that their domain and codomain match up, their composition. This is represented by
   \begin{spec}
     compose : (a, b, c : obj) -> (f : mor a b) -> (g : mor b c) -> mor a c
   \end{spec}
@@ -93,7 +93,7 @@ These lines are a bit different in concept: They eat type, but produce \emph{equ
   \end{tikzcd}
   \captionof{figure}{The equation $id_a ; f=f$}
   \end{center}
-  
+
   \item Right identity law is defined analogously by |rightIdentity|, modelling the commutative diagram:
   %
   %
@@ -104,7 +104,7 @@ These lines are a bit different in concept: They eat type, but produce \emph{equ
   \end{tikzcd}
   \captionof{figure}{The equation $f;id_b=f$}
   \end{center}
-  
+
   \item Finally, the line
   %
   %

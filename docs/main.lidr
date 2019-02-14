@@ -16,6 +16,6 @@
 \section{Introduction}
 
 \section{Category theory preliminaries}
-  %include category.lidr
+  %include ../src/Category.lidr
 
 \end{document}
