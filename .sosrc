@@ -1,10 +1,6 @@
 - patterns:
-  - src/.*\.idr
+  - src/.*\.lidr
   - idris-stbx-core.ipkg
   commands:
   - idris --checkpkg idris-stbx-core.ipkg --V2
-
-- patterns:
-  - docs/.*\.lidr
-  commands:
   - make pdf
