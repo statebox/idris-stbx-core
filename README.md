@@ -18,14 +18,18 @@ You'll need
 
 ### Generate documentation
 
-Go into the `latex Documentation` directory and use `make` to generate the Pdf
-documentation.
+Use `make` to generate the Pdf documentation. You will find it in the
+`docs\build` directory.
 Look directly in the [Makefile](Makefile) for additional options.
 
 ## Live Checks
 
 We use [SteelOverseer](https://github.com/schell/steeloverseer) to react to
-file changes and check the types on the whole projecct.
+file changes.
+If you modify a `.idr` file in the `src` directory, all the package will be
+recompiled.
+If you modify a `.lidr` file in the `docs` directory, the PDF documentation will
+be updated.
 
 To install SteelOverseer, first download and install the
 [Stack](https://github.com/commercialhaskell/stack) build tool.
