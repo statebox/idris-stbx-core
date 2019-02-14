@@ -38,9 +38,12 @@ associativity :
   -> (h . g) . f = h . (g . f)
 associativity a b c d f g h = Refl
 
-typesAsCategory : VerifiedCategory Type TypeMorphism
-typesAsCategory = MkVerifiedCategory
-  (MkCategory identity compose)
+typesAsCategory : Category
+typesAsCategory = MkCategory
+  Type
+  TypeMorphism
+  identity
+  compose
   leftIdentity
   rightIdentity
   associativity

@@ -8,20 +8,25 @@ import Category
 PointedObject : Type
 PointedObject = (a : Type ** a)
 
-data PointedMorphism : (a, b : PointedObject) -> Type where
-  MkPointedMorphism : (x : a) -> (y : b) -> (f : a -> b) -> f x = y -> PointedMorphism (a ** x) (b ** y)
+-- data PointedMorphism : (a, b : PointedObject) -> Type where
+--   MkPointedMorphism : (x : a) -> (y : b) -> (f : a -> b) -> f x = y -> PointedMorphism (a ** x) (b ** y)
+
+record PointedMorphism (a : PointedObject) (b : PointedObject) where
+  constructor MkPointedMorphism
+  func : (fst a) -> (fst b)
+  funcRespPoint : func (snd a) = snd b
 
 identity : (a : PointedObject) -> PointedMorphism a a
-identity (a' ** x) = MkPointedMorphism x x id Refl
+identity (a' ** x) = MkPointedMorphism id Refl
 
 compose : (a, b, c : PointedObject) -> (f : PointedMorphism a b) -> (g : PointedMorphism b c) -> PointedMorphism a c
 compose
   (a' ** x)
   (b' ** y)
   (c' ** z)
-  (MkPointedMorphism x y f' fxy)
-  (MkPointedMorphism y z g' gyz)
-  = MkPointedMorphism x z (g' . f') (trans (cong {f = g'} fxy) gyz)
+  (MkPointedMorphism f' fxy)
+  (MkPointedMorphism g' gyz)
+  = MkPointedMorphism (g' . f') (trans (cong {f = g'} fxy) gyz)
 
 leftReflId : (p : x = y) -> trans Refl p = p
 leftReflId Refl = Refl
@@ -33,8 +38,8 @@ leftIdentity :
 leftIdentity
   (a' ** x)
   (b' ** y)
-  (MkPointedMorphism x y f' fxy)
-  = cong {f = MkPointedMorphism x y f'} (leftReflId fxy)
+  (MkPointedMorphism f' fxy)
+  = cong {f = MkPointedMorphism f'} (leftReflId fxy)
 
 rightReflId : (p : x = y) -> trans p Refl = p
 rightReflId Refl = Refl
@@ -49,8 +54,8 @@ rightIdentity :
 rightIdentity
   (a' ** x)
   (b' ** y)
-  (MkPointedMorphism x y f' fxy)
-  = cong {f = MkPointedMorphism x y f'} (trans (rightReflId (cong {f = id} fxy)) (congId fxy))
+  (MkPointedMorphism f' fxy)
+  = cong {f = MkPointedMorphism f'} (trans (rightReflId (cong {f = id} fxy)) (congId fxy))
 
 transCongAssociacivity :
      (f : a -> b)
@@ -77,14 +82,17 @@ associativity
   (b' ** y)
   (c' ** w)
   (d' ** z)
-  (MkPointedMorphism x y f' fxy)
-  (MkPointedMorphism y w g' gyw)
-  (MkPointedMorphism w z h' hwz)
-  = cong {f = MkPointedMorphism x z (h' . g' . f')} (transCongAssociacivity f' g' h' fxy gyw hwz)
+  (MkPointedMorphism f' fxy)
+  (MkPointedMorphism g' gyw)
+  (MkPointedMorphism h' hwz)
+  = cong {f = MkPointedMorphism (h' . g' . f')} (transCongAssociacivity f' g' h' fxy gyw hwz)
 
-pointedTypesCategory : VerifiedCategory PointedObject PointedMorphism
-pointedTypesCategory = MkVerifiedCategory
-  (MkCategory identity compose)
+pointedTypesCategory : Category
+pointedTypesCategory = MkCategory
+  PointedObject
+  PointedMorphism
+  identity
+  compose
   leftIdentity
   rightIdentity
   associativity

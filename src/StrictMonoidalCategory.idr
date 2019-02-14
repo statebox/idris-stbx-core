@@ -7,24 +7,22 @@ import ProductCategory
 %access public export
 %default total
 
-data StrictMonoidalCategory : (obj : Type) -> (mor : obj -> obj -> Type) -> Type where
-  MkStrictMonoidalCategory :
-       (cat : VerifiedCategory obj mor)
-    -> (tfun : CFunctor (productVerifiedCategory cat cat) cat)
-    -> (unit : obj)
-    -> (tensorIsLUnital : (a : obj) -> (mapObj tfun) (unit, a) = a)
-    -> (tensorIsRUnital : (a : obj) -> (mapObj tfun) (a, unit) = a)
-    -> (tensorIsAssociativeObj : (a, b, c : obj) -> let m = mapObj tfun in
-                                 m (a, m (b, c)) = m (m (a, b), c))
-    -> (tensorIsAssociativeMor : (a, b, c, d, e, f : obj)
-                              -> (g : mor a b)
-                              -> (h : mor c d)
-                              -> (k : mor e f)
-                              -> let
-                                   mo = mapObj tfun
-                                   mm = mapMor tfun
-                                  in
-                                mm (a, mo (c,e)) (b, mo (d,f)) (MkProductMorphism g (mm (c,e) (d,f) (MkProductMorphism h k)))
-                              = mm (mo (a,c), e) (mo (b,d), f) (MkProductMorphism (mm (a,c) (b,d) (MkProductMorphism g h)) k)
-                              )
-    -> StrictMonoidalCategory obj mor
+record StrictMonoidalCategory where
+  constructor MkStrictMonoidalCategory
+  cat : Category
+  tensor : CFunctor (productCategory cat cat) cat
+  unit : obj cat
+  tensorIsLeftUnital  : (a : obj cat) -> (mapObj tensor) (unit, a) = a
+  tensorIsRightUnital : (a : obj cat) -> (mapObj tensor) (a, unit) = a
+  tensorIsAssociativeObj : (a, b, c : obj cat) -> let mo = mapObj tensor in
+                           mo (a, mo (b, c)) = mo (mo (a, b), c)
+  tensorIsAssociativeMor : (a, b, c, d, e, f : obj cat)
+                        -> (g : mor cat a b)
+                        -> (h : mor cat c d)
+                        -> (k : mor cat e f)
+                        -> let
+                             mo = mapObj tensor
+                             mm = mapMor tensor
+                           in
+                          mm (a, mo (c,e)) (b, mo (d,f)) (MkProductMorphism g (mm (c,e) (d,f) (MkProductMorphism h k)))
+                        = mm (mo (a,c), e) (mo (b,d), f) (MkProductMorphism (mm (a,c) (b,d) (MkProductMorphism g h)) k)
