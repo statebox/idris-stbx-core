@@ -5,31 +5,25 @@ Before starting to develop the Statebox dependently typed core, we need to imple
 We start with the most basic thing we can do, namely the definition of category. First things first, we start by defining our module.
 %
 %
-\begin{code}
-module Category
-
-%access public export
-%default total
-\end{code}
+> module Category
+> 
+> %access public export
+> %default total
 %
 Then, we implement the basic elements a category consists of.
-%
-%
-\begin{code}
-record Category where
-  constructor MkCategory
-  obj           : Type
-  mor           : obj -> obj -> Type
-  identity      : (a : obj) -> mor a a
-  compose       : (a, b, c : obj) -> (f : mor a b) -> (g : mor b c) -> mor a c
-  leftIdentity  : (a, b : obj) -> (f : mor a b) -> compose a a b (identity a) f = f
-  rightIdentity : (a, b : obj) -> (f : mor a b) -> compose a b b f (identity b) = f
-  associativity : (a, b, c, d : obj)
-               -> (f : mor a b)
-               -> (g : mor b c)
-               -> (h : mor c d)
-               -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
-\end{code}
+> record Category where
+>   constructor MkCategory
+>   obj           : Type
+>   mor           : obj -> obj -> Type
+>   identity      : (a : obj) -> mor a a
+>   compose       : (a, b, c : obj) -> (f : mor a b) -> (g : mor b c) -> mor a c
+>   leftIdentity  : (a, b : obj) -> (f : mor a b) -> compose a a b (identity a) f = f
+>   rightIdentity : (a, b : obj) -> (f : mor a b) -> compose a b b f (identity b) = f
+>   associativity : (a, b, c, d : obj)
+>                -> (f : mor a b)
+>                -> (g : mor b c)
+>                -> (h : mor c d)
+>                -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
 %
 Let's look at this implementation more in detail, starting from line one. 
 %
@@ -116,7 +110,7 @@ These lines are a bit different in concept: They eat type, but produce \emph{equ
                   -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
   \end{spec}
   %
-  Imposes the familiar associativity law. It takes four objects and three morphisms between them, and produces an equation stating that the order of composition does not matter. This effectively models the commutative diagram
+  Imposes the familiar associativity law. It takes four objects and three morphisms between them, and produces an equation stating that the order of composition does not matter. This effectively models the commutative diagram:
   %
   %
   \begin{center}

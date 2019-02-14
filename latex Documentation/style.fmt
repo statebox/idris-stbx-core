@@ -2,7 +2,5 @@
 %subst varid a = "\text{\texfamily{" a "}}"
 %subst conid a = "\text{\texfamily{\color{blue}" a "}}"
 %subst keyword a = "\text{\texfamily\textbf{\color{purple}" a "}}"
-%subst consym a = "\text{\texfamily{\color{blue}" a "}}"
-%subst varsym a = "\text{\texfamily\textbf{\color{purple}" a "}}"
 \framedhs 
 %endif
