@@ -1,25 +1,33 @@
-# What
+# Statebox Core
 
-Minimal example of using [lhs2tex](https://github.com/kosmikus/lhs2tex/blob/master/INSTALL) with [Idris](https://www.idris-lang.org/).
+This repository contains the core of the Statebox platform.
 
-# Setup
+## Literate Idris
 
-You need `lhs2tex`, `latexmk` and `idris`.
+The code is written using Literate Idris, so that it is possible to integrate
+documentation and code and export them both as an executable and as a human
+readable document.
 
-# Usage
+### Tools
 
-Run just make to extract the code and build the PDF, see `Makefile` for more information
+You'll need
 
-# References
+- [lhs2tex](https://github.com/kosmikus/lhs2tex/blob/master/INSTALL)
+- [latexmk](https://mg.readthedocs.io/latexmk.html)
+- [Idris](https://www.idris-lang.org/).
 
-- [lhs2tex tutorial](http://ozark.hendrix.edu/~yorgey/490/static/lhs2TeX-tutorial.pdf)
-- [lhs2tex guide](https://www.andres-loeh.de/lhs2tex/Guide2-1.17.pdf)
-- [lhs2tex presentation](https://www.andres-loeh.de/lhs2TeX-IFIP.pdf)
+### Generate documentation
+
+Use `make` to generate the Pdf documentation. You will find it in the
+`docs` directory.
+Look directly in the [Makefile](Makefile) for additional options.
 
 ## Live Checks
 
 We use [SteelOverseer](https://github.com/schell/steeloverseer) to react to
-file changes and check the types on the whole projecct.
+file changes.
+If you modify any `.lidr` file, the whole package will be recompiled and the PDF
+documentation will be updated.
 
 To install SteelOverseer, first download and install the
 [Stack](https://github.com/commercialhaskell/stack) build tool.

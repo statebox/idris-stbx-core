@@ -1,21 +1,18 @@
-.PHONY=pdf code all clean exec
+.PHONY=all pdf clean cleanAuxiliary cleanBinaries cleanSources
 
-MAIN=hello
-
-all: pdf code binary exec
+all: pdf
 
 pdf:
-	lhs2tex -o ${MAIN}.tex ${MAIN}.lidr
-	latexmk -pdf ${MAIN}.tex
-
-code:
-	lhs2TeX --newcode -o ${MAIN}.idr ${MAIN}.lidr
-
-binary:
-	idris ${MAIN}.idr -o ${MAIN}
-
-exec:
-	./${MAIN}
+	$(MAKE) -C docs pdf
 
 clean:
-	rm -f ${MAIN}.ibc ${MAIN}.idr ${MAIN}.tex ${MAIN}.ptb ${MAIN}.log ${MAIN}.aux ${MAIN}.fdb_latexmk ${MAIN}.fls ${MAIN} ${MAIN}.pdf
+	$(MAKE) -C docs clean
+
+cleanAuxiliary:
+	$(MAKE) -C docs cleanAuxiliary
+
+cleanBinaries:
+	$(MAKE) -C docs cleanBinaries
+
+cleanSources:
+	$(MAKE) -C docs cleanSources
