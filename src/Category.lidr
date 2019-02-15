@@ -116,7 +116,7 @@ These lines are a bit different in concept: They eat type, but produce \emph{equ
                   -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
   \end{spec}
   %
-  Imposes the familiar associativity law. It takes four objects and three morphisms between them, and produces an equation stating that the order of composition does not matter. This effectively models the commutative diagram
+  Imposes the familiar associativity law. It takes four objects and three morphisms between them, and produces an equation stating that the order of composition does not matter. This effectively models the commutative diagram:
   %
   %
   \begin{center}
