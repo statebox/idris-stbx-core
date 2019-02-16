@@ -17,6 +17,5 @@
 
 \section{Category theory preliminaries}
   %include ../src/Category.lidr
-  %include ../src/Functor.lidr
 
 \end{document}
