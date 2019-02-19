@@ -5,6 +5,7 @@ modules =
   Monoid.MonoidAsCategory,
   Monoid.MonoidMorphismAsFunctor,
   Monoid.MonoidMorphisms,
+  PetriNet.MultiSet,
   PetriNet.PetriNet,
   PointedTypes.PointedTypesCategory,
   Preorder.MonotoneMapAsFunctor,
