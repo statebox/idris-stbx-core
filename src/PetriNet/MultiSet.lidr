@@ -1,5 +1,7 @@
 > module PetriNet.Multiset
 >
+> import Decidable.Order
+>
 > %access public export
 > %default total
 >
@@ -10,11 +12,15 @@
 > multiSetUnion : (m1, m2 : MultiSet a) -> MultiSet a
 > multiSetUnion m1 m2 = (\x => m1 x + m2 x)
 >
-> isSubMultiSet : {a : Type} -> (m1, m2 : MultiSet a) -> Type
-> isSubMultiSet {a} m1 m2 = (x : a) -> (LTE (m1 x) (m2 x))
+> data IsSubMultiSet : (m1, m2 : MultiSet a) -> Type where
+>   MkIsSubMultiSet : ((x : a) -> LTE (m1 x) (m2 x)) -> IsSubMultiSet m1 m2
 >
-> multiSetDifference : (m1, m2 : MultiSet a) -> isSubMultiSet m2 m1 -> MultiSet a
-> multiSetDifference m1 m2 isSub = \x => (-) (m1 x) (m2 x) {smaller = isSub x}
+> Preorder (MultiSet a) IsSubMultiSet where
+>   transitive m1 m2 m3 (MkIsSubMultiSet m1Subm2) (MkIsSubMultiSet m2Subm3) = MkIsSubMultiSet(\x => LTEIsTransitive (m1 x) (m2 x) (m3 x) (m1Subm2 x) (m2Subm3 x))
+>   reflexive m = MkIsSubMultiSet (\x => LTEIsReflexive (m x))
+>
+> multiSetDifference : (m1, m2 : MultiSet a) -> IsSubMultiSet m2 m1 -> MultiSet a
+> multiSetDifference m1 m2 (MkIsSubMultiSet isSub) = \x => (-) (m1 x) (m2 x) {smaller = isSub x}
 >
 > multiSetScalarMultiplication : Nat -> MultiSet a -> MultiSet a
 > multiSetScalarMultiplication n m = \x => n * m x
