@@ -1,6 +1,6 @@
 > module PetriNet.PetriNet
 >
-> import PetriNet.Multiset
+> import PetriNet.MultiSet
 >
 > %access public export
 > %default total
@@ -11,3 +11,9 @@
 >   transition : Type
 >   input      : transition -> MultiSet places
 >   output     : transition -> MultiSet places
+>
+> Marking : PetriNet -> Type
+> Marking pN = MultiSet (places pN)
+>
+> data TransitionIsEnabled : transition pN -> Marking pN -> Type where
+>   MkTransitionIsEnabled : IsSubMultiSet (input pN t) m -> TransitionIsEnabled t m
