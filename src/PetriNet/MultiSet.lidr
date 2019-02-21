@@ -2,12 +2,18 @@
 >
 > import Decidable.Order
 >
+> -- contrib
+> import Interfaces.Verified
+>
 > %access public export
 > %default total
 >
 > -- a multiset is a function `t -> Nat`, where `t` is a type
 > MultiSet : Type -> Type -- should we impose that it is non-zero only on a finite number on inputs?
 > MultiSet t = t -> Nat
+>
+> multisetEq : {m1, m2 : MultiSet a} -> ((a : a) -> m1 a = m2 a) -> m1 = m2
+> multisetEq eqOnElements = really_believe_me eqOnElements
 >
 > multiSetUnion : (m1, m2 : MultiSet a) -> MultiSet a
 > multiSetUnion m1 m2 = (\x => m1 x + m2 x)
@@ -39,7 +45,12 @@
 > Semigroup (MultiSet a) where
 >   (<+>) = multiSetUnion
 >
+> VerifiedSemigroup (MultiSet a) where
+>   semigroupOpIsAssociative m1 m2 m3 = multisetEq (\x => plusAssociative (m1 x) (m2 x) (m3 x))
+>
 > Monoid (MultiSet a) where
 >   neutral = zeroMultiSet
 >
-> -- TODO: prove verified semigroup and verified monoid
+> VerifiedMonoid (MultiSet a) where
+>   monoidNeutralIsNeutralL m = multisetEq (\x => plusZeroRightNeutral (m x))
+>   monoidNeutralIsNeutralR m = multisetEq (\x => plusZeroLeftNeutral  (m x))
