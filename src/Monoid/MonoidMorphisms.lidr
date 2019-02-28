@@ -1,24 +1,36 @@
-> module Monoid.MonoidMorphism
-> 
+> module Monoid.MonoidMorphisms
+>
+> import Monoid.Monoid
+>
 > -- contrib
 > import Interfaces.Verified
-> 
+>
 > %access public export
 > %default total
-> 
-> FunctionRespectsOperation : (VerifiedSemigroup s1, VerifiedSemigroup s2)
->   => (a, b : s1)
->   -> (f : s1 -> s2)
->   -> Type
-> FunctionRespectsOperation a b f = f (a <+> b) = f a <+> f b
-> 
-> FunctionRespectsIdentity : (VerifiedMonoid monoid1, VerifiedMonoid monoid2)
->   => (f : monoid1 -> monoid2)
->   -> Type
-> FunctionRespectsIdentity f = f (Algebra.neutral) = Algebra.neutral
-> 
-> record MorphismOfMonoids domain codomain where
+>
+> record MorphismOfMonoids (domain : Monoid) (codomain : Monoid) where
 >   constructor MkMorphismOfMonoids
->   func : domain -> codomain
->   funcRespOp : (VerifiedSemigroup domain, VerifiedSemigroup codomain) => (a, b : domain) -> FunctionRespectsOperation a b func
->   funcRespId : (VerifiedMonoid domain, VerifiedMonoid codomain) => FunctionRespectsIdentity func
+>   func       : set domain -> set codomain
+>   funcRespOp : (a, b : set domain)
+>             -> func ((<+>) @{verifiedMonoidToSemigroup @{axioms domain}} a b)
+>              = (<+>) @{verifiedMonoidToSemigroup @{axioms codomain}} (func a) (func b)
+>   funcRespId : func (Algebra.neutral @{verifiedMonoidToMonoid @{axioms domain}})
+>              = Algebra.neutral @{verifiedMonoidToMonoid @{axioms codomain}}
+>
+> monoidIdentity : (m : Monoid) -> MorphismOfMonoids m m
+> monoidIdentity m = MkMorphismOfMonoids
+>   id
+>   (\_, _ => Refl)
+>   Refl
+>
+> monoidMorphismsComposition :
+>      MorphismOfMonoids a b
+>   -> MorphismOfMonoids b c
+>   -> MorphismOfMonoids a c
+> monoidMorphismsComposition
+>   (MkMorphismOfMonoids func1 funcRespOp1 funcRespId1)
+>   (MkMorphismOfMonoids func2 funcRespOp2 funcRespId2)
+>   = MkMorphismOfMonoids
+>       (func2 . func1)
+>       (\a, b => trans (cong {f = func2} (funcRespOp1 a b)) (funcRespOp2 (func1 a) (func1 b)))
+>       (trans (cong {f = func2} funcRespId1) funcRespId2)
