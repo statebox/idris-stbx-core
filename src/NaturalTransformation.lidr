@@ -11,7 +11,7 @@ Perhaps unsurprisingly, after having defined categories and functors we switch t
 > %access public export
 > %default total
 %
-As we did for the previous modules, to implement |NaturalTransformation| we will resort again to records and constructors.
+As we did for the previous modules, to implement |NaturalTransformation| we will resort again to records and constructors. In the following snippet, you can see how the record |NaturalTransformation| is specified by two categories $\mathcal{C}, \mathcal{D}$, implemented as |cat1| and |cat2| respectively, and two functors $F,G:\mathcal{C} \to \mathcal{D}$ between them, implemented as |func1| and |func2|.
 %
 > record NaturalTransformation (cat1 : Category) (cat2 : Category) (func1 : CFunctor cat1 cat2) (func2 : CFunctor cat1 cat2) where
 >     constructor MkNaturalTranformation
@@ -26,14 +26,14 @@ Recall that, given functors $F,G: \mathcal{C} \to \mathcal{D}$, a natural transf
 %
 >     component : (a : obj cat1) -> mor cat2 (mapObj func1 a) (mapObj func2 a)
 %
-This is precisely what we need: |mapObj func1 a| means that we are applying |func1| to the object |a|. This is akin to consider $FA$. Similarly, |mapObj func2 a| is akin to consider $GA$. These two objects, belonging to |cat2| (standing for $\mathcal{D}$ in our mathematical definition), get fed to |mor| producing the homset of morphism from $FA$ to $GA$. a term of this type is just the implementation of a morphism $FA \to GA$, and it is precisely what we associate to an object |a|.
+|mapObj func1 a| means that we are applying |func1| to the object |a|. This is akin to consider $FA$. Similarly, |mapObj func2 a| is akin to consider $GA$. These two objects, belonging to |cat2| (standing for $\mathcal{D}$ in our mathematical definition), get fed to |mor| producing the homset of morphism from $FA$ to $GA$. a term of this type is just the implementation of a morphism $FA \to GA$, and it is precisely what we associate to an object |a|.
 %
 %
 %
 \subsubsection{The laws}
 %
 %
-Up to now, we defined, for a natural transformation $\alpha:F \to G$, its components $\alpha_A: FA \to GA$ for each $A$ object of $\mathcal{C}$. These components have to be related by each other by a property, stating that for each morphism $f:A \to B$ in $\mathcal{C}$ the following square commutes:
+Up to now, we defined, for a natural transformation $\alpha:F \to G$, its components $\alpha_A: FA \to GA$ for each $A$ object of $\mathcal{C}$. These components have to be related with each other by a property, stating that for each morphism $f:A \to B$ in $\mathcal{C}$ the following square commutes:
 %
 %
 \begin{center}
@@ -44,7 +44,7 @@ Up to now, we defined, for a natural transformation $\alpha:F \to G$, its compon
 \end{center}
 %
 %
-This property lets us interpret a natural transformation as a way to link the result of applying $F$ to the result of applying $G$ in a way that cooperates with the structure, namely morphism composition: In fact, notice how the commutative square above guarantees that given $f:A \to B$ and $g: B \to C$ in $\mathcal{C}$, applying the commutative square above to $f;g$ has the same effect of pasting together the commutative squares for $f$ and $g$, that is, the following diagram commutes:
+This property lets us interpret a natural transformation as a way to link the result of applying $F$ to the result of applying $G$ in a way that cooperates with the structure, namely morphism composition: In fact, notice how the commutative square above guarantees that given $f:A \to B$ and $g: B \to C$ in $\mathcal{C}$, applying the natural transformation law above to $f;g$ has the same effect of pasting together the commutative squares for $f$ and $g$, that is, the following diagram commutes:
 %
 %
 \begin{center}
@@ -81,18 +81,19 @@ $\alpha_A$ and $\alpha_B$ are respectively |component a| and |component b| in ou
 \subsubsection{Conclusion}
 %
 %
+The code above is everything we need to define what a natural transformation is. In the next sections, we will proceed by making this definition more specific and obtain a natural isomorphism. The code of this section, presented as a unique block, can be found below.
 
-> module NaturalTransformation
->
-> import Category
-> import Functor
->
-> %access public export
-> %default total
-> record NaturalTransformation (cat1 : Category) (cat2 : Category) (func1 : CFunctor cat1 cat2) (func2 : CFunctor cat1 cat2) where
->     constructor MkNaturalTranformation
->     component : (a : obj cat1) -> mor cat2 (mapObj func1 a) (mapObj func2 a)
->     commutativity : {a, b : obj cat1}
->                  -> (f : mor cat1 a b)
->                  -> compose cat2 (mapObj func1 a) (mapObj func2 a) (mapObj func2 b) (component a) (mapMor func2 a b f)
->                   = compose cat2 (mapObj func1 a) (mapObj func1 b) (mapObj func2 b) (mapMor func1 a b f) (component b)
+< module NaturalTransformation
+<
+< import Category
+< import Functor
+<
+< %access public export
+< %default total
+< record NaturalTransformation (cat1 : Category) (cat2 : Category) (func1 : CFunctor cat1 cat2) (func2 : CFunctor cat1 cat2) where
+<     constructor MkNaturalTranformation
+<     component : (a : obj cat1) -> mor cat2 (mapObj func1 a) (mapObj func2 a)
+<     commutativity : {a, b : obj cat1}
+<                  -> (f : mor cat1 a b)
+<                  -> compose cat2 (mapObj func1 a) (mapObj func2 a) (mapObj func2 b) (component a) (mapMor func2 a b f)
+<                   = compose cat2 (mapObj func1 a) (mapObj func1 b) (mapObj func2 b) (mapMor func1 a b f) (component b)
