@@ -1,14 +1,14 @@
 > module Preorder.monotoneMapAsFunctor
-> 
+>
 > import Category
 > import Functor
 > import Preorder.MonotoneMaps
 > import Preorder.PreorderAsCategory
 > import Preorder.UniquePreorder
-> 
+>
 > -- contrib
 > import Decidable.Order
-> 
+>
 > monotoneMapToFunctor : (UniquePreorder t1 po1, UniquePreorder t2 po2)
 >   => MonotoneMap t1 po1 t2 po2
 >   -> CFunctor (preorderAsCategory {t = t1} {po = po1}) (preorderAsCategory {t = t2} {po = po2})

@@ -1,26 +1,26 @@
 > module Preorder.PreorderAsCategory
-> 
+>
 > import Category
 > import Preorder.UniquePreorder
-> 
+>
 > -- contrib
 > import Decidable.Order
-> 
+>
 > %access public export
 > %default total
-> 
+>
 > leftIdentity : UniquePreorder t po
 >   => (a, b : t)
 >   -> (f : po a b)
 >   -> transitive a a b (reflexive a) f = f
-> leftIdentity a b f = unique a b (Decidable.Order.transitive a a b (Decidable.Order.reflexive a) f) f
-> 
+> leftIdentity a b f = unique a b (transitive a a b (reflexive a) f) f
+>
 > rightIdentity : UniquePreorder t po
 >   => (a, b : t)
 >   -> (f : po a b)
 >   -> transitive a b b f (reflexive b) = f
-> rightIdentity a b f = unique a b (Decidable.Order.transitive a b b f (Decidable.Order.reflexive b)) f
-> 
+> rightIdentity a b f = unique a b (transitive a b b f (reflexive b)) f
+>
 > associativity : UniquePreorder t po
 >   => (a, b, c, d : t)
 >   -> (f : po a b)
@@ -28,9 +28,9 @@
 >   -> (h : po c d)
 >   -> transitive a b d f (transitive b c d g h) = transitive a c d (transitive a b c f g) h
 > associativity a b c d f g h = unique a d
->   (Decidable.Order.transitive a b d f (Decidable.Order.transitive b c d g h))
->   (Decidable.Order.transitive a c d (Decidable.Order.transitive a b c f g) h)
-> 
+>   (Decidable.Order.transitive a b d f (transitive b c d g h))
+>   (Decidable.Order.transitive a c d (transitive a b c f g) h)
+>
 > preorderAsCategory : UniquePreorder t po => Category
 > preorderAsCategory {t} {po} = MkCategory
 >   t

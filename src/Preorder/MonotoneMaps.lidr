@@ -1,13 +1,11 @@
 > module Preorder.MonotoneMaps
-> 
-> import Preorder.UniquePreorder
-> 
+>
 > -- contrib
 > import Decidable.Order
-> 
+>
 > %access public export
 > %default total
-> 
+>
 > record MonotoneMap (t1 : Type) (po1 : t1 -> t1 -> Type) (t2 : Type) (po2 : t2 -> t2 -> Type) where
 >   constructor MkMonotoneMap
 >   func : t1 -> t2
