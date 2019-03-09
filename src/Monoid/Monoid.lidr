@@ -11,6 +11,9 @@
 >   set    : Type
 >   axioms : VerifiedMonoid set
 >
+> buildMonoid : (vm : VerifiedMonoid m) => Monoid
+> buildMonoid @{vm} {m} = MkMonoid m vm
+>
 > verifiedMonoidToSemigroup : VerifiedMonoid m => Semigroup m
 > verifiedMonoidToSemigroup @{mon} = %implementation
 >

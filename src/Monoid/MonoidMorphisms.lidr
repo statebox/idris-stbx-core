@@ -17,6 +17,12 @@
 >   funcRespId : func (Algebra.neutral @{verifiedMonoidToMonoid @{axioms domain}})
 >              = Algebra.neutral @{verifiedMonoidToMonoid @{axioms codomain}}
 >
+> morphismsOfMonoindsEq :
+>      (mor1, mor2 : MorphismOfMonoids m1 m2)
+>   -> ((x : set m1) -> (func mor1 x) = (func mor2 x))
+>   -> mor1 = mor2
+> morphismsOfMonoindsEq mor1 mor2 pointWisePrf = really_believe_me pointWisePrf
+>
 > monoidIdentity : (m : Monoid) -> MorphismOfMonoids m m
 > monoidIdentity m = MkMorphismOfMonoids
 >   id
@@ -27,10 +33,8 @@
 >      MorphismOfMonoids a b
 >   -> MorphismOfMonoids b c
 >   -> MorphismOfMonoids a c
-> monoidMorphismsComposition
->   (MkMorphismOfMonoids func1 funcRespOp1 funcRespId1)
->   (MkMorphismOfMonoids func2 funcRespOp2 funcRespId2)
->   = MkMorphismOfMonoids
->       (func2 . func1)
->       (\a, b => trans (cong {f = func2} (funcRespOp1 a b)) (funcRespOp2 (func1 a) (func1 b)))
->       (trans (cong {f = func2} funcRespId1) funcRespId2)
+> monoidMorphismsComposition mor1 mor2 =
+>   MkMorphismOfMonoids
+>     ((func mor2) . (func mor1))
+>     (\a, b => trans (cong {f = func mor2} (funcRespOp mor1 a b)) (funcRespOp mor2 (func mor1 a) (func mor1 b)))
+>     (trans (cong {f = func mor2} (funcRespId mor1)) (funcRespId mor2))
