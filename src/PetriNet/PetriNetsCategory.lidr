@@ -1,0 +1,71 @@
+> module PetriNet.PetriNetsCategory
+>
+> import Category
+> import Utils
+> import Monoid.Monoid
+> import Monoid.MonoidMorphisms
+> import PetriNet.MultiSet
+> import PetriNet.PetriNet
+> import PetriNet.PetriNetMorphisms
+>
+> %access public export
+> %default total
+>
+> petriNetLeftIdentity :
+>      (pN1, pN2 : PetriNet)
+>   -> (mor : PetriNetMorphism pN1 pN2)
+>   -> petriNetComposition pN1 pN1 pN2 (petriNetIdentity pN1) mor = mor
+> petriNetLeftIdentity
+>   pN1
+>   pN2
+>   (MkPetriNetMorphism trMor mulMor iC oC)
+>   = petriNetMorphismEq
+>       (petriNetComposition pN1 pN1 pN2 (petriNetIdentity pN1) (MkPetriNetMorphism trMor mulMor iC oC))
+>       (MkPetriNetMorphism trMor mulMor iC oC)
+>       (\t => Refl)
+>       (morphismsOfMonoindsEq (monoidMorphismsComposition (monoidIdentity (placesMonoid pN1)) mulMor) mulMor (\x => Refl))
+>
+> petriNetRightIdentity :
+>      (pN1, pN2 : PetriNet)
+>   -> (mor : PetriNetMorphism pN1 pN2)
+>   -> petriNetComposition pN1 pN2 pN2 mor (petriNetIdentity pN2) = mor
+> petriNetRightIdentity
+>   pN1
+>   pN2
+>   (MkPetriNetMorphism trMor mulMor iC oC)
+>   = petriNetMorphismEq
+>       (petriNetComposition pN1 pN2 pN2 (MkPetriNetMorphism trMor mulMor iC oC) (petriNetIdentity pN2))
+>       (MkPetriNetMorphism trMor mulMor iC oC)
+>       (\t => Refl)
+>       (morphismsOfMonoindsEq (monoidMorphismsComposition mulMor (monoidIdentity (placesMonoid pN2))) mulMor (\x => Refl))
+>
+> petriNetAssociativity :
+>      (pN1, pN2, pN3, pN4 : PetriNet)
+>   -> (mor1 : PetriNetMorphism pN1 pN2)
+>   -> (mor2 : PetriNetMorphism pN2 pN3)
+>   -> (mor3 : PetriNetMorphism pN3 pN4)
+>   -> petriNetComposition pN1 pN2 pN4 mor1 (petriNetComposition pN2 pN3 pN4 mor2 mor3)
+>    = petriNetComposition pN1 pN3 pN4 (petriNetComposition pN1 pN2 pN3 mor1 mor2) mor3
+> petriNetAssociativity pN1 pN2 pN3 pN4
+>   (MkPetriNetMorphism trMor1 mulMor1 iC1 oC1)
+>   (MkPetriNetMorphism trMor2 mulMor2 iC2 oC2)
+>   (MkPetriNetMorphism trMor3 mulMor3 iC3 oC3)
+>   = petriNetMorphismEq
+>       (petriNetComposition pN1 pN2 pN4 (MkPetriNetMorphism trMor1 mulMor1 iC1 oC1) (petriNetComposition pN2 pN3 pN4 (MkPetriNetMorphism trMor2 mulMor2 iC2 oC2) (MkPetriNetMorphism trMor3 mulMor3 iC3 oC3)))
+>       (petriNetComposition pN1 pN3 pN4 (petriNetComposition pN1 pN2 pN3 (MkPetriNetMorphism trMor1 mulMor1 iC1 oC1) (MkPetriNetMorphism trMor2 mulMor2 iC2 oC2)) (MkPetriNetMorphism trMor3 mulMor3 iC3 oC3))
+>       (\t => Refl)
+>       (morphismsOfMonoindsEq
+>          (monoidMorphismsComposition mulMor1 (monoidMorphismsComposition mulMor2 mulMor3))
+>          (monoidMorphismsComposition (monoidMorphismsComposition mulMor1 mulMor2) mulMor3)
+>          (\x => Refl)
+>       )
+>
+> petriNetsAsCategory : Category
+> petriNetsAsCategory = MkCategory
+>   PetriNet
+>   PetriNetMorphism
+>   petriNetIdentity
+>   petriNetComposition
+>   petriNetLeftIdentity
+>   petriNetRightIdentity
+>   petriNetAssociativity

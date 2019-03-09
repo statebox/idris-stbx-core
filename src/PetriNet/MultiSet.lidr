@@ -1,4 +1,4 @@
-> module PetriNet.Multiset
+> module PetriNet.MultiSet
 >
 > import Decidable.Order
 >
@@ -12,8 +12,8 @@
 > MultiSet : Type -> Type -- should we impose that it is non-zero only on a finite number on inputs?
 > MultiSet t = t -> Nat
 >
-> multisetEq : {m1, m2 : MultiSet a} -> ((a : a) -> m1 a = m2 a) -> m1 = m2
-> multisetEq eqOnElements = really_believe_me eqOnElements
+> multiSetEq : {m1, m2 : MultiSet a} -> ((x : a) -> m1 x = m2 x) -> m1 = m2
+> multiSetEq eqOnElements = really_believe_me eqOnElements
 >
 > multiSetUnion : (m1, m2 : MultiSet a) -> MultiSet a
 > multiSetUnion m1 m2 = (\x => m1 x + m2 x)
@@ -46,11 +46,11 @@
 >   (<+>) = multiSetUnion
 >
 > VerifiedSemigroup (MultiSet a) where
->   semigroupOpIsAssociative m1 m2 m3 = multisetEq (\x => plusAssociative (m1 x) (m2 x) (m3 x))
+>   semigroupOpIsAssociative m1 m2 m3 = multiSetEq (\x => plusAssociative (m1 x) (m2 x) (m3 x))
 >
 > Monoid (MultiSet a) where
 >   neutral = zeroMultiSet
 >
-> VerifiedMonoid (MultiSet a) where
->   monoidNeutralIsNeutralL m = multisetEq (\x => plusZeroRightNeutral (m x))
->   monoidNeutralIsNeutralR m = multisetEq (\x => plusZeroLeftNeutral  (m x))
+> [multiSetVerifiedMonoid] VerifiedMonoid (MultiSet a) where
+>   monoidNeutralIsNeutralL m = multiSetEq (\x => plusZeroRightNeutral (m x))
+>   monoidNeutralIsNeutralR m = multiSetEq (\x => plusZeroLeftNeutral  (m x))

@@ -1,6 +1,10 @@
 > module PetriNet.PetriNet
 >
+> import Monoid.Monoid
 > import PetriNet.MultiSet
+>
+> -- contrib
+> import Interfaces.Verified
 >
 > %access public export
 > %default total
@@ -14,6 +18,9 @@
 >
 > Marking : PetriNet -> Type
 > Marking pN = MultiSet (places pN)
+>
+> placesMonoid : PetriNet -> Monoid
+> placesMonoid pN = MkMonoid (Marking pN) (multiSetVerifiedMonoid)
 >
 > data TransitionIsEnabled : transitions pN -> Marking pN -> Type where
 >   MkTransitionIsEnabled : IsSubMultiSet (input pN t) m -> TransitionIsEnabled t m
