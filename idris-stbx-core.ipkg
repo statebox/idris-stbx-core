@@ -1,12 +1,20 @@
 package idris-stbx-core
 
 modules =
+  Cats.CatsAsCategory,
+  Discrete.DiscreteCategory,
+  Idris.FunctorAsCFunctor,
   Idris.TypesAsCategory,
+  Idris.TypesAsCategoryExtensional,
+  Monoid.Monoid,
   Monoid.MonoidAsCategory,
   Monoid.MonoidMorphismAsFunctor,
   Monoid.MonoidMorphisms,
+  Monoid.MonoidsCategory,
   PetriNet.MultiSet,
   PetriNet.PetriNet,
+  PetriNet.PetriNetMorphisms,
+  PetriNet.PetriNetsCategory,
   PointedTypes.PointedTypesCategory,
   Preorder.MonotoneMapAsFunctor,
   Preorder.MonotoneMaps,
@@ -17,6 +25,7 @@ modules =
   WiringDiagram.WiringDiagramAlgebra,
   Category,
   Functor,
+  NaturalTransformation,
   ProductCategory,
   StrictMonoidalCategory,
   SymmetricMonoidalCategory,
