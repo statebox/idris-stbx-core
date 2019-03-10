@@ -52,44 +52,25 @@ Now, for any pair of objects |a, b : obj|, we can talk about the collection |mor
 %
 %
 Now that we have arrows in our category, allowing us to go from one object to the other, we would like to start following consecutive arrows; I mean, if an arrow leads us to $b$, we would like to continue our journey by taking any other arrow starting at $b$. Nobody stops us from doing that, but it would be really cumbersome if we must keep track of every single arrow whenever we want to describe a path from one dot to another. The definition of category comes in our help here, providing us with an operation to obtain arrows from paths, called \emph{composition}.
-
 %
-Let's look at this implementation more in detail, starting from line one.
-%
-%
-\begin{spec}
-record Category where
-\end{spec}
-%
-We define a category as a type, to be precise a |record|. A record type allows to aggregate values together. In our case said values represent all the main ingredients that make up a category -- morphisms, objects, etc. These are implemented in the record using the constructor |MkCategory|.
 %
 %
 <   compose : (a, b, c : obj)
 <          -> (f : mor a b)
 <          -> (g : mor b c)
 <          -> mor a c
-%
-The main ingredients to model are objects and morphisms: We give objects a type |obj| and morphisms a type |obj -> obj -> Type| -- that is, morphisms are interpreted as functions that take two objects representing domain and codomain and return a type.
-
 Furthermore, the constructor |MkCategory| asks to determine:
 %
 <   identity : (a : obj) -> mor a a
 %
-\begin{itemize}
-  \item For each object, a selected identity morphism. This is represented by
-  \begin{spec}
-    identity : (a : obj) -> mor a a
-  \end{spec}
-  Which is a function that, for each object $a$, returns a morphism $a \to a$.
-
-  \item For each couple of morphisms such that their domain and codomain match up, their composition. This is represented by
-  \begin{spec}
-    compose : (a, b, c : obj) -> (f : mor a b) -> (g : mor b c) -> mor a c
-  \end{spec}
-  Wich is again a function. It asks to determine some objects and a couple of functions having the objects as domain/codomain such that they match up. The result, as we would expect, is the composition of the specified morphisms.
-\end{itemize}
+Which for now is nothing more than a function that, for each object $a$, returns a morphism $a \to a$.
 %
-The part of the construction covered above defines the components of a category, but as they stand nothing ensures that the category axioms hold. For instance, there is nothing in principle that tells us that composing an identity with a morphism returns the morphism itself. This is the role of the remaining definition of the constructor |MkCategory|, ensuring that such axioms are enforced.
+%
+%
+\subsubsection{The laws}
+%
+%
+The part of the construction covered above defines the components of a category, but as they stand nothing ensures that the category axioms hold. For instance, there is nothing in principle that tells us that composing an identity with a morphism returns the morphism itself. This is the role of the remaining definition of the constructor |MkCategory|, ensuring that such axioms are enforced:
 %
 %
 \begin{spec}
@@ -127,34 +108,30 @@ These lines are a bit different in concept: They eat type, but produce \emph{equ
   \end{tikzcd}
   \captionof{figure}{The identity laws $id_a ; f=f$ and $f;id_b = f$}
   \end{center}
-%
-In Idris, we can state the two identity laws as follows:
-%
-%
+  %
+  In Idris, we can state the two identity laws as follows:
+  %
+  %
 <   leftIdentity  : (a, b : obj)
 <                -> (f : mor a b)
 <                -> compose a a b (identity a) f = f
-%
-and
-%
-%
+  %
+  and
+  %
+  %
 <   rightIdentity : (a, b : obj)
 <                -> (f : mor a b)
 <                -> compose a b b f (identity b) = f
-%
-In short, this amounts to say that |(identity a) ; f = f = f ; (identity b)| for any morphism |f : a -> b|. As a technical side note, I'd like to emphasise here how Idris allows us to encode equality in the type system; from a practial point of view, equality in Idris is a type which has only one inhabitant, called |Refl|, which corresponding to reflexivity, and stating that |x = x| for any possible |x|.
+  %
+  In short, this amounts to say that |(identity a) ; f = f = f ; (identity b)| for any morphism |f : a -> b|. As a technical side note, I'd like to emphasise here how Idris allows us to encode equality in the type system; from a practial point of view, equality in Idris is a type which has only one inhabitant, called |Refl|, which corresponding to reflexivity, and stating that |x = x| for any possible |x|.
 
   \item Finally, the line
-  %
-  %
-  \begin{spec}
-    associativity : (a, b, c, d : obj)
-                  -> (f : mor a b)
-                  -> (g : mor b c)
-                  -> (h : mor c d)
-                  -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
-  \end{spec}
-  %
+<   associativity : (a, b, c, d : obj)
+<                -> (f : mor a b)
+<                -> (g : mor b c)
+<                -> (h : mor c d)
+<                -> compose a b d f (compose b c d g h)
+<                = compose a c d (compose a b c f g) h
   Imposes the familiar associativity law. It takes four objects and three morphisms between them, and produces an equation stating that the order of composition does not matter. This effectively models the commutative diagram:
   %
   %
@@ -166,16 +143,6 @@ In short, this amounts to say that |(identity a) ; f = f = f ; (identity b)| for
   \captionof{figure}{The associativity law $f;(g;h)=(f;g);h$}
   \end{center}
 \end{itemize}
-%
-Which we render in Idris as
-%
-%
-<   associativity : (a, b, c, d : obj)
-<                -> (f : mor a b)
-<                -> (g : mor b c)
-<                -> (h : mor c d)
-<                -> compose a b d f (compose b c d g h)
-<                = compose a c d (compose a b c f g) h
 %
 %
 %

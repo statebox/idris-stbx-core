@@ -37,7 +37,7 @@ Recall that, given functors $F,G: \mathcal{C} \to \mathcal{D}$, a natural transf
 >     component : (a : obj cat1) -> mor cat2 (mapObj func1 a) (mapObj func2 a)
 
 %
-|mapObj func1 a| means that we are applying |func1| to the object |a|. This is akin to consider $FA$. Similarly, |mapObj func2 a| is akin to consider $GA$. These two objects, belonging to |cat2| (standing for $\mathcal{D}$ in our mathematical definition), get fed to |mor| producing the homset of morphism from $FA$ to $GA$. a term of this type is just the implementation of a morphism $FA \to GA$, and it is precisely what we associate to an object |a|.
+|mapObj func1 a| means that we are applying |func1| to the object |a|. This is akin to consider $FA$. Similarly, |mapObj func2 a| is akin to consider $GA$. These two objects, belonging to |cat2| (standing for $\mathcal{D}$ in our mathematical definition), get fed to |mor| producing the homset of morphisms from $FA$ to $GA$. a term of this type is just the implementation of a morphism $FA \to GA$, and it is precisely what we associate to an object |a|.
 %
 %
 %
