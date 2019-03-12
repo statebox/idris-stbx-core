@@ -4,7 +4,7 @@
 >
 > %access public export
 > %default total
-
+>
 > record Isomorphism (cat : Category) (a : obj cat) (b : obj cat) where
 >   constructor mkIsomorphism
 >   morphism: mor cat a b
