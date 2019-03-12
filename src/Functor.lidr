@@ -134,3 +134,22 @@ The code covered above completes our definition of |CFunctor|, which we provide 
 <                  -> (g : mor cat1 b c)
 <                  -> mapMor a c (compose cat1 a b c f g)
 <                   = compose cat2 (mapObj a) (mapObj b) (mapObj c) (mapMor a b f) (mapMor b c g)
+
+> idFunctor : (cat : Category) -> CFunctor cat cat
+> idFunctor cat = MkCFunctor
+>   id
+>   (\a, b => id)
+>   (\a => Refl)
+>   (\a, b, c, f, g => Refl)
+>
+> functorComposition :
+>      (cat1, cat2, cat3 : Category)
+>   -> CFunctor cat1 cat2
+>   -> CFunctor cat2 cat3
+>   -> CFunctor cat1 cat3
+> functorComposition cat1 cat2 cat3 func gunc = MkCFunctor
+>   ((mapObj gunc) . (mapObj func))
+>   (\a, b => (mapMor gunc (mapObj func a) (mapObj func b)) . (mapMor func a b))
+>   (\a => trans (cong (preserveId func a)) (preserveId gunc (mapObj func a)))
+>   (\a, b, c, f, g => trans (cong (preserveCompose func a b c f g))
+>                            (preserveCompose gunc (mapObj func a) (mapObj func b) (mapObj func c) (mapMor func a b f) (mapMor func b c g)))
