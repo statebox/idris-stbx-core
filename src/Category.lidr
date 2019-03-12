@@ -15,16 +15,12 @@ We start with the most basic thing we can do, namely the definition of category.
 Then, we implement the basic elements a category consists of.
 %
 %
-
-> record Category where
-
+< record Category where
 %
 A |record| in Idirs is just the product type of several values, which are called the fields of the record. It's a convenient syntax because Idris provides field access and update functions automatically for us. We add also the constructor |MkCategory| to be able to construct concrete values of type |Category|:
 %
 %
-
->   constructor MkCategory
-
+<   constructor MkCategory
 %
 %
 %
@@ -34,9 +30,7 @@ A |record| in Idirs is just the product type of several values, which are called
 At its most basic level, a category is a collection of things, called \emph{objects}. To specify what these things are, we add to our definition a field to keep track of them:
 %
 %
-
->   obj : Type
-
+<   obj : Type
 %
 You can think about |obj| as a collection of dots, which will be items we want to talk about in our category.
 
@@ -48,9 +42,7 @@ Moreover, if we denote a category as $\mathcal{C}$, a convenient notation to den
 To translate this to Idris, let's add another field to our Category:
 %
 %
-
->   mor : obj -> obj -> Type
-
+<   mor : obj -> obj -> Type
 %
 Now, for any pair of objects |a, b : obj|, we can talk about the collection |mor a b| of arrows going from $a$ to $b$. This faithfully models, on the implementation side, what $\mathcal{C}(a,b)$ is on the theoretical side.
 %
@@ -72,20 +64,16 @@ record Category where
 We define a category as a type, to be precise a |record|. A record type allows to aggregate values together. In our case said values represent all the main ingredients that make up a category -- morphisms, objects, etc. These are implemented in the record using the constructor |MkCategory|.
 %
 %
-
->   compose : (a, b, c : obj)
->          -> (f : mor a b)
->          -> (g : mor b c)
->          -> mor a c
-
+<   compose : (a, b, c : obj)
+<          -> (f : mor a b)
+<          -> (g : mor b c)
+<          -> mor a c
 %
 The main ingredients to model are objects and morphisms: We give objects a type |obj| and morphisms a type |obj -> obj -> Type| -- that is, morphisms are interpreted as functions that take two objects representing domain and codomain and return a type.
 
 Furthermore, the constructor |MkCategory| asks to determine:
 %
-
->   identity : (a : obj) -> mor a a
-
+<   identity : (a : obj) -> mor a a
 %
 \begin{itemize}
   \item For each object, a selected identity morphism. This is represented by
@@ -137,26 +125,22 @@ These lines are a bit different in concept: They eat type, but produce \emph{equ
     a \arrow[r,"f"]\arrow[dr, "f"'] & b\arrow[d,equal]\\
     & b\\
   \end{tikzcd}
-\captionof{figure}{The identity laws $id_a ; f=f$ and $f;id_b = f$}
-\end{center}
+  \captionof{figure}{The identity laws $id_a ; f=f$ and $f;id_b = f$}
+  \end{center}
 %
 In Idris, we can state the two identity laws as follows:
 %
 %
-
->   leftIdentity  : (a, b : obj)
->                -> (f : mor a b)
->                -> compose a a b (identity a) f = f
-
+<   leftIdentity  : (a, b : obj)
+<                -> (f : mor a b)
+<                -> compose a a b (identity a) f = f
 %
 and
 %
 %
-
->   rightIdentity : (a, b : obj)
->                -> (f : mor a b)
->                -> compose a b b f (identity b) = f
-
+<   rightIdentity : (a, b : obj)
+<                -> (f : mor a b)
+<                -> compose a b b f (identity b) = f
 %
 In short, this amounts to say that |(identity a) ; f = f = f ; (identity b)| for any morphism |f : a -> b|. As a technical side note, I'd like to emphasise here how Idris allows us to encode equality in the type system; from a practial point of view, equality in Idris is a type which has only one inhabitant, called |Refl|, which corresponding to reflexivity, and stating that |x = x| for any possible |x|.
 
@@ -179,20 +163,19 @@ In short, this amounts to say that |(identity a) ; f = f = f ; (identity b)| for
     a \arrow[r, "f"]\arrow[dr,"f;g"']&b\arrow[d, "g"]\arrow[dr, "g;h"]&\\
     &c\arrow[r, "h"']& d\\
   \end{tikzcd}
-\captionof{figure}{The associativity law $f;(g;h)=(f;g);h$}
-\end{center}
+  \captionof{figure}{The associativity law $f;(g;h)=(f;g);h$}
+  \end{center}
+\end{itemize}
 %
 Which we render in Idris as
 %
 %
-
->   associativity : (a, b, c, d : obj)
->                -> (f : mor a b)
->                -> (g : mor b c)
->                -> (h : mor c d)
->                -> compose a b d f (compose b c d g h)
->                = compose a c d (compose a b c f g) h
-
+<   associativity : (a, b, c, d : obj)
+<                -> (f : mor a b)
+<                -> (g : mor b c)
+<                -> (h : mor c d)
+<                -> compose a b d f (compose b c d g h)
+<                = compose a c d (compose a b c f g) h
 %
 %
 %
@@ -202,23 +185,24 @@ Which we render in Idris as
 Summing up and putting it all together, our definition of |Category| now looks like this:
 %
 %
-< record Category where
-<   constructor MkCategory
-<   obj           : Type
-<   mor           : obj -> obj -> Type
-<   identity      : (a : obj) -> mor a a
-<   compose       : (a, b, c : obj)
-<                -> (f : mor a b)
-<                -> (g : mor b c)
-<                -> mor a c
-<   leftIdentity  : (a, b : obj)
-<                -> (f : mor a b)
-<                -> compose a a b (identity a) f = f
-<   rightIdentity : (a, b : obj)
-<                -> (f : mor a b)
-<                -> compose a b b f (identity b) = f
-<   associativity : (a, b, c, d : obj)
-<                -> (f : mor a b)
-<                -> (g : mor b c)
-<                -> (h : mor c d)
-<                -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
+
+> record Category where
+>   constructor MkCategory
+>   obj           : Type
+>   mor           : obj -> obj -> Type
+>   identity      : (a : obj) -> mor a a
+>   compose       : (a, b, c : obj)
+>                -> (f : mor a b)
+>                -> (g : mor b c)
+>                -> mor a c
+>   leftIdentity  : (a, b : obj)
+>                -> (f : mor a b)
+>                -> compose a a b (identity a) f = f
+>   rightIdentity : (a, b : obj)
+>                -> (f : mor a b)
+>                -> compose a b b f (identity b) = f
+>   associativity : (a, b, c, d : obj)
+>                -> (f : mor a b)
+>                -> (g : mor b c)
+>                -> (h : mor c d)
+>                -> compose a b d f (compose b c d g h) = compose a c d (compose a b c f g) h
