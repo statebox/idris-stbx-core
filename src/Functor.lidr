@@ -135,6 +135,14 @@ The code covered above completes our definition of |CFunctor|, which we provide 
 <                  -> mapMor a c (compose cat1 a b c f g)
 <                   = compose cat2 (mapObj a) (mapObj b) (mapObj c) (mapMor a b f) (mapMor b c g)
 
+> functorEq :
+>      (cat1, cat2 : Category)
+>   -> (func, gunc : CFunctor cat1 cat2)
+>   -> ((a : obj cat1) -> (mapObj func a = mapObj gunc a))
+>   -> ((a, b : obj cat1) -> (f : mor cat1 a b) -> (mapMor func a b f = mapMor gunc a b f))
+>   -> func = gunc
+> functorEq cat1 cat2 func gunc prfObj prfMor = really_believe_me ()
+>
 > idFunctor : (cat : Category) -> CFunctor cat cat
 > idFunctor cat = MkCFunctor
 >   id
