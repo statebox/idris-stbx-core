@@ -1,6 +1,7 @@
 > module ProductCategory
 >
 > import Category
+> import Functor
 > import Utils
 >
 > %access public export
@@ -17,7 +18,7 @@
 >     constructor MkProductMorphism
 >     pi1 : mor1 (fst a) (fst b)
 >     pi2 : mor2 (snd a) (snd b)
-> 
+>
 > productIdentity :
 >      {cat1, cat2 : Category}
 >   -> (a : (obj cat1, obj cat2))
@@ -57,6 +58,9 @@
 >   -> (g : ProductMorphism (obj cat1) (obj cat2) (mor cat1) (mor cat2) b c)
 >   -> (h : ProductMorphism (obj cat1) (obj cat2) (mor cat1) (mor cat2) c d)
 >   -> productCompose a b d f (productCompose b c d g h) = productCompose a c d (productCompose a b c f g) h
+> productAssociativity {cat1} {cat2} a b c d f g h = cong2 {f = MkProductMorphism}
+>   (associativity cat1 (fst a) (fst b) (fst c) (fst d) (pi1 f) (pi1 g) (pi1 h))
+>   (associativity cat2 (snd a) (snd b) (snd c) (snd d) (pi2 f) (pi2 g) (pi2 h))
 >
 > productCategory : (cat1, cat2 : Category) -> Category
 > productCategory cat1 cat2 = MkCategory
@@ -67,3 +71,12 @@
 >   (productLeftIdentity {cat1} {cat2})
 >   (productRightIdentity {cat1} {cat2})
 >   (productAssociativity {cat1} {cat2})
+>
+> productAssociator :
+>      (cat1, cat2, cat3 : Category)
+>   -> CFunctor (productCategory (productCategory cat1 cat2) cat3) (productCategory cat1 (productCategory cat2 cat3))
+> productAssociator cat1 cat2 cat3 = MkCFunctor
+>   (\o => (fst (fst o), (snd (fst o), snd o)))
+>   (\abc1, abc2, m => MkProductMorphism (pi1 (pi1 m)) (MkProductMorphism (pi2 (pi1 m)) (pi2 m)))
+>   (\((o1, o2), o3) => Refl)
+>   (\a1, a2, c, f, g => Refl)
