@@ -1,12 +1,12 @@
 > module MonoidalCategory
-> 
+>
 > import Category
 > import Functor
 > import ProductCategory
-> 
+>
 > %access public export
 > %default total
-> 
+>
 > record StrictMonoidalCategory where
 >   constructor MkStrictMonoidalCategory
 >   cat : Category
