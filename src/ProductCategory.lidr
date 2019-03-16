@@ -72,9 +72,9 @@
 >
 > productAssociator :
 >      (cat1, cat2, cat3 : Category)
->   -> CFunctor (productCategory (productCategory cat1 cat2) cat3) (productCategory cat1 (productCategory cat2 cat3))
+>   -> CFunctor (productCategory cat1 (productCategory cat2 cat3)) (productCategory (productCategory cat1 cat2) cat3)
 > productAssociator cat1 cat2 cat3 = MkCFunctor
->   (\o => (fst (fst o), (snd (fst o), snd o)))
->   (\abc1, abc2, m => MkProductMorphism (pi1 (pi1 m)) (MkProductMorphism (pi2 (pi1 m)) (pi2 m)))
->   (\((o1, o2), o3) => Refl)
+>   (\o => ((fst o, fst (snd o)), (snd (snd o))))
+>   (\abc1, abc2, m => MkProductMorphism (MkProductMorphism (pi1 m) (pi1 (pi2 m))) (pi2 (pi2 m)))
+>   (\o => Refl)
 >   (\a1, a2, c, f, g => Refl)
