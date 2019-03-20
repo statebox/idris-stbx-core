@@ -20,8 +20,7 @@
 > functionPreserveCompose f x x x Refl Refl = Refl
 >
 > functionAsFunctor :
->      {a, b : Type}
->   -> (f : a -> b)
+>      (f : a -> b)
 >   -> CFunctor (discreteCategory a) (discreteCategory b)
 > functionAsFunctor f = MkCFunctor
 >   f
