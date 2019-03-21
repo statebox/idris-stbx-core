@@ -104,7 +104,7 @@
 >   -> (rightUnitor : NaturalIsomorphism cat cat (MonoidalCategory.rightIdTensor cat tensor unit) (Functor.idFunctor cat))
 >   -> (a, b : obj cat)
 >   -> Type
-> MonoidalTriangle cat tensor unit associator leftUnitor rightUnitor a b = 
+> MonoidalTriangle cat tensor unit associator leftUnitor rightUnitor a b =
 >   (mapMor tensor
 >           (mapObj tensor (a, unit), b)
 >           (a, b)
@@ -115,12 +115,11 @@
 >            (mapObj tensor (a, mapObj tensor (unit, b)))
 >            (mapObj tensor (a, b))
 >            (component (natTrans associator) (a, unit, b))
->            (mapMor tensor 
->               (a, mapObj tensor (unit, b))
->               (a, b)
->               (MkProductMorphism (identity cat a) (component (natTrans leftUnitor) b))))
-
-> {-
+>            (mapMor tensor
+>                    (a, mapObj tensor (unit, b))
+>                    (a, b)
+>                    (MkProductMorphism (identity cat a) (component (natTrans leftUnitor) b))))
+>
 > -- we are not using a record here because compilation does not terminate in that case
 > data MonoidalCategory : Type where
 >   MkMonoidalCategory :
@@ -131,11 +130,17 @@
 >                                         cat
 >                                         (leftTensor3  cat tensor)
 >                                         (rightTensor3 cat tensor))
->     -> (leftUnitor  : NaturalIsomorphism cat cat (leftIdTensor  cat tensor unit) idFunctor)
->     -> (rightUnitor : NaturalIsomorphism cat cat (rightIdTensor cat tensor unit) idFunctor)
+>     -> (leftUnitor  : NaturalIsomorphism cat cat (leftIdTensor  cat tensor unit) (idFunctor cat))
+>     -> (rightUnitor : NaturalIsomorphism cat cat (rightIdTensor cat tensor unit) (idFunctor cat))
 >     -> ((a, b, c, d : obj cat) -> MonoidalPentagon cat tensor associator a b c d)
 >     -> ((a, b : obj cat) -> MonoidalTriangle cat tensor unit associator leftunitor rightUnitor a b)
 >     -> MonoidalCategory
+>
+> cat : MonoidalCategory -> Category
+> cat (MkMonoidalCategory innerCat _ _ _ _ _ _ _) = innerCat
+>
+> tensor : (mCat : MonoidalCategory) -> CFunctor (productCategory (cat mCat) (cat mCat)) (cat mCat)
+> tensor (MkMonoidalCategory _ monoidalTensor _ _ _ _ _ _) = monoidalTensor
 
 -- >
 -- > record MonoidalCategory where
@@ -160,5 +165,3 @@
 -- >                            in
 -- >                           mm (a, mo (c,e)) (b, mo (d,f)) (MkProductMorphism g (mm (c,e) (d,f) (MkProductMorphism h k)))
 -- >                         = mm (mo (a,c), e) (mo (b,d), f) (MkProductMorphism (mm (a,c) (b,d) (MkProductMorphism g h)) k)
-
-> -}
