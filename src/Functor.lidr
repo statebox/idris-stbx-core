@@ -149,7 +149,10 @@ The code covered above completes our definition of |CFunctor|, which we provide 
 >   (\a, b => id)
 >   (\a => Refl)
 >   (\a, b, c, f, g => Refl)
->
+ 
+ idFunctorProof : mapObj (Functor.idFunctor) a = a
+ idFunctorProof = ?wat
+
 > functorComposition :
 >      (cat1, cat2, cat3 : Category)
 >   -> CFunctor cat1 cat2

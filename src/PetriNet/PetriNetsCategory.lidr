@@ -69,3 +69,17 @@
 >   petriNetLeftIdentity
 >   petriNetRightIdentity
 >   petriNetAssociativity
+> 
+
+ implicit toOrdPetri : (Ord a) => PetriNet -> OrdPetriNet
+
+>
+> ordPetriNetsAsCategory : Category
+> ordPetriNetsAsCategory = MkCategory
+>   OrdPetriNet
+>   (\opn1, opn2 => PetriNetMorphism (pnet opn1) (pnet opn2))
+>   (\opn => petriNetIdentity (pnet opn))
+>   (\opn1, opn2, opn3 => petriNetComposition (pnet opn1) (pnet opn2) (pnet opn3))
+>   (\opn1, opn2 => petriNetLeftIdentity (pnet opn1) (pnet opn2))
+>   (\opn1, opn2 => petriNetRightIdentity (pnet opn1) (pnet opn2))
+>   (\opn1, opn2, opn3, opn4 => petriNetAssociativity (pnet opn1) (pnet opn2) (pnet opn3) (pnet opn4))

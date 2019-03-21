@@ -90,6 +90,7 @@
 >                                       (rightTensor3 cat tensor))
 >   -> (a, b, c, d : obj cat)
 >   -> Type
+> MonoidalPentagon cat tensor associator a b c d = ?wat
 >
 > MonoidalTriangle :
 >      (cat : Category)
@@ -99,31 +100,27 @@
 >                                       cat
 >                                       (leftTensor3  cat tensor)
 >                                       (rightTensor3 cat tensor))
->   -> (leftUnitor  : NaturalIsomorphism cat cat (leftIdTensor  cat tensor unit) idFunctor)
->   -> (rightUnitor : NaturalIsomorphism cat cat (rightIdTensor cat tensor unit) idFunctor)
+>   -> (leftUnitor  : NaturalIsomorphism cat cat (MonoidalCategory.leftIdTensor  cat tensor unit) (Functor.idFunctor cat))
+>   -> (rightUnitor : NaturalIsomorphism cat cat (MonoidalCategory.rightIdTensor cat tensor unit) (Functor.idFunctor cat))
 >   -> (a, b : obj cat)
 >   -> Type
-> MonoidalTriangle cat tensor unit associator leftUnitor rightUnitor a b =
+> MonoidalTriangle cat tensor unit associator leftUnitor rightUnitor a b = 
 >   (mapMor tensor
 >           (mapObj tensor (a, unit), b)
 >           (a, b)
->           (MkProductMorphism (component (natTrans rightUnitor) a) ?er)) =
-
--->           (MkProductMorphism (component (natTrans rightUnitor) a) (identity cat b))) =
-
+>           (MkProductMorphism (component (natTrans rightUnitor) a) (identity cat b)))
+>           =
 >   (compose cat
 >            (mapObj tensor (mapObj tensor (a, unit), b))
 >            (mapObj tensor (a, mapObj tensor (unit, b)))
 >            (mapObj tensor (a, b))
 >            (component (natTrans associator) (a, unit, b))
->            ?asdf)
+>            (mapMor tensor 
+>               (a, mapObj tensor (unit, b))
+>               (a, b)
+>               (MkProductMorphism (identity cat a) (component (natTrans leftUnitor) b))))
 
--- >            (mapMor tensor
--- >                    (mapObj tensor (a, mapObj tensor (unit, b)))
--- >                    (mapObj tensor (a, b))
--- >                    (MkProductMorphism (identity cat a) (component (natTrans leftUnitor) b))))
-
->
+> {-
 > -- we are not using a record here because compilation does not terminate in that case
 > data MonoidalCategory : Type where
 >   MkMonoidalCategory :
@@ -163,3 +160,5 @@
 -- >                            in
 -- >                           mm (a, mo (c,e)) (b, mo (d,f)) (MkProductMorphism g (mm (c,e) (d,f) (MkProductMorphism h k)))
 -- >                         = mm (mo (a,c), e) (mo (b,d), f) (MkProductMorphism (mm (a,c) (b,d) (MkProductMorphism g h)) k)
+
+> -}
