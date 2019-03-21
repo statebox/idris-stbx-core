@@ -90,7 +90,25 @@
 >                                       (rightTensor3 cat tensor))
 >   -> (a, b, c, d : obj cat)
 >   -> Type
-> MonoidalPentagon cat tensor associator a b c d = ?wat
+> MonoidalPentagon cat tensor associator a b c d =
+>   (compose cat
+>            (mapObj tensor (mapObj tensor (mapObj tensor (a, b), c), d))
+>            (mapObj tensor (mapObj tensor (a, b), mapObj tensor (c, d)))
+>            (mapObj tensor (a, (mapObj tensor (b, mapObj tensor (c, d)))))
+>            (component (natTrans associator) (mapObj tensor (a, b), c, d))
+>            (component (natTrans associator) (a, b, mapObj tensor (c, d))))
+>            =
+>   (compose cat
+>            (mapObj tensor (mapObj tensor (mapObj tensor (a, b), c), d))
+>            (mapObj tensor (mapObj tensor (a, mapObj tensor (b, c)), d))
+>            (mapObj tensor (a, (mapObj tensor (b, mapObj tensor (c, d)))))
+>            (mapMor tensor (mapObj tensor (mapObj tensor (a, b), c), d) (mapObj tensor (a, mapObj tensor (b, c)), d) (MkProductMorphism (component (natTrans associator) (a, b, c)) (identity cat d)))
+>            (compose cat
+>                     (mapObj tensor (mapObj tensor (a, mapObj tensor (b, c)),d))
+>                     (mapObj tensor (a, mapObj tensor (mapObj tensor (b, c), d)))
+>                     (mapObj tensor (a, (mapObj tensor (b, mapObj tensor (c, d)))))
+>                     (component (natTrans associator) (a, mapObj tensor (b, c), d))
+>                     (mapMor tensor (a, mapObj tensor (mapObj tensor (b, c), d)) (a, (mapObj tensor (b, mapObj tensor (c, d)))) (MkProductMorphism (identity cat a) (component (natTrans associator) (b, c, d))))))
 >
 > MonoidalTriangle :
 >      (cat : Category)
