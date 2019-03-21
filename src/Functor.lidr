@@ -19,14 +19,14 @@ We will again employ |record| to implement functors, as we did for categories.
 %
 %
 
-> record CFunctor (cat1 : Category) (cat2 : Category) where
+< record CFunctor (cat1 : Category) (cat2 : Category) where
 
 %
 Notice how we had to use the name |CFunctor| to avoid clashings with |Functor|, which is a type already defined by Idris. We will moreover use |constructor| again to construct concrete values of type |CFunctor|.
 %
 %
 
->   constructor MkCFunctor
+<   constructor MkCFunctor
 
 %
 %
@@ -40,7 +40,7 @@ We start with the objects, where we declare our functor to be simply a map: If w
 %
 %
 
->   mapObj          : obj cat1 -> obj cat2
+<   mapObj          : obj cat1 -> obj cat2
 
 %
 As we would expect, |mapObj| takes an object of |cat1|, extracted from the |Category| type using the |obj| value, and maps it to an object of |cat2|.
@@ -51,9 +51,9 @@ In our implementation we model this as follows:
 %
 %
 
->   mapMor          : (a, b : obj cat1)
->                  -> mor cat1 a b
->                  -> mor cat2 (mapObj a) (mapObj b)
+<   mapMor          : (a, b : obj cat1)
+<                  -> mor cat1 a b
+<                  -> mor cat2 (mapObj a) (mapObj b)
 
 %
 |mapMor| is just a map between morphisms of |cat1| and morphisms of |cat2| which is consistent with respect to the map we already defined on objects
@@ -75,8 +75,8 @@ In Idris we represent this by defining a function that, for each object |a| of |
 %
 %
 
->   preserveId      : (a : obj cat1)
->                  -> mapMor a a (identity cat1 a) = identity cat2 (mapObj a)
+<   preserveId      : (a : obj cat1)
+<                  -> mapMor a a (identity cat1 a) = identity cat2 (mapObj a)
 
 %
 Finally, we must account for composition. The idea here is that, if functors respects the categorical structure, it shouldn't matter if we compose two morphisms first and then apply the functor or viceversa. Mathematically, we represent this, for $f:a \to b$ and $g: b \to c$ in $\mathcal{C}$, with the equation between morphisms of $\mathcal{D}$:
@@ -100,11 +100,11 @@ In Idris, we proceed in a way similar to what we did for identities:
 %
 %
 
->   preserveCompose : (a, b, c : obj cat1)
->                  -> (f : mor cat1 a b)
->                  -> (g : mor cat1 b c)
->                  -> mapMor a c (compose cat1 a b c f g)
->                   = compose cat2 (mapObj a) (mapObj b) (mapObj c) (mapMor a b f) (mapMor b c g)
+<   preserveCompose : (a, b, c : obj cat1)
+<                  -> (f : mor cat1 a b)
+<                  -> (g : mor cat1 b c)
+<                  -> mapMor a c (compose cat1 a b c f g)
+<                   = compose cat2 (mapObj a) (mapObj b) (mapObj c) (mapMor a b f) (mapMor b c g)
 
 %
 Given three objects |a, b, c : obj cat1|, which are the domains/codomains of the morphisms we are going to compose, and given two of these morphisms |f : mor cat1 a b| and |g : mor cat1 b c| respectively, we produce a proof that |mapMor| and |compose| commute with each other.
@@ -115,26 +115,21 @@ Given three objects |a, b, c : obj cat1|, which are the domains/codomains of the
 %
 %
 The code covered above completes our definition of |CFunctor|, which we provide in its entirety below:
-< module Functor
-<
-< import Category
-<
-< %access public export
-< %default total
-< record CFunctor (cat1 : Category) (cat2 : Category) where
-<   constructor MkCFunctor
-<   mapObj          : obj cat1 -> obj cat2
-<   mapMor          : (a, b : obj cat1)
-<                  -> mor cat1 a b
-<                  -> mor cat2 (mapObj a) (mapObj b)
-<   preserveId      : (a : obj cat1)
-<                  -> mapMor a a (identity cat1 a) = identity cat2 (mapObj a)
-<   preserveCompose : (a, b, c : obj cat1)
-<                  -> (f : mor cat1 a b)
-<                  -> (g : mor cat1 b c)
-<                  -> mapMor a c (compose cat1 a b c f g)
-<                   = compose cat2 (mapObj a) (mapObj b) (mapObj c) (mapMor a b f) (mapMor b c g)
 
+> record CFunctor (cat1 : Category) (cat2 : Category) where
+>   constructor MkCFunctor
+>   mapObj          : obj cat1 -> obj cat2
+>   mapMor          : (a, b : obj cat1)
+>                  -> mor cat1 a b
+>                  -> mor cat2 (mapObj a) (mapObj b)
+>   preserveId      : (a : obj cat1)
+>                  -> mapMor a a (identity cat1 a) = identity cat2 (mapObj a)
+>   preserveCompose : (a, b, c : obj cat1)
+>                  -> (f : mor cat1 a b)
+>                  -> (g : mor cat1 b c)
+>                  -> mapMor a c (compose cat1 a b c f g)
+>                   = compose cat2 (mapObj a) (mapObj b) (mapObj c) (mapMor a b f) (mapMor b c g)
+>
 > functorEq :
 >      (cat1, cat2 : Category)
 >   -> (func, gunc : CFunctor cat1 cat2)
@@ -149,10 +144,7 @@ The code covered above completes our definition of |CFunctor|, which we provide 
 >   (\a, b => id)
 >   (\a => Refl)
 >   (\a, b, c, f, g => Refl)
- 
- idFunctorProof : mapObj (Functor.idFunctor) a = a
- idFunctorProof = ?wat
-
+>
 > functorComposition :
 >      (cat1, cat2, cat3 : Category)
 >   -> CFunctor cat1 cat2
