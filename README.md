@@ -1,5 +1,7 @@
 # Statebox Core
 
+[![Build Status](https://travis-ci.com/statebox/idris-stbx-core.svg?branch=master)](https://travis-ci.com/statebox/idris-stbx-core)
+
 This repository contains the core of the Statebox platform, comprising:
 
 - open Petri nets
