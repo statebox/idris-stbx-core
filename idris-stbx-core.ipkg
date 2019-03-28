@@ -25,6 +25,7 @@ modules =
   WiringDiagram.WiringDiagramAlgebra,
   Category,
   Functor,
+  Isomorphism,
   NaturalTransformation,
   ProductCategory,
   StrictMonoidalCategory,

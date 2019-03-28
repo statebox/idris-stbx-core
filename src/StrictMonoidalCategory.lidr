@@ -1,4 +1,4 @@
-> module MonoidalCategory
+> module StrictMonoidalCategory
 >
 > import Category
 > import Functor
