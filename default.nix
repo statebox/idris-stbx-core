@@ -16,7 +16,7 @@
 #
 # To launch a shell with all dependencies installed in the environment:
 #
-# $ nix-shell -A typedefs
+# $ nix-shell -A idris-stbx-core
 #
 # After entering nix-shell, build it:
 #

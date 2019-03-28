@@ -1,7 +1,7 @@
 { stdenv, haskellPackages, texlive }:
 
 stdenv.mkDerivation rec {
-  name = "idris-statebox-core-doc-${version}";
+  name = "idris-stbx-core-doc-${version}";
   version = "dev";
   src = ./.;
 
