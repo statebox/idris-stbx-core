@@ -8,6 +8,7 @@
 > import StrictMonoidalCategory
 > import Monoid.Monoid
 > import Monoid.FreeMonoid
+> import Syntax.PreorderReasoning
 >
 > %access public export
 > %default total
@@ -34,16 +35,40 @@
 >         (k : e = f) ->
 >         help (a, c ++ e) (b, d ++ f) (MkProductMorphism g (help (c, e) (d, f) (MkProductMorphism h k))) =
 >         help (a ++ c, e) (b ++ d, f) (MkProductMorphism (help (a, c) (b, d) (MkProductMorphism g h)) k)
-> help2 b b d d f f Refl Refl Refl  = ?wat Refl
+> help2 {n} b b d d f f Refl Refl Refl = really_believe_me (Refl {x=Refl {x=b ++ d ++ f}})  -- TODO figure out how to rewrite appendAssociative
+>
+> finSetToFMC : Nat -> StrictMonoidalCategory
+> finSetToFMC n = MkStrictMonoidalCategory 
+>                   (finSetCategory n)
+>                   (finSetTensor n)
+>                   []
+>                   (\a => Refl)
+>                   appendNilRightNeutral
+>                   appendAssociative
+>                   help2
 
- finSetToFMC : Nat -> StrictMonoidalCategory
- finSetToFMC n = MkStrictMonoidalCategory 
-                   (finSetCategory n)
-                   (finSetTensor n)
-                   []
-                   (\a => Refl)
-                   appendNilRightNeutral
-                   appendAssociative
-                   help2
+> data Path : (i -> i -> Type) -> i -> i -> Type where
+>  Nil  : Path e i i
+>  (::) : e i j -> Path e j k -> Path e i k
 
+ l_1...l_m
+ ()
+a   b
+
+> generatorsToCat : (n:Nat) -> List ((Fin n, Fin n)) -> Category
+> generatorsToCat n gs = 
+>   MkCategory 
+>     (Fin n)
+>     (\m,p => Path ())
+>     ?ident
+>     ?comp
+>     ?lid 
+>     ?rid
+>     ?assoc
+
+ generatorsToFMC : (n:Nat) -> List ((finSetToFreeMonoid n, finSetToFreeMonoid n)) -> StrictMonoidalCategory
+ generatorsToFMC n gs = 
+   MkStrictMonoidalCategory
+     (finSetToFreeMonoid n)
+     ?wat
 
