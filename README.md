@@ -5,7 +5,6 @@
 This repository contains the core of the Statebox platform, comprising:
 
 - open Petri nets
-- wiring diagrams, which allow us to compose (glue) nets
 - executions of Petri nets
 
 The code is written in Idris, in terms of mathematical propositions and
@@ -41,24 +40,21 @@ Use `make` to generate the PDF documentation. You will find it in the
 `docs` directory.
 Look directly in the [Makefile](Makefile) for additional options.
 
-## File watcher
+### Elba Build
 
-We use [SteelOverseer](https://github.com/schell/steeloverseer) to rebuild on
-file changes.
-If you modify any `.lidr` file, the whole package will be recompiled and the PDF
-documentation will be updated.
-
-To install SteelOverseer, first download and install the
-[Stack](https://github.com/commercialhaskell/stack) build tool.
-
-Then do:
+Use
 
 ```
-stack install steeloverseer
+elba build
 ```
 
-Then, to launch the file watcher, just type:
+to build with [elba](https://github.com/elba/elba).
+
+If you have authentication problems, run
 
 ```
-sos
+eval `ssh-agent`
+ssh-add
 ```
+
+before running `elba`

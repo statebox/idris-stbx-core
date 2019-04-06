@@ -1,12 +1,12 @@
 > module PetriNet.PetriNetsCategory
 >
-> import Category
-> import Utils
+> import Basic.Category
 > import Monoid.Monoid
-> import Monoid.MonoidMorphisms
+> import Monoid.MonoidMorphism
 > import PetriNet.MultiSet
 > import PetriNet.PetriNet
 > import PetriNet.PetriNetMorphisms
+> import Utils
 >
 > %access public export
 > %default total
@@ -23,7 +23,7 @@
 >       (petriNetComposition pN1 pN1 pN2 (petriNetIdentity pN1) (MkPetriNetMorphism trMor mulMor iC oC))
 >       (MkPetriNetMorphism trMor mulMor iC oC)
 >       (\t => Refl)
->       (morphismsOfMonoindsEq (monoidMorphismsComposition (monoidIdentity (placesMonoid pN1)) mulMor) mulMor (\x => Refl))
+>       (monoidMorphismEq (monoidMorphismsComposition (monoidIdentity (placesMonoid pN1)) mulMor) mulMor (\x => Refl))
 >
 > petriNetRightIdentity :
 >      (pN1, pN2 : PetriNet)
@@ -37,7 +37,7 @@
 >       (petriNetComposition pN1 pN2 pN2 (MkPetriNetMorphism trMor mulMor iC oC) (petriNetIdentity pN2))
 >       (MkPetriNetMorphism trMor mulMor iC oC)
 >       (\t => Refl)
->       (morphismsOfMonoindsEq (monoidMorphismsComposition mulMor (monoidIdentity (placesMonoid pN2))) mulMor (\x => Refl))
+>       (monoidMorphismEq (monoidMorphismsComposition mulMor (monoidIdentity (placesMonoid pN2))) mulMor (\x => Refl))
 >
 > petriNetAssociativity :
 >      (pN1, pN2, pN3, pN4 : PetriNet)
@@ -54,7 +54,7 @@
 >       (petriNetComposition pN1 pN2 pN4 (MkPetriNetMorphism trMor1 mulMor1 iC1 oC1) (petriNetComposition pN2 pN3 pN4 (MkPetriNetMorphism trMor2 mulMor2 iC2 oC2) (MkPetriNetMorphism trMor3 mulMor3 iC3 oC3)))
 >       (petriNetComposition pN1 pN3 pN4 (petriNetComposition pN1 pN2 pN3 (MkPetriNetMorphism trMor1 mulMor1 iC1 oC1) (MkPetriNetMorphism trMor2 mulMor2 iC2 oC2)) (MkPetriNetMorphism trMor3 mulMor3 iC3 oC3))
 >       (\t => Refl)
->       (morphismsOfMonoindsEq
+>       (monoidMorphismEq
 >          (monoidMorphismsComposition mulMor1 (monoidMorphismsComposition mulMor2 mulMor3))
 >          (monoidMorphismsComposition (monoidMorphismsComposition mulMor1 mulMor2) mulMor3)
 >          (\x => Refl)
@@ -69,7 +69,7 @@
 >   petriNetLeftIdentity
 >   petriNetRightIdentity
 >   petriNetAssociativity
-> 
+>
 
  implicit toOrdPetri : (Ord a) => PetriNet -> OrdPetriNet
 

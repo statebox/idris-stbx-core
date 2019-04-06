@@ -15,8 +15,5 @@
 
 \section{Introduction}
 
-\section{Category theory preliminaries}
-  %include ../src/Category.lidr
-  %include ../src/Functor.lidr
-  %include ../src/NaturalTransformation.lidr
+\section{Petri nets}
 \end{document}

@@ -1,8 +1,7 @@
 > module PetriNet.MultiSet
 >
-> import Decidable.Order
->
 > -- contrib
+> import Decidable.Order
 > import Interfaces.Verified
 >
 > %access public export

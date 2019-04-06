@@ -29,6 +29,6 @@
 > fireTransition {pN} t m (MkTransitionIsEnabled mContainsInputT) = multiSetDifference m (input pN t) mContainsInputT
 >
 > record OrdPetriNet where
->   constructor MkOrdPetriNet 
+>   constructor MkOrdPetriNet
 >   pnet : PetriNet
 >   ordPlaces: Ord (places pnet)

@@ -1,0 +1,16 @@
+[package]
+name = "statebox/idris-stbx-core"
+version = "0.1.0"
+authors = []
+
+[dependencies]
+"statebox/idris-ct" = { git = "ssh://git@github.com/statebox/idris-ct" }
+
+[targets.lib]
+path = "src"
+mods =  [ "PetriNet.MultiSet"
+        , "PetriNet.PetriNet"
+        , "PetriNet.PetriNetMorphisms"
+        , "PetriNet.PetriNetsCategory"
+        ]
+idris_opts = ["-p", "contrib"]
