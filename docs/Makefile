@@ -1,23 +1,22 @@
-.PHONY=all pdf clean cleanAuxiliary cleanBinaries cleanSources
+.PHONY=all pdf html clean
 
-MAIN=main
-AUX=auxiliary
-SOURCES=sources
+TITLE=Statebox core
+SRC=../src/Intro.lidr \
+    ../src/Category.lidr \
+    ../src/Functor.lidr \
+    ../src/NaturalTransformation.lidr
+OUT=main
+PANDOC=pandoc
 
-all: pdf
+all: pdf html
 
 pdf:
-	mkdir -p ${AUX}
-	mkdir -p ${SOURCES}
-	lhs2TeX -o ${SOURCES}/${MAIN}.tex ${MAIN}.lidr
-	latexmk -pdf ${SOURCES}/${MAIN}.tex -outdir=${AUX}
-	mv ${AUX}/${MAIN}.pdf ${MAIN}.pdf
+	${PANDOC} --verbose --metadata pagetitle="${TITLE}" -f markdown+lhs+raw_tex \
+	          -H header.tex -s -o ${OUT}.pdf ${SRC}
+
+html:
+	${PANDOC} --verbose --metadata pagetitle="${TITLE}" -f markdown+lhs+raw_tex \
+	          -s -o ${OUT}.html ${SRC}
 
 clean:
-	rm -f ${AUX}/* ${SOURCES}/*
-
-cleanAuxiliary:
-	rm -f ${AUX}/*
-
-cleanSources:
-	rm -f ${SOURCES}/*
+	rm -f ${OUT}.{html,pdf}

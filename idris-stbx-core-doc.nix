@@ -1,4 +1,4 @@
-{ stdenv, haskellPackages, texlive }:
+{ stdenv, pandoc, texlive }:
 
 stdenv.mkDerivation rec {
   name = "idris-stbx-core-doc-${version}";
@@ -6,25 +6,22 @@ stdenv.mkDerivation rec {
   src = ./.;
 
   buildInputs = [
-    haskellPackages.lhs2tex
+    pandoc
     texlive.combined.scheme-full
   ];
 
   buildPhase = ''
     cd docs
-    mkdir out
-    lhs2TeX -o out/main.tex main.lidr
-    cd out
-    HOME="$PWD" pdflatex main.tex
+    make
   '';
 
   installPhase = ''
     mkdir -p $out/share/doc/idris-stbx-core
-    cp main.pdf $out/share/doc/idris-stbx-core
+    cp main.pdf main.html $out/share/doc/idris-stbx-core
   '';
 
   meta = {
     description = "Literate Idris glued open petrinet semantics";
-    homepage = "https://statebox.org/";
+    homepage = "https://statebox.org";
   };
 }

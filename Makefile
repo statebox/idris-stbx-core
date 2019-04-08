@@ -1,18 +1,12 @@
-.PHONY=all pdf clean cleanAuxiliary cleanBinaries cleanSources
+.PHONY=all pdf html clean
 
-all: pdf
+all: pdf html
 
 pdf:
 	$(MAKE) -C docs pdf
 
+html:
+	$(MAKE) -C docs html
+
 clean:
 	$(MAKE) -C docs clean
-
-cleanAuxiliary:
-	$(MAKE) -C docs cleanAuxiliary
-
-cleanBinaries:
-	$(MAKE) -C docs cleanBinaries
-
-cleanSources:
-	$(MAKE) -C docs cleanSources
