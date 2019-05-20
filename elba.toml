@@ -5,6 +5,8 @@ authors = []
 
 [dependencies]
 "statebox/idris-ct" = { git = "ssh://git@github.com/statebox/idris-ct" }
+"vmchale/permutations" = { git = "ssh://git@github.com/marcosh/permutations", tag="elba-tag" }
+
 
 [targets.lib]
 path = "src"
