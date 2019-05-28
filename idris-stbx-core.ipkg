@@ -8,4 +8,4 @@ modules =
 
 sourcedir = src
 
-pkgs = contrib
+pkgs = contrib, permutations
