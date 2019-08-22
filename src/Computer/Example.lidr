@@ -26,6 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > import Computer.Computer
 > import Control.Isomorphism
 > import Data.Vect
+> import Free.FreeFunctor
 > import Free.Graph
 > import Free.Path
 > import Free.PathCategory
@@ -35,6 +36,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >
 > %access public export
 > %default total
+> %hide Language.Reflection.Elab.Tactics.compute
+>
+> mkCFunctorInj : MkCFunctor mo1 mm1 pi1 pc1 = MkCFunctor mo2 mm2 pi2 pc2 -> mo1=mo2
+> mkCFunctorInj Refl = Refl
 >
 > loopGraph : Graph
 > loopGraph = MkGraph () [((),())]
@@ -58,6 +63,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > reflectPath = [Here]
 >
 > applyReflect : Either () () -> Maybe (Either () ())
-> applyReflect input = case reflectFunctor of
->   Nothing   => Nothing
->   Just func => Just $ compute loopGraph () () func reflectPath input
+> applyReflect input with (reflectFunctor) proof refdef
+>   applyReflect input | Nothing = Nothing
+>   applyReflect input | Just (MkCFunctor mo mm pi pc) =
+>     Just $ let moeq = mkCFunctorInj $ justInjective refdef in
+>            (replace moeq (compute loopGraph () () (MkCFunctor mo mm pi pc) reflectPath)) input
