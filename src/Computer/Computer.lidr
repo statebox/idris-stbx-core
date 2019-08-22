@@ -65,3 +65,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   -> Ty [] (mapObj func finalVertex)
 > compute g initialVertex finalVertex func path initialValue =
 >   (mapMor func initialVertex finalVertex path) initialValue
+>
+
+> compute':
+>   -- a graph
+>      (g : Graph)
+>   -- the data for building a functor to the category of closed typedefs
+>   -> (iso : Iso (vertices g) (Fin k))
+>   -> (v : Vect k (obj ClosedTypedefsAsCategory.closedTypedefsAsCategory))
+>   -> Vect (length $ edges g) (mor' ClosedTypedefsAsCategory.closedTypedefsAsCategory)
+>   -- a path in the graph
+>   -> Path g initialVertex finalVertex
+>   -- a value of the initial type
+>   -> Ty [] (index (to iso initialVertex) v)
+>   -- and we return a value of the final type
+>   -> Maybe (Ty [] (index (to iso finalVertex) v))
+> compute' {initialVertex} { finalVertex} g iso v e path initialValue with (assembleFunctor g iso v e) proof refdef
+>   compute' {initialVertex} { finalVertex} g iso v e path initialValue | Nothing = Nothing
+>   compute' {initialVertex} { finalVertex} g iso v e path initialValue | Just (MkCFunctor mo mm pi pc) = let
+>     moeq = justInjective refdef
+>     tt = mm initialVertex finalVertex path in
+>     ?asdf
