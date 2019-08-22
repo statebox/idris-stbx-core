@@ -56,15 +56,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >      (ge : Vect n (gv, gv))
 >   -> (to : gv -> Fin k)
 >   -> (v : Vect k (obj cat))
->   -> (f : {i, j : gv} -> Elem (i, j) ge -> m (mor cat (Vect.index (to i) v) (Vect.index (to j) v)))
->   -> m ({i, j : gv} -> Elem (i, j) ge -> mor cat (Vect.index (to i) v) (Vect.index (to j) v))
-> assembleElemM {cat} []        to v f = pure absurd
+>   -> (f : (i, j : gv) -> Elem (i, j) ge -> m (mor cat (Vect.index (to i) v) (Vect.index (to j) v)))
+>   -> m ((i, j : gv) -> Elem (i, j) ge -> mor cat (Vect.index (to i) v) (Vect.index (to j) v))
+> assembleElemM      {cat} []            to v f = pure (\_,_ => absurd)
 > assembleElemM {gv} {cat} ((i,j) :: xs) to v f =
->   do x1 <- f Here
->      x2 <- assembleElemM {cat} xs to v (f . There)
->      pure $ \el => case el of
+>   do x1 <- f i j Here
+>      x2 <- assembleElemM {cat} xs to v (\k,l,el => f k l (There el))
+>      pure $ \k,l,el => case el of
 >                      Here => x1
->                      There el' => x2 el'
+>                      There el' => x2 k l el'
 >
 > assembleMorphisms :
 >      DecEq (obj cat)
@@ -74,8 +74,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   -> (to : gv -> Fin k)
 >   -> (v : Vect k (obj cat))
 >   -> (e : Vect (length ge) (mor' cat))
->   -> m ({i, j : gv} -> Elem (i, j) ge -> mor cat (Vect.index (to i) v) (Vect.index (to j) v))
-> assembleMorphisms {cat} ge to v e = assembleElemM {cat} ge to v (extractMorphism {cat} {to} v e)
+>   -> m ((i, j : gv) -> Elem (i, j) ge -> mor cat (Vect.index (to i) v) (Vect.index (to j) v))
+> assembleMorphisms {m} {cat} ge to v e = assembleElemM {cat} ge to v (\k,l => extractMorphism {f=m} {cat} {to} {ge} {i=k} {j=l} v e)
 >
 > graphEmbedding : DecEq (obj cat) =>
 >      Iso (vertices g) (Fin k)
