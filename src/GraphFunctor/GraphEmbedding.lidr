@@ -82,6 +82,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   -> Vect k (obj cat)
 >   -> Vect (length $ edges g) (mor' cat)
 >   -> Maybe (GraphEmbedding g cat)
-> graphEmbedding {cat} {g=MkGraph gv ge} (MkIso to from tf ft) v e =
->   MkGraphEmbedding (flip index v . to) <$>
->     assembleMorphisms {cat} ge to v e
+> graphEmbedding {cat} {g} iso v e =
+>   MkGraphEmbedding (flip index v . (to iso)) <$>
+>     assembleMorphisms {cat} (edges g) (to iso) v e

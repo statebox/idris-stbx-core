@@ -22,17 +22,33 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > module Computer.Computer
 >
 > import Basic.Category
+> import Basic.Functor
 > import Control.Isomorphism
 > import Data.Fin
 > import Data.Vect
+> import Free.FreeFunctor
 > import Free.Graph
 > import Free.Path
+> import Free.PathCategory
 > import GraphFunctor.ClosedTypedefsAsCategory
 > import GraphFunctor.GraphEmbedding
 > import Typedefs.Typedefs
+> import Typedefs.TypedefsDecEq
 >
 > %access public export
 > %default total
+>
+> assembleFunctor :
+>   -- a graph
+>      (g : Graph)
+>   -- the data for building a functor to the category of closed typedefs
+>   -> (iso : Iso (vertices g) (Fin k))
+>   -> (v : Vect k (obj ClosedTypedefsAsCategory.closedTypedefsAsCategory))
+>   -> Vect (length $ edges g) (mor' ClosedTypedefsAsCategory.closedTypedefsAsCategory)
+>   -- maybe return a functor from the path category to the category of closed typedefs
+>   -> Maybe (CFunctor (pathCategory g) ClosedTypedefsAsCategory.closedTypedefsAsCategory)
+> assembleFunctor g iso v e =
+>   (freeFunctor g) <$> (graphEmbedding {cat = ClosedTypedefsAsCategory.closedTypedefsAsCategory} iso v e)
 >
 > compute :
 >   -- a graph
@@ -40,12 +56,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   -- initial and final vertices
 >   -> (initialVertex, finalVertex : Graph.vertices g)
 >   -- a functor to the category of closed typedefs
->   -> (iso : Iso (vertices g) (Fin k))
->   -> (v : Vect k (obj ClosedTypedefsAsCategory.closedTypedefsAsCategory))
->   -> Vect (length $ edges g) (mor' ClosedTypedefsAsCategory.closedTypedefsAsCategory)
+>   -> (func : CFunctor (pathCategory g) ClosedTypedefsAsCategory.closedTypedefsAsCategory)
 >   -- a path in the graph from `initialVertex` to `finalVertex`
 >   -> Path g initialVertex finalVertex
 >   -- a value of the initial type
->   -> Ty [] (index (to iso initialVertex) v)
+>   -> Ty [] (mapObj func initialVertex)
 >   -- and we return a value of the final type
->   -> Ty [] (index (to iso finalVertex) v)
+>   -> Ty [] (mapObj func finalVertex)
+> compute g initialVertex finalVertex func path initialValue =
+>   (mapMor func initialVertex finalVertex path) initialValue
