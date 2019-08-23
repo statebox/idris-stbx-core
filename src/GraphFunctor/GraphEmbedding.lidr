@@ -47,7 +47,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   -> Edge (MkGraph gv ge) i j
 >   -> f (mor cat (Vect.index (to i) v) (Vect.index (to j) v))
 > extractMorphism {to} {i} {j} v e edge =
->  let (a' ** b' ** e') = index (elem2Fin edge) e in
+>  let (a' ** b' ** e') = Vect.index (elem2Fin edge) e in
 >  case (decEq a' (Vect.index (to i) v), decEq b' (Vect.index (to j) v)) of
 >    (Yes Refl, Yes Refl) => pure e'
 >    _ => empty
@@ -83,5 +83,5 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   -> Vect (length $ edges g) (mor' cat)
 >   -> Maybe (GraphEmbedding g cat)
 > graphEmbedding {cat} {g} iso v e =
->   MkGraphEmbedding (flip index v . (to iso)) <$>
+>   MkGraphEmbedding (flip Vect.index v . (to iso)) <$>
 >     assembleMorphisms {cat} (edges g) (to iso) v e

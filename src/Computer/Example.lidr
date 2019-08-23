@@ -68,3 +68,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   applyReflect input | Just (MkCFunctor mo mm pi pc) =
 >     Just $ let moeq = mkCFunctorInj $ justInjective refdef in
 >            (replace moeq (compute loopGraph () () (MkCFunctor mo mm pi pc) reflectPath)) input
+>
+> applyReflect' : Either () () -> Maybe (Either () ())
+> applyReflect' = compute' loopGraph graphIso [boolTypedef] [(boolTypedef ** boolTypedef ** reflect)] reflectPath

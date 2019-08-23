@@ -77,12 +77,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   -- a path in the graph
 >   -> Path g initialVertex finalVertex
 >   -- a value of the initial type
->   -> Ty [] (index (to iso initialVertex) v)
+>   -> Ty [] (Vect.index (to iso initialVertex) v)
 >   -- and we return a value of the final type
->   -> Maybe (Ty [] (index (to iso finalVertex) v))
-> compute' {initialVertex} { finalVertex} g iso v e path initialValue with (assembleFunctor g iso v e) proof refdef
+>   -> Maybe (Ty [] (Vect.index (to iso finalVertex) v))
+> compute' {initialVertex} { finalVertex} g iso v e path initialValue with (assembleElemM {cat=ClosedTypedefsAsCategory.closedTypedefsAsCategory}
+>                                                                                         {m=Maybe}
+>                                                                                         (edges g)
+>                                                                                         (to iso)
+>                                                                                         v
+>                                                                                         (\k, l => extractMorphism {cat=ClosedTypedefsAsCategory.closedTypedefsAsCategory}
+>                                                                                                                   {f=Maybe}
+>                                                                                                                   v e))
 >   compute' {initialVertex} { finalVertex} g iso v e path initialValue | Nothing = Nothing
->   compute' {initialVertex} { finalVertex} g iso v e path initialValue | Just (MkCFunctor mo mm pi pc) = let
->     moeq = justInjective refdef
->     tt = mm initialVertex finalVertex path in
->     ?asdf
+>   compute' {initialVertex} { finalVertex} g iso v e path initialValue | Just morphismsFunction = let
+>       gEmbedding = MkGraphEmbedding {cat=ClosedTypedefsAsCategory.closedTypedefsAsCategory} (flip Vect.index v . (to iso)) morphismsFunction
+>       func = freeFunctor g gEmbedding
+>       mor = mapMor func initialVertex finalVertex path
+>     in
+>       Just $ mor initialValue
