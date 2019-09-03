@@ -1,11 +1,15 @@
 package idris-stbx-core
 
 modules =
-  PetriNet.MultiSet,
-  PetriNet.PetriNet,
-  PetriNet.PetriNetMorphisms,
-  PetriNet.PetriNetsCategory
+  --PetriNet.MultiSet,
+  --PetriNet.PetriNet,
+  --PetriNet.PetriNetMorphisms,
+  --PetriNet.PetriNetsCategory,
+  GraphFunctor.ClosedTypedefsAsCategory,
+  GraphFunctor.GraphEmbedding,
+  Computer.Computer,
+  Computer.Example
 
 sourcedir = src
 
-pkgs = contrib
+pkgs = contrib, optparse, idris-ct, typedefs-core
