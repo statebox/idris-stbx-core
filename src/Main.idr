@@ -37,18 +37,18 @@ readFSM (FSMFile f) = readInput f parseLine
   where
   parseLine : String -> Either ParseError (Nat, Nat, Nat)
   parseLine str = let mv = validateLength (split (== ' ') str) 3 in
-                  do v <- maybeToEither (ErrorMsg "malformed FSM file") mv
-                     nats <- traverse (leftMap ErrorMsg . parseNat) v
-                     pure (index 0 nats, index 1 nats, index 2 nats)
+                  do toks <- maybeToEither (ErrorMsg "malformed FSM file") mv
+                     [v0,v1,e] <- traverse (leftMap ErrorMsg . parseNat) toks
+                     pure (v0,v1,e)
 
 readFFI : InFFI -> IO (Either ProcError (List (Nat, String)))
 readFFI (FFIFile f) = readInput f parseLine
   where
   parseLine : String -> Either ParseError (Nat, String)
   parseLine str = let mv = validateLength (split (== ' ') str) 2 in
-                  do v <- maybeToEither (ErrorMsg "malformed FFI file") mv
-                     nat <- leftMap ErrorMsg $ parseNat $ index 0 v
-                     pure (nat, index 1 v)
+                  do [tok,fun] <- maybeToEither (ErrorMsg "malformed FFI file") mv
+                     e <- leftMap ErrorMsg $ parseNat tok
+                     pure (e,fun)
 
 runWithOptions : CoreOpts -> IO ()
 runWithOptions (MkCoreOpts fsmf ffif firings) =
