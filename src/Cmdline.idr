@@ -1,6 +1,7 @@
 module Cmdline
 
 import Options.Applicative
+import Util
 
 %default total
 
@@ -28,9 +29,7 @@ firingsP : Parser (List Nat)
 firingsP = option parseNatSeq (long "fire" . short 'f')
   where
   parseNatSeq : String -> Either ParseError (List Nat)
-  parseNatSeq = traverse (\s => if all isDigit (unpack s)
-                                then Right $ cast {to=Nat} s
-                                else Left $ ErrorMsg "not a number") . split (== ',')
+  parseNatSeq = traverse (leftMap ErrorMsg . parseNat) . split (== ',')
 
 public export
 record CoreOpts where
