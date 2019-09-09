@@ -1,11 +1,15 @@
 module GraphFunctor.FFICategory
 
+import Data.List
 import Data.Vect
 import Basic.Category
 import Basic.Functor
 import Idris.TypesAsCategory
+import Free.Graph
+import Free.FreeFunctor
 import GraphFunctor.Graph
 import GraphFunctor.FreeFunctor
+import Util.Max
 
 %access public export
 %default total
@@ -37,34 +41,22 @@ printG = unsafePerformIO . foreign FFI_C "printG" (() -> IO ())
 printH : () -> ()
 printH = unsafePerformIO . foreign FFI_C "printH" (() -> IO ())
 
-data Transition : () -> () -> Type where
-  PrintA : Transition () ()
-  PrintB : Transition () ()
-  PrintC : Transition () ()
-  PrintD : Transition () ()
-  PrintE : Transition () ()
-  PrintF : Transition () ()
-  PrintG : Transition () ()
-  PrintH : Transition () ()
+graphFromListGraph : Free.Graph.Graph -> GraphFunctor.Graph.Graph
+graphFromListGraph g = MkGraph (vertices g) (Edge g)
 
-ffiGraph : Graph
-ffiGraph = MkGraph () Transition
+ffiGraph : List (Nat, Nat) -> GraphFunctor.Graph.Graph
+ffiGraph l = graphFromListGraph $
+             Free.Graph.MkGraph {n=length l}
+                                (Fin $ S $ findMax2 l)
+                                (replace {P=\z=>Vect z (Fin (S (findMax2 l)), Fin (S (findMax2 l)))}
+                                         (sym $ lengthMWE l _)
+                                         (fromList $ maxOfSelf2 l))
 
-ffiCategory : Category
-ffiCategory = pathCategory ffiGraph
+ffiCategory : List (Nat, Nat) -> Category
+ffiCategory = pathCategory . ffiGraph
 
-ffiFunctor : CFunctor FFICategory.ffiCategory TypesAsCategory.typesAsCategory
-ffiFunctor = freeFunctor ffiGraph (MkGraphEmbedding (const ()) mapEdge)
-  where
-  mapEdge : (i : ()) -> (j : ()) -> Transition i j -> () -> ()
-  mapEdge () () PrintA = printA
-  mapEdge () () PrintB = printB
-  mapEdge () () PrintC = printC
-  mapEdge () () PrintD = printD
-  mapEdge () () PrintE = printE
-  mapEdge () () PrintF = printF
-  mapEdge () () PrintG = printG
-  mapEdge () () PrintH = printH
+data Singleton : a -> Type where
+  MkSingleton : (v : a) -> Singleton v
 
-exampleExecution : Path FFICategory.ffiGraph () ()
-exampleExecution = [PrintB, PrintA, PrintD]
+ffiFunctor : (l : List (Nat, Nat)) -> CFunctor (FFICategory.ffiCategory l) TypesAsCategory.typesAsCategory
+ffiFunctor l = freeFunctor (ffiGraph l) (MkGraphEmbedding (Singleton . finToNat) (\i,j,el,si => MkSingleton $ finToNat j))
