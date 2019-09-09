@@ -42,7 +42,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > tdefId : (t : TDef 0) -> t -&> t
 > tdefId t = Basics.id
 >
-> ||| The category of typedefs with n free variables.
+> ||| The category of typedefs without free variables.
 > ||| Objects are typedefs, morphisms are Natural transformations between typedefs.
 > closedTypedefsAsCategory : Category
 > closedTypedefsAsCategory = MkCategory

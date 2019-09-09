@@ -6,3 +6,4 @@ void printE();
 void printF();
 void printG();
 void printH();
+void err();

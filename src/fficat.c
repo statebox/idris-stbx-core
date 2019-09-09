@@ -39,3 +39,8 @@ void printH()
 {
     printf("H\n");
 }
+
+void err()
+{
+    printf("<ERROR>\n");
+}
