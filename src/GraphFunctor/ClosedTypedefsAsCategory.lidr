@@ -24,6 +24,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > import Basic.Category
 > import Basic.Functor
 > import Idris.TypesAsCategoryExtensional
+> import Monad.KleisliCategory
+> import Monad.Monad
 > import Typedefs.Typedefs
 > import Typedefs.Names
 > import Data.Vect
@@ -60,3 +62,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >   (\_,_ => MkExtensionalTypeMorphism)
 >   (\_ => Refl)
 >   (\_, _, _, _, _ => Refl)
+>
+> closedTypedefsAsKleisliCategory : Monad TypesAsCategoryExtensional.typesAsCategoryExtensional -> Category
+> closedTypedefsAsKleisliCategory monad = MkCategory
+>   (TDef 0)
+>   (\a, b => mor (kleisliCategory monad) (Ty [] a) (Ty [] b))
+>   (\a => identity (kleisliCategory monad) (Ty [] a))
+>   (\a, b, c, f, g => compose (kleisliCategory monad) (Ty [] a) (Ty [] b) (Ty [] c) f g)
+>   (\a, b, f => leftIdentity (kleisliCategory monad) (Ty [] a) (Ty [] b) f)
+>   (\a, b, f => rightIdentity (kleisliCategory monad) (Ty [] a) (Ty [] b) f)
+>   (\a, b, c, d, f, g, h => associativity (kleisliCategory monad) (Ty [] a) (Ty [] b) (Ty [] c) (Ty [] d) f g h)

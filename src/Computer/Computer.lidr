@@ -32,6 +32,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > import Free.PathCategory
 > import GraphFunctor.ClosedTypedefsAsCategory
 > import GraphFunctor.GraphEmbedding
+> import Idris.TypesAsCategoryExtensional
+> import Monad.KleisliCategory
+> import Monad.IOMonad
+> import Monad.Monad
 > import Typedefs.Typedefs
 > import Typedefs.TypedefsDecEq
 >
@@ -66,32 +70,34 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > compute g initialVertex finalVertex func path initialValue =
 >   (mapMor func initialVertex finalVertex path) initialValue
 >
-
+> cClosedTypedefsKleiliCategory : Category
+> cClosedTypedefsKleiliCategory = ClosedTypedefsAsCategory.closedTypedefsAsKleisliCategory $ ioMonad FFI_JS
+>
 > compute':
 >   -- a graph
 >      (g : Graph)
 >   -- the data for building a functor to the category of closed typedefs
 >   -> (iso : Iso (vertices g) (Fin k))
->   -> (v : Vect k (obj ClosedTypedefsAsCategory.closedTypedefsAsCategory))
->   -> Vect (length $ edges g) (mor' ClosedTypedefsAsCategory.closedTypedefsAsCategory)
+>   -> (v : Vect k (obj Computer.cClosedTypedefsKleiliCategory))
+>   -> Vect (length $ edges g) (mor' Computer.cClosedTypedefsKleiliCategory)
 >   -- a path in the graph
 >   -> Path g initialVertex finalVertex
 >   -- a value of the initial type
 >   -> Ty [] (Vect.index (to iso initialVertex) v)
 >   -- and we return a value of the final type
->   -> Maybe (Ty [] (Vect.index (to iso finalVertex) v))
-> compute' {initialVertex} { finalVertex} g iso v e path initialValue with (assembleElemM {cat=ClosedTypedefsAsCategory.closedTypedefsAsCategory}
->                                                                                         {m=Maybe}
->                                                                                         (edges g)
->                                                                                         (to iso)
->                                                                                         v
->                                                                                         (\k, l => extractMorphism {cat=ClosedTypedefsAsCategory.closedTypedefsAsCategory}
->                                                                                                                   {f=Maybe}
->                                                                                                                   v e))
+>   -> Maybe (IO' FFI_JS (Ty [] (Vect.index (to iso finalVertex) v)))
+> compute' {initialVertex} {finalVertex} g iso v e path initialValue with (assembleElemM {cat=Computer.cClosedTypedefsKleiliCategory}
+>                                                                                        {m=Maybe}
+>                                                                                        (edges g)
+>                                                                                        (to iso)
+>                                                                                        v
+>                                                                                        (\k, l => extractMorphism {cat=Computer.cClosedTypedefsKleiliCategory}
+>                                                                                                                  {f=Maybe}
+>                                                                                                                  v e))
 >   compute' {initialVertex} { finalVertex} g iso v e path initialValue | Nothing = Nothing
 >   compute' {initialVertex} { finalVertex} g iso v e path initialValue | Just morphismsFunction = let
->       gEmbedding = MkGraphEmbedding {cat=ClosedTypedefsAsCategory.closedTypedefsAsCategory} (flip Vect.index v . (to iso)) morphismsFunction
+>       gEmbedding = MkGraphEmbedding {cat=Computer.cClosedTypedefsKleiliCategory} (flip Vect.index v . (to iso)) morphismsFunction
 >       func = freeFunctor g gEmbedding
 >       mor = mapMor func initialVertex finalVertex path
 >     in
->       Just $ mor initialValue
+>       Just $ ExtensionalTypeMorphism.func mor initialValue

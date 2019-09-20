@@ -33,6 +33,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > import GraphFunctor.ClosedTypedefsAsCategory
 > import GraphFunctor.GraphEmbedding
 > import Typedefs.Typedefs
+> import Typedefs.Names
 >
 > %access public export
 > %default total
@@ -41,33 +42,32 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > mkCFunctorInj : MkCFunctor mo1 mm1 pi1 pc1 = MkCFunctor mo2 mm2 pi2 pc2 -> mo1=mo2
 > mkCFunctorInj Refl = Refl
 >
-> loopGraph : Graph
-> loopGraph = MkGraph () [((),())]
+> twoLoopsGraph : Graph
+> twoLoopsGraph = MkGraph () [((),()), ((), ())]
 >
-> graphIso : Iso (vertices Example.loopGraph) (Fin 1)
+> graphIso : Iso (vertices Example.twoLoopsGraph) (Fin 1)
 > graphIso = MkIso
 >   (\_ => FZ) (\_ => ()) (\FZ => Refl) (\() => Refl)
 >
 > -- this is mapped to Either () ()
-> boolTypedef : TDef 0
-> boolTypedef = TSum [T1, T1]
+> natTypedef : TDef 0
+> natTypedef = TMu [("ZZ", T1), ("SS", TVar 0)]
 >
-> reflect : Either () () -> Either () ()
-> reflect (Left  ()) = Right ()
-> reflect (Right ()) = Left  ()
+> succ : Ty [] Example.natTypedef -> IO' FFI_JS (Ty [] Example.natTypedef)
+> succ n = pure $ Inn $ Right n
 >
-> reflectFunctor : Maybe (CFunctor (pathCategory Example.loopGraph) ClosedTypedefsAsCategory.closedTypedefsAsCategory)
-> reflectFunctor = assembleFunctor loopGraph graphIso [boolTypedef] [(boolTypedef ** boolTypedef ** reflect)]
+> succsucc : Ty [] Example.natTypedef -> IO' FFI_JS (Ty [] Example.natTypedef)
+> succsucc n = pure $ Inn $ Right $ Inn $ Right n
 >
-> reflectPath : Path Example.loopGraph () ()
-> reflectPath = [Here]
+> succsPath : Path Example.twoLoopsGraph () ()
+> succsPath = [Here, There Here]
 >
-> applyReflect : Either () () -> Maybe (Either () ())
-> applyReflect input with (reflectFunctor) proof refdef
->   applyReflect input | Nothing = Nothing
->   applyReflect input | Just (MkCFunctor mo mm pi pc) =
->     Just $ let moeq = mkCFunctorInj $ justInjective refdef in
->            (replace moeq (compute loopGraph () () (MkCFunctor mo mm pi pc) reflectPath)) input
->
-> applyReflect' : Either () () -> Maybe (Either () ())
-> applyReflect' = compute' loopGraph graphIso [boolTypedef] [(boolTypedef ** boolTypedef ** reflect)] reflectPath
+> applyReflect' : Ty [] Example.natTypedef -> Maybe (IO' FFI_JS (Ty [] Example.natTypedef))
+> applyReflect' = compute'
+>   twoLoopsGraph
+>   graphIso
+>   [ Example.natTypedef ]
+>   [ (Example.natTypedef ** Example.natTypedef ** MkExtensionalTypeMorphism succ)
+>   , (Example.natTypedef ** Example.natTypedef ** MkExtensionalTypeMorphism succsucc)
+>   ]
+>   succsPath
