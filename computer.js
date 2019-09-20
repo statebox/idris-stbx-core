@@ -1,6 +1,7 @@
+#!/usr/bin/env node
 "use strict";
 
-(function(){
+// (function(){
 
 const $JSRTS = {
     throw: function (x) {
@@ -24,21 +25,47 @@ const $JSRTS = {
         return str.substr(Math.max(0, offset), Math.max(0, len))
     }
 };
+$JSRTS.os = require('os');
+
+$JSRTS.fs = require('fs');
+
 $JSRTS.prim_systemInfo = function (index) {
     switch (index) {
         case 0:
-            return "javascript";
+            return "node";
         case 1:
-            return navigator.platform;
+            return $JSRTS.os.platform();
     }
     return "";
 };
 
-$JSRTS.prim_writeStr = function (x) { return console.log(x) };
+$JSRTS.prim_writeStr = function (x) { return process.stdout.write(x) };
 
-$JSRTS.prim_readStr = function () { return prompt('Prelude.getLine') };
+$JSRTS.prim_readStr = function () {
+    var ret = '';
+    var b = Buffer.alloc(1024);
+    var i = 0;
+    while (true) {
+        $JSRTS.fs.readSync(0, b, i, 1)
+        if (b[i] == 10) {
+            ret = b.toString('utf8', 0, i);
+            break;
+        }
+        i++;
+        if (i == b.length) {
+            var nb = Buffer.alloc(b.length * 2);
+            b.copy(nb)
+            b = nb;
+        }
+    }
+    return ret;
+};
 
-$JSRTS.die = function (message) { throw new Error(message) };
+$JSRTS.die = function (message) {
+    console.error(message);
+    process.exit(-1);
+};
+
 $JSRTS.jsbn = (function () {
 
   // Copyright (c) 2005  Tom Wu
@@ -1401,6 +1428,14 @@ function $partial_5_6$io_95_bind(x1, x2, x3, x4, x5){
     });
 }
 
+function $partial_0_2$Computer__Example1__backward(){
+    return (function(x1){
+        return (function(x2){
+            return Computer__Example1__backward(x1, x2);
+        });
+    });
+}
+
 function $partial_8_9$Computer__Computer__compute_39_(x1, x2, x3, x4, x5, x6, x7, x8){
     return (function(x9){
         return Computer__Computer__compute_39_(x1, x2, x3, x4, x5, x6, x7, x8, x9);
@@ -1413,10 +1448,10 @@ function $partial_13_14$GraphFunctor__GraphEmbedding__extractMorphism(x1, x2, x3
     });
 }
 
-function $partial_0_2$Computer__Example__reflect(){
+function $partial_0_2$Computer__Example1__forward(){
     return (function(x1){
         return (function(x2){
-            return Computer__Example__reflect(x1, x2);
+            return Computer__Example1__forward(x1, x2);
         });
     });
 }
@@ -1453,9 +1488,9 @@ function $partial_2_3$Typedefs__Typedefs___123_ap_95_1_125_(x1, x2){
     });
 }
 
-function $partial_0_1$Computer__Example___123_applyReflect_39__95_4_125_(){
+function $partial_0_1$Computer__Example1___123_applyReflect_39__95_4_125_(){
     return (function(x1){
-        return Computer__Example___123_applyReflect_39__95_4_125_(x1);
+        return Computer__Example1___123_applyReflect_39__95_4_125_(x1);
     });
 }
 
@@ -1723,6 +1758,14 @@ function $HC_2_65669$Prelude__Either__Either($1, $2){
     this.$2 = $2;
 }
 
+function $HC_2_65669$Prelude__Either__Either1() {
+    return function ($1) {
+        return function($2){
+            return new $HC_2_65669$Prelude__Either__Either($1, $2);
+        }
+    }
+}
+
 function $HC_1_1$Data__Fin__FS($1){
     this.type = 1;
     this.$1 = $1;
@@ -1785,6 +1828,14 @@ function $HC_2_65595$Builtins__Pair($1, $2){
     this.type = 65595;
     this.$1 = $1;
     this.$2 = $2;
+}
+
+function $HC_2_65595$Builtins__Pair1(){
+    return (function(x1){
+        return (function(x2){
+            return new $HC_2_65595$Builtins__Pair(x1, x2);
+        });
+    });
 }
 
 function $HC_1_1$Prelude__Either__Right($1){
@@ -1894,9 +1945,9 @@ function Typedefs__Typedefs__Ty($_0_arg, $_1_arg, $_2_arg){
         } else if(($_2_arg.type === 5)) {
             return null;
         } else if(($_2_arg.type === 3)) {
-            return Typedefs__Typedefs__Tnary($_0_arg, null, $_1_arg, $_2_arg.$2, new $HC_2_65595$Builtins__Pair());
+            return Typedefs__Typedefs__Tnary($_0_arg, null, $_1_arg, $_2_arg.$2, new $HC_2_65595$Builtins__Pair1());
         } else if(($_2_arg.type === 2)) {
-            return Typedefs__Typedefs__Tnary($_0_arg, null, $_1_arg, $_2_arg.$2, new $HC_2_65669$Prelude__Either__Either());
+            return Typedefs__Typedefs__Tnary($_0_arg, null, $_1_arg, $_2_arg.$2, new $HC_2_65669$Prelude__Either__Either1());
         } else {
             return Data__Vect__index(null, null, $_2_arg.$1, $_1_arg);
         }
@@ -1931,10 +1982,47 @@ function Typedefs__Typedefs__ap($_0_arg, $_1_arg, $_2_arg, $_3_arg){
     }
 }
 
-// Computer.Example.applyReflect'
+// Computer.Example1.applyReflect'
 
-function Computer__Example__applyReflect_39_(){
-    return $partial_8_9$Computer__Computer__compute_39_(null, new $HC_2_1$Data__Vect___58__58_(new $HC_2_0$Builtins__MkPair($HC_0_0$MkUnit, $HC_0_0$MkUnit), $HC_0_0$Data__Vect__Nil), $HC_0_0$MkUnit, $HC_0_0$MkUnit, $partial_0_1$Computer__Example___123_applyReflect_39__95_4_125_(), new $HC_2_1$Data__Vect___58__58_(new $HC_2_2$Typedefs__Typedefs__TSum((new $JSRTS.jsbn.BigInteger(("0"))), new $HC_2_1$Data__Vect___58__58_($HC_0_1$Typedefs__Typedefs__T1, new $HC_2_1$Data__Vect___58__58_($HC_0_1$Typedefs__Typedefs__T1, $HC_0_0$Data__Vect__Nil))), $HC_0_0$Data__Vect__Nil), new $HC_2_1$Data__Vect___58__58_(new $HC_2_0$Builtins__MkDPair(new $HC_2_2$Typedefs__Typedefs__TSum((new $JSRTS.jsbn.BigInteger(("0"))), new $HC_2_1$Data__Vect___58__58_($HC_0_1$Typedefs__Typedefs__T1, new $HC_2_1$Data__Vect___58__58_($HC_0_1$Typedefs__Typedefs__T1, $HC_0_0$Data__Vect__Nil))), new $HC_2_0$Builtins__MkDPair(new $HC_2_2$Typedefs__Typedefs__TSum((new $JSRTS.jsbn.BigInteger(("0"))), new $HC_2_1$Data__Vect___58__58_($HC_0_1$Typedefs__Typedefs__T1, new $HC_2_1$Data__Vect___58__58_($HC_0_1$Typedefs__Typedefs__T1, $HC_0_0$Data__Vect__Nil))), $partial_0_2$Computer__Example__reflect())), $HC_0_0$Data__Vect__Nil), Computer__Example__reflectPath());
+function Computer__Example1__applyReflect_39_(){
+    return $partial_8_9$Computer__Computer__compute_39_(
+        null,
+        
+        Computer__Example1__twoLoopsGraph(),
+        
+        $HC_0_0$MkUnit,
+        $HC_0_0$MkUnit,
+        
+        $partial_0_1$Computer__Example1___123_applyReflect_39__95_4_125_(),
+        
+        new $HC_2_1$Data__Vect___58__58_(
+            Computer__Example1__rgbTypedef(),
+            $HC_0_0$Data__Vect__Nil
+        ),
+        
+        new $HC_2_1$Data__Vect___58__58_(
+            new $HC_2_0$Builtins__MkDPair(
+                Computer__Example1__rgbTypedef(),
+                new $HC_2_0$Builtins__MkDPair(
+                    Computer__Example1__rgbTypedef(),
+                    $partial_0_2$Computer__Example1__forward()
+                )
+            ),
+            
+            new $HC_2_1$Data__Vect___58__58_(
+                new $HC_2_0$Builtins__MkDPair(
+                    Computer__Example1__rgbTypedef(),
+                    new $HC_2_0$Builtins__MkDPair(
+                        Computer__Example1__rgbTypedef(),
+                        $partial_0_2$Computer__Example1__backward()
+                    )
+                ),
+                $HC_0_0$Data__Vect__Nil
+            )
+        ),
+        
+        Computer__Example1__succsPath()
+    );
 }
 
 // GraphFunctor.GraphEmbedding.assembleElemM
@@ -1948,6 +2036,22 @@ function GraphFunctor__GraphEmbedding__assembleElemM($_0_arg, $_1_arg, $_2_arg, 
     } else {
         
         return $_5_arg.$1(null)($partial_0_3$GraphFunctor__GraphEmbedding___123_assembleElemM_95_10_125_());
+    }
+}
+
+// Computer.Example1.backward
+
+function Computer__Example1__backward($_0_arg, $_2_in){
+    
+    if(($_0_arg.type === 0)) {
+        return new $HC_1_1$Prelude__Either__Right(new $HC_1_1$Prelude__Either__Right($HC_0_0$MkUnit));
+    } else {
+        const $cg$3 = $_0_arg.$1;
+        if(($cg$3.type === 0)) {
+            return new $HC_1_0$Prelude__Either__Left($HC_0_0$MkUnit);
+        } else {
+            return new $HC_1_1$Prelude__Either__Right(new $HC_1_1$Prelude__Either__Right($HC_0_0$MkUnit));
+        }
     }
 }
 
@@ -2023,6 +2127,22 @@ function Free__FreeFunctor__foldPath($_0_arg, $_1_arg, $_2_arg, $_3_arg, $_4_arg
         let $cg$3 = null;
         $cg$3 = $_4_arg.$1($_2_arg);
         return $_0_arg.$1($cg$3);
+    }
+}
+
+// Computer.Example1.forward
+
+function Computer__Example1__forward($_0_arg, $_2_in){
+    
+    if(($_0_arg.type === 0)) {
+        return new $HC_1_1$Prelude__Either__Right(new $HC_1_0$Prelude__Either__Left($HC_0_0$MkUnit));
+    } else {
+        const $cg$3 = $_0_arg.$1;
+        if(($cg$3.type === 0)) {
+            return new $HC_1_1$Prelude__Either__Right(new $HC_1_1$Prelude__Either__Right($HC_0_0$MkUnit));
+        } else {
+            return new $HC_1_0$Prelude__Either__Left($HC_0_0$MkUnit);
+        }
     }
 }
 
@@ -2104,7 +2224,7 @@ function Monad__KleisliCategory__kleisliCategory($_0_arg, $_1_arg){
 // Main.main
 
 function Main__main($_0_in){
-    const $_1_in = Computer__Example__applyReflect_39_()(new $HC_1_0$Prelude__Either__Left($HC_0_0$MkUnit));
+    const $_1_in = Computer__Example1__applyReflect_39_()(new $HC_1_0$Prelude__Either__Left($HC_0_0$MkUnit));
     return $HC_0_0$MkUnit;
 }
 
@@ -2137,21 +2257,22 @@ function Data__Fin__natToFin($_0_arg, $_1_arg){
     }
 }
 
-// Computer.Example.reflect
+// Computer.Example1.rgbTypedef
 
-function Computer__Example__reflect($_0_arg, $_2_in){
-    
-    if(($_0_arg.type === 0)) {
-        return new $HC_1_1$Prelude__Either__Right($HC_0_0$MkUnit);
-    } else {
-        return new $HC_1_0$Prelude__Either__Left($HC_0_0$MkUnit);
-    }
-}
-
-// Computer.Example.reflectPath
-
-function Computer__Example__reflectPath(){
-    return new $HC_3_1$Free__Path___58__58_($HC_0_0$MkUnit, $HC_0_0$Data__Vect__Here, $HC_0_0$Free__Path__Nil);
+function Computer__Example1__rgbTypedef(){
+    return new $HC_2_2$Typedefs__Typedefs__TSum(
+        (new $JSRTS.jsbn.BigInteger(("1"))),
+        new $HC_2_1$Data__Vect___58__58_(
+            $HC_0_1$Typedefs__Typedefs__T1,
+            new $HC_2_1$Data__Vect___58__58_(
+                $HC_0_1$Typedefs__Typedefs__T1,
+                new $HC_2_1$Data__Vect___58__58_(
+                    $HC_0_1$Typedefs__Typedefs__T1,
+                    $HC_0_0$Data__Vect__Nil
+                )
+            )
+        )
+    );
 }
 
 // Data.Fin.shift
@@ -2183,6 +2304,48 @@ function Typedefs__Typedefs__shiftVars($_0_arg, $_1_arg){
     } else {
         return new $HC_1_4$Typedefs__Typedefs__TVar(Data__Fin__shift(null, (new $JSRTS.jsbn.BigInteger(("1"))), $_1_arg.$1));
     }
+}
+
+// Computer.Example1.succsPath
+
+function Computer__Example1__succsPath(){
+    return new $HC_3_1$Free__Path___58__58_(
+        $HC_0_0$MkUnit,
+        $HC_0_0$Data__Vect__Here,
+        new $HC_3_1$Free__Path___58__58_(
+            $HC_0_0$MkUnit,
+            new $HC_1_1$Data__Vect__There($HC_0_0$Data__Vect__Here),
+            new $HC_3_1$Free__Path___58__58_(
+                $HC_0_0$MkUnit,
+                $HC_0_0$Data__Vect__Here,
+                new $HC_3_1$Free__Path___58__58_(
+                    $HC_0_0$MkUnit,
+                    $HC_0_0$Data__Vect__Here,
+                    $HC_0_0$Free__Path__Nil
+                )
+            )
+        )
+    );
+}
+
+// Computer.Example1.twoLoopsGraph
+
+function Computer__Example1__twoLoopsGraph(){
+    return new $HC_2_1$Data__Vect___58__58_(
+        new $HC_2_0$Builtins__MkPair(
+            $HC_0_0$MkUnit, 
+            $HC_0_0$MkUnit
+        ),
+        
+        new $HC_2_1$Data__Vect___58__58_(
+            new $HC_2_0$Builtins__MkPair(
+                $HC_0_0$MkUnit,
+                $HC_0_0$MkUnit
+            ),
+            
+            $HC_0_0$Data__Vect__Nil
+        )
+    );
 }
 
 // Monad.VerifiedMonadAsMonad.verifiedMonadMultiplication
@@ -2226,9 +2389,9 @@ function Typedefs__Typedefs___123_ap_95_1_125_($_0_lift, $_1_lift, $_2_lift){
     return new $HC_2_0$Builtins__MkPair($_2_lift.$1, Typedefs__Typedefs__ap($_0_lift.add((new $JSRTS.jsbn.BigInteger(("1")))), null, $_2_lift.$2, new $HC_2_1$Data__Vect___58__58_(new $HC_1_4$Typedefs__Typedefs__TVar($cg$2), Prelude__Functor__Data__Vect___64_Prelude__Functor__Functor_36_Vect_32_n_58__33_map_58_0(null, null, null, $partial_1_2$Typedefs__Typedefs__shiftVars(null), $_1_lift))));
 }
 
-// Computer.Example.{applyReflect'_4}
+// Computer.Example1.{applyReflect'_4}
 
-function Computer__Example___123_applyReflect_39__95_4_125_($_0_lift){
+function Computer__Example1___123_applyReflect_39__95_4_125_($_0_lift){
     return $HC_0_0$Data__Fin__FZ;
 }
 
@@ -2347,8 +2510,8 @@ function Free__FreeFunctor___123_freeFunctor_95_24_125_($_0_lift, $_1_lift, $_2_
 function Basic__Functor___123_functorComposition_95_25_125_($_0_lift, $_1_lift, $_2_lift){
     
     let $cg$2 = null;
-    $cg$2 = $_1_lift.$1($_2_lift);
-    return $_0_lift.$1($cg$2);
+    $cg$2 = $_1_lift.$2($_2_lift);
+    return $_0_lift.$2($cg$2);
 }
 
 // Basic.Functor.{functorComposition_26}
@@ -2402,22 +2565,22 @@ function Monad__KleisliCategory___123_kleisliCategory_95_32_125_($_0_lift, $_1_l
     $cg$4 = $cg$5.$1($_4_lift);
     let $cg$6 = null;
     const $cg$8 = $_1_lift.$1;
-    $cg$6 = $cg$8.$1($_4_lift);
+    $cg$6 = $cg$8.$2($_4_lift);
     let $cg$9 = null;
     let $cg$10 = null;
     const $cg$12 = $_1_lift.$1;
-    $cg$10 = $cg$12.$1($_3_lift);
+    $cg$10 = $cg$12.$2($_3_lift);
     let $cg$13 = null;
     const $cg$15 = $_1_lift.$1;
     let $cg$16 = null;
     const $cg$18 = $_1_lift.$1;
-    $cg$16 = $cg$18.$1($_4_lift);
-    $cg$13 = $cg$15.$1($cg$16);
+    $cg$16 = $cg$18.$2($_4_lift);
+    $cg$13 = $cg$15.$2($cg$16);
     let $cg$19 = null;
     const $cg$21 = $_1_lift.$1;
     let $cg$22 = null;
     const $cg$24 = $_1_lift.$1;
-    $cg$22 = $cg$24.$1($_4_lift);
+    $cg$22 = $cg$24.$2($_4_lift);
     $cg$19 = $cg$21.$2($_3_lift)($cg$22)($_6_lift);
     $cg$9 = $_0_lift.$2($_2_lift)($cg$10)($cg$13)($_5_lift)($cg$19);
     let $cg$25 = null;
@@ -2721,5 +2884,5 @@ function $_0_runMain(){
 }
 
 
-$_0_runMain();
-}.call(this))
+// $_0_runMain();
+// }.call(this))

@@ -8,7 +8,8 @@ import Free.Graph
 -- import GraphFunctor.FreeFunctor
 --import GraphFunctor.FFICategory
 import Computer.Computer
-import Computer.Example
+import Computer.Example1
+import Typedefs.Typedefs
 
 import Data.Vect
 
@@ -72,9 +73,6 @@ import Data.Vect
 --                Nothing => putStrLn "malformed firing sequence: misaligned path"
 --            Nothing => putStrLn "malformed firing sequence: numbers outside of graph"
 --        Nothing => putStrLn "unknown FFI function in map"
-
-loopGraph : Graph
-loopGraph = MkGraph () [((),())]
 
 partial
 main : IO' FFI_JS ()

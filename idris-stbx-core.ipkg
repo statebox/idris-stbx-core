@@ -8,6 +8,12 @@ modules =
   GraphFunctor.ClosedTypedefsAsCategory,
   GraphFunctor.GraphEmbedding,
   Computer.Computer,
-  Computer.Example
+  Computer.Example1
+
+main = Main
+
+executable = computer.js
 
 pkgs = contrib, optparse, idris-ct, typedefs-core
+
+opts = "--codegen node"
