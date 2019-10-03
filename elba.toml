@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = []
 
 [dependencies]
-"statebox/idris-ct" = { git = "ssh://git@github.com/statebox/idris-ct" }
+"statebox/idris-ct" = { git = "https://github.com/statebox/idris-ct" }
 
 [targets.lib]
 path = "src"

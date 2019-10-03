@@ -19,6 +19,12 @@ import Util.Elem
 -- Define some foreign functions
 -- Generate the free category over the
 
+getOne : () -> Int
+getOne = unsafePerformIO . foreign FFI_C "getOne" (() -> IO Int)
+
+printIntAndSucc : Int -> Int
+printIntAndSucc = unsafePerformIO . foreign FFI_C "printIntAndSucc" (Int -> IO Int)
+
 printA : () -> ()
 printA = unsafePerformIO . foreign FFI_C "printA" (() -> IO ())
 
@@ -49,19 +55,31 @@ err = unsafePerformIO . foreign FFI_C "err" (() -> IO ())
 graphFromListGraph : Free.Graph.Graph -> GraphFunctor.Graph.Graph
 graphFromListGraph g = MkGraph (vertices g) (Edge g)
 
-constructMap : List (Nat, String) -> Maybe (SortedMap Nat (() -> ()))
+data U = UNIT | INT
+
+enumerateTypes : Fin 2 -> Type
+enumerateTypes FZ = ()
+enumerateTypes (FS FZ) = Int
+
+interp : U -> Type
+interp UNIT = ()
+interp INT = Int
+
+constructMap : List (Nat, String) -> Maybe (SortedMap Nat (a : U ** b : U ** (interp a -> interp b)))
 constructMap l = fromList <$> traverse mapping l
   where
-  mapping : (Nat, String) -> Maybe ((Nat, () -> ()))
-  mapping (n, "printA") = Just (n, printA)
-  mapping (n, "printB") = Just (n, printB)
-  mapping (n, "printC") = Just (n, printC)
-  mapping (n, "printD") = Just (n, printD)
-  mapping (n, "printE") = Just (n, printE)
-  mapping (n, "printF") = Just (n, printF)
-  mapping (n, "printG") = Just (n, printG)
-  mapping (n, "printH") = Just (n, printH)
-  mapping  _            = Nothing
+  mapping : (Nat, String) -> Maybe (Nat, (a : U ** b : U ** (interp a -> interp b)))
+  mapping (n, "getOne")          = Just (n, (UNIT ** INT  ** getOne))
+  mapping (n, "printIntAndSucc") = Just (n, (INT  ** INT  ** printIntAndSucc))
+-- mapping (n, "printA")          = Just (n, (UNIT ** UNIT ** printA))
+-- mapping (n, "printB")          = Just (n, (UNIT ** UNIT ** printB))
+-- mapping (n, "printC")          = Just (n, (UNIT ** UNIT ** printC))
+-- mapping (n, "printD")          = Just (n, (UNIT ** UNIT ** printD))
+-- mapping (n, "printE")          = Just (n, (UNIT ** UNIT ** printE))
+-- mapping (n, "printF")          = Just (n, (UNIT ** UNIT ** printF))
+-- mapping (n, "printG")          = Just (n, (UNIT ** UNIT ** printG))
+-- mapping (n, "printH")          = Just (n, (UNIT ** UNIT ** printH))
+  mapping  _                     = Nothing
 
 ffiEdges : (l : List (Nat, Nat)) -> Vect (length l) (Fin (S (findMax2 l)), Fin (S (findMax2 l)))
 ffiEdges l = replace {P=\z=>Vect z (Fin (S (findMax2 l)), Fin (S (findMax2 l)))}
@@ -74,8 +92,18 @@ ffiGraph {len} {m} v = graphFromListGraph $ Free.Graph.MkGraph {n=len} (Fin m) v
 ffiCategory : Vect len (Fin m, Fin m) -> Category
 ffiCategory = pathCategory . ffiGraph
 
-ffiFunctor : (v : Vect len (Fin m, Fin m)) -> SortedMap Nat (() -> ()) -> CFunctor (FFICategory.ffiCategory v) TypesAsCategory.typesAsCategory
-ffiFunctor v mp = freeFunctor (ffiGraph v) (MkGraphEmbedding (const ()) (\i,j,el => fromMaybe err (SortedMap.lookup (elem2Nat el) mp)))
+edgeSpec : Vect 2 (Fin 2, Fin 2)
+edgeSpec = [(FZ, FS FZ), (FS FZ, FS FZ)]
+
+ffiFunctor : SortedMap Nat (a : U ** b : U ** (interp a -> interp b)) -> CFunctor (FFICategory.ffiCategory FFICategory.edgeSpec) TypesAsCategory.typesAsCategory
+ffiFunctor mp = freeFunctor (ffiGraph edgeSpec) (MkGraphEmbedding enumerateTypes mapEdges)
+  where
+  mapEdges : (i,j : Fin 2) -> Elem (i,j) FFICategory.edgeSpec -> enumerateTypes i -> enumerateTypes j
+  --mapEdges     FZ      FZ  el = let tt = fromMaybe (UNIT ** UNIT ** err) (SortedMap.lookup (elem2Nat el) mp) in ?wat1
+  mapEdges     FZ  (FS FZ)  Here              = getOne
+  --mapEdges (FS FZ)     FZ  el = ?wat3
+  mapEdges (FS FZ) (FS FZ) (There Here)       = printIntAndSucc
+  mapEdges     i       j   (There (There el)) = absurd el
 
 firingPath : (v : Vect len (Fin m, Fin m)) -> List (Fin len) -> Maybe (s ** t ** Path (FFICategory.ffiGraph v) s t)
 firingPath v []      = Nothing
