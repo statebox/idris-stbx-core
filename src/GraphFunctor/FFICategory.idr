@@ -18,6 +18,8 @@ import Util.Elem
 
 -- Define some foreign functions
 -- Generate the free category over the
+--execUU : String -> () -> ()
+--execUU s = unsafePerformIO . foreign FFI_C s (() -> IO ())
 
 printA : () -> ()
 printA = unsafePerformIO . foreign FFI_C "printA" (() -> IO ())
@@ -53,6 +55,7 @@ constructMap : List (Nat, String) -> Maybe (SortedMap Nat (() -> ()))
 constructMap l = fromList <$> traverse mapping l
   where
   mapping : (Nat, String) -> Maybe ((Nat, () -> ()))
+--  mapping (n, s) = Just (n, e)
   mapping (n, "printA") = Just (n, printA)
   mapping (n, "printB") = Just (n, printB)
   mapping (n, "printC") = Just (n, printC)

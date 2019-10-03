@@ -1,3 +1,7 @@
 *.ibc
 target
 elba.lock
+*.so
+*.ss
+*.ttc
+*.ttm

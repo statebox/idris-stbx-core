@@ -3,17 +3,26 @@ package idris-stbx-core
 sourcedir = src
 
 modules =
+  --PetriNet.MultiSet,
+  --PetriNet.PetriNet,
+  --PetriNet.PetriNetMorphisms,
+  --PetriNet.PetriNetsCategory,
   GraphFunctor.Graph,
   GraphFunctor.FreeFunctor,
+  GraphFunctor.FFICategory,
   GraphFunctor.ClosedTypedefsAsCategory,
   GraphFunctor.GraphEmbedding,
-  Computer.Computer,
-  Computer.Example1
+  Computer.ComputerJS,
+  Computer.ComputerC,
+  Computer.Example,
+  Util,
+  Cmdline,
+  Main
 
 main = Main
 
-executable = computer.js
+executable = fficat
 
 pkgs = contrib, optparse, idris-ct, typedefs-core
 
-opts = "--codegen node"
+opts = "--cg-opt fficat.c"

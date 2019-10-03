@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 >
 > import Basic.Category
 > import Basic.Functor
-> import Computer.Computer
+> import Computer.ComputerC
 > import Control.Isomorphism
 > import Data.Vect
 > import Free.FreeFunctor
@@ -43,22 +43,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > mkCFunctorInj Refl = Refl
 >
 > twoLoopsGraph : Graph
-> twoLoopsGraph = MkGraph () [((),()), ((), ())]
+> twoLoopsGraph = MkGraph () [((),()), ((),())]
 >
 > graphIso : Iso (vertices Example1.twoLoopsGraph) (Fin 1)
 > graphIso = MkIso
 >   (\_ => FZ) (\_ => ()) (\FZ => Refl) (\() => Refl)
 >
-> -- this is mapped to Either () ()
+> -- this is mapped to Either () (Either () ())
 > rgbTypedef : TDef 0
 > rgbTypedef = TSum [T1, T1, T1]
 >
-> forward : Ty [] Example1.rgbTypedef -> IO' FFI_JS (Ty [] Example1.rgbTypedef)
+> forward : Ty [] Example1.rgbTypedef -> IO' FFI_C (Ty [] Example1.rgbTypedef)
 > forward (Left ())          = pure $ Right (Left ())
 > forward (Right (Left ()))  = pure $ Right (Right ())
 > forward (Right (Right ())) = pure $ Left ()
 >
-> backward : Ty [] Example1.rgbTypedef -> IO' FFI_JS (Ty [] Example1.rgbTypedef)
+> backward : Ty [] Example1.rgbTypedef -> IO' FFI_C (Ty [] Example1.rgbTypedef)
 > backward (Left ())          = pure $ Right (Right ())
 > backward (Right (Left ()))  = pure $ Left ()
 > backward (Right (Right ())) = pure $ Right (Left ())
@@ -66,7 +66,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > succsPath : Path Example1.twoLoopsGraph () ()
 > succsPath = [Here, There Here, Here, Here]
 >
-> applyReflect' : Ty [] Example1.rgbTypedef -> Maybe (IO' FFI_JS (Ty [] Example1.rgbTypedef))
+> applyReflect' : Ty [] Example1.rgbTypedef -> Maybe (IO' FFI_C (Ty [] Example1.rgbTypedef))
 > applyReflect' = compute'
 >   twoLoopsGraph
 >   graphIso
