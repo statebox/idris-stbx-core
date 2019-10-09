@@ -115,23 +115,8 @@ login : Ty [] T1 -> IO $ Ty [] CartContent
 login () = pure $ Inn (Left ())
 
 -- add product asks the use for a product id and a quantity, and adds it to the cart
-readIntFromUser : () -> IO Int
-readIntFromUser = foreign FFI_C "readInt" (() -> IO Int)
-
-      -- """
-      --   (function() {
-      --     const readline = require('readline');
-
-      --     const rl = readline.createInterface({
-      --       input: process.stdin,
-      --       output: process.stdout
-      --     });
-
-      --     return rl.question('Please enter an integer', (input) => {
-      --       return input;
-      --     });
-      --   })()
-      -- """
+readIntFromUser : String -> IO Int
+readIntFromUser = foreign FFI_C "readInt" (String -> IO Int)
 
 intToProductId : Int -> Either () (Either () (Either () ()))
 intToProductId i = assert_total $
@@ -143,7 +128,7 @@ intToProductId i = assert_total $
 
 readProductIdFromUser : IO $ Ty [] ProductId
 readProductIdFromUser = do
-  intFromUser <- readIntFromUser ()
+  intFromUser <- readIntFromUser "product"
   pure $ intToProductId intFromUser
 
 natToQuantity : Nat -> Ty [] InvoiceId
@@ -152,7 +137,7 @@ natToQuantity (S n) = Inn (Right $ natToQuantity n)
 
 readQuantityFromUser : IO $ Ty [] Quantity
 readQuantityFromUser = do
-  intFromUser <- readIntFromUser ()
+  intFromUser <- readIntFromUser "quantity"
   pure $ natToQuantity . cast $ intFromUser
 
 weakenNat : Mu [] (TSum [T1, TVar FZ]) -> Mu v (TSum [T1, TVar FZ])
@@ -172,20 +157,6 @@ natToInvoiceId (S n) = Inn (Right $ natToInvoiceId n)
 
 generateRandomInt : () -> IO Int
 generateRandomInt = foreign FFI_C "generateInt" (() -> IO Int)
-  -- where
-  --   generateInt : String
-  --   generateInt =
-  --     """
-  --       int generateInt() {
-  --         return 5;
-  --       }
-  --     """
-
-      -- """
-      --   (function () {
-      --     return Math.floor((Math.random() * 100000000) + 1);
-      --   })()
-      -- """
 
 generateInvoiceNumber : IO Nat
 generateInvoiceNumber = cast <$> generateRandomInt ()
@@ -198,7 +169,7 @@ checkout (Inn cartContent) = do
 -- we provide the path
 
 path : Path EcommerceGraph Guest PurchaseCompleted
-path = [Here, There Here, {-There Here,-} There $ There Here]
+path = [Here, There Here, There Here, There $ There Here]
 
 -- and finally we compute
 

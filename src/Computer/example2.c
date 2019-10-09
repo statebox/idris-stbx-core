@@ -3,14 +3,16 @@
 #include <time.h>
 #include <unistd.h>
 
-int readInt() {
-  char buffer[1];
+int readInt(char *whatToEnter) {
+  char buffer[2];
 
-  printf("Please enter an integer value\n");
+  printf("C: Please enter an integer value for the %s\n", whatToEnter);
 
-  read(STDIN_FILENO, buffer, 1);
+  read(STDIN_FILENO, buffer, 2);
 
-  return buffer[0];
+  printf("C: The number %d was given\n", buffer[0] - 48);
+
+  return (int) buffer[0];
 }
 
 int generateInt() {
@@ -20,7 +22,7 @@ int generateInt() {
 
   chaos = rand() % 100000;
 
-  printf("The generated number is %d\n", chaos);
+  printf("C: The generated number is %d\n", chaos);
 
   return chaos;
 }
