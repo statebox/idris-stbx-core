@@ -1,0 +1,2 @@
+int readInt();
+int generateInt();

@@ -22,7 +22,7 @@
 module Computer.Example2
 
 import Basic.Category
-import Computer.ComputerJS
+import Computer.ComputerC
 import Control.Isomorphism
 import Data.Vect
 import Free.Graph
@@ -33,6 +33,8 @@ import Typedefs.Names
 
 %access public export
 %default total
+
+%include c "Computer/example2.h"
 
 -- Consider this graph
 --
@@ -109,29 +111,27 @@ InvoiceId = TMu [("ZZ", T1), ("SS", TVar 0)]
 -- we also need to map the arrows of the graph
 
 -- login just creates an empty cart
-login : Ty [] T1 -> JS_IO $ Ty [] CartContent
+login : Ty [] T1 -> IO $ Ty [] CartContent
 login () = pure $ Inn (Left ())
 
 -- add product asks the use for a product id and a quantity, and adds it to the cart
-readIntFromUser : JS_IO Int
-readIntFromUser = foreign FFI_JS readInt (JS_IO Int)
-  where
-    readInt : String
-    readInt =
-      """
-        (function() {
-          const readline = require('readline');
+readIntFromUser : () -> IO Int
+readIntFromUser = foreign FFI_C "readInt" (() -> IO Int)
 
-          const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-          });
+      -- """
+      --   (function() {
+      --     const readline = require('readline');
 
-          return rl.question('Please enter an integer', (input) => {
-            return input;
-          });
-        })();
-      """
+      --     const rl = readline.createInterface({
+      --       input: process.stdin,
+      --       output: process.stdout
+      --     });
+
+      --     return rl.question('Please enter an integer', (input) => {
+      --       return input;
+      --     });
+      --   })()
+      -- """
 
 intToProductId : Int -> Either () (Either () (Either () ()))
 intToProductId i = assert_total $
@@ -141,47 +141,56 @@ intToProductId i = assert_total $
   else if remainder == 2 then Right $ Right $ Left  ()
   else                        Right $ Right $ Right ()
 
-readProductIdFromUser : JS_IO $ Ty [] ProductId
+readProductIdFromUser : IO $ Ty [] ProductId
 readProductIdFromUser = do
-  intFromUser <- readIntFromUser
+  intFromUser <- readIntFromUser ()
   pure $ intToProductId intFromUser
 
 natToQuantity : Nat -> Ty [] InvoiceId
 natToQuantity Z     = Inn (Left ())
 natToQuantity (S n) = Inn (Right $ natToQuantity n)
 
-readQuantityFromUser : JS_IO $ Ty [] Quantity
+readQuantityFromUser : IO $ Ty [] Quantity
 readQuantityFromUser = do
-  intFromUser <- readIntFromUser
+  intFromUser <- readIntFromUser ()
   pure $ natToQuantity . cast $ intFromUser
 
-addProduct : Ty [] CartContent -> JS_IO $ Ty [] CartContent
-addProduct (Inn cartContent) = do
+weakenNat : Mu [] (TSum [T1, TVar FZ]) -> Mu v (TSum [T1, TVar FZ])
+weakenNat (Inn (Left ())) = Inn (Left ())
+weakenNat (Inn (Right r)) = Inn (Right (weakenNat r))
+
+addProduct : Ty [] CartContent -> IO $ Ty [] CartContent
+addProduct cartContent = do
   productId <- readProductIdFromUser
   quantity  <- readQuantityFromUser
-  -- pure $ Inn (Right $ ((productId, ?qwer), ?asdf))
-  pure $ Inn cartContent
+  pure $ Inn (Right $ ((productId, weakenNat quantity), cartContent))
 
 -- checkout generates a random invoice id
 natToInvoiceId : Nat -> Ty [] InvoiceId
 natToInvoiceId Z     = Inn (Left ())
 natToInvoiceId (S n) = Inn (Right $ natToInvoiceId n)
 
-generateRandomInt : JS_IO Int
-generateRandomInt = foreign FFI_JS generateInt (JS_IO Int)
+generateRandomInt : () -> IO Int
+generateRandomInt = foreign FFI_C generateInt (() -> IO Int)
   where
     generateInt : String
     generateInt =
       """
-        (function () {
-          return Math.floor((Math.random() * 100000000) + 1);
-        })()
+        int generateInt() {
+          return 5;
+        }
       """
 
-generateInvoiceNumber : JS_IO Nat
-generateInvoiceNumber = cast <$> generateRandomInt
+      -- """
+      --   (function () {
+      --     return Math.floor((Math.random() * 100000000) + 1);
+      --   })()
+      -- """
 
-checkout : Ty [] CartContent -> JS_IO $ Ty [] InvoiceId
+generateInvoiceNumber : IO Nat
+generateInvoiceNumber = cast <$> generateRandomInt ()
+
+checkout : Ty [] CartContent -> IO $ Ty [] InvoiceId
 checkout (Inn cartContent) = do
   randomNat <- generateInvoiceNumber
   pure $ natToInvoiceId randomNat
@@ -193,7 +202,7 @@ path = [Here, There Here, There Here, There $ There Here]
 
 -- and finally we compute
 
-walkOnTheWildSide : Maybe (JS_IO $ Ty [] InvoiceId)
+walkOnTheWildSide : Maybe (IO $ Ty [] InvoiceId)
 walkOnTheWildSide = compute'
   EcommerceGraph
   EcommerceGraphIsFinite
