@@ -1,9 +1,26 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
 
 int readInt() {
-  return 5;
+  char buffer[1];
+
+  printf("Please enter an integer value\n");
+
+  read(STDIN_FILENO, buffer, 1);
+
+  return buffer[0];
 }
 
 int generateInt() {
-  return 5;
+  int chaos;
+
+  srand(time(NULL));
+
+  chaos = rand() % 100000;
+
+  printf("The generated number is %d\n", chaos);
+
+  return chaos;
 }

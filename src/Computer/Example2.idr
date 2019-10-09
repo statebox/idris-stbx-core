@@ -171,15 +171,15 @@ natToInvoiceId Z     = Inn (Left ())
 natToInvoiceId (S n) = Inn (Right $ natToInvoiceId n)
 
 generateRandomInt : () -> IO Int
-generateRandomInt = foreign FFI_C generateInt (() -> IO Int)
-  where
-    generateInt : String
-    generateInt =
-      """
-        int generateInt() {
-          return 5;
-        }
-      """
+generateRandomInt = foreign FFI_C "generateInt" (() -> IO Int)
+  -- where
+  --   generateInt : String
+  --   generateInt =
+  --     """
+  --       int generateInt() {
+  --         return 5;
+  --       }
+  --     """
 
       -- """
       --   (function () {
@@ -198,7 +198,7 @@ checkout (Inn cartContent) = do
 -- we provide the path
 
 path : Path EcommerceGraph Guest PurchaseCompleted
-path = [Here, There Here, There Here, There $ There Here]
+path = [Here, There Here, {-There Here,-} There $ There Here]
 
 -- and finally we compute
 

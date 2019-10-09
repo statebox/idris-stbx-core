@@ -20,6 +20,4 @@ main =
     Nothing => putStrLn' "Ouch, something went wrong"
     Just goForAWalk => do
       invoiceId <- goForAWalk
-      putStrLn' $ "The invoice id is" ++ invoiceIdToString invoiceId
-
-  
+      putStrLn' $ "The invoice id is " ++ invoiceIdToString invoiceId
