@@ -7,6 +7,7 @@ modules =
   GraphFunctor.GraphEmbedding,
   Computer.ComputerC,
   Computer.Example2,
+  Computer.Example2Helper,
   Main2
 
 main = Main2
