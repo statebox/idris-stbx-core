@@ -10,7 +10,13 @@ import GraphFunctor.FFICategory
 
 --import Computer.Computer
 --import Computer.Example1
---import Typedefs.Typedefs
+
+import Data.NEList
+import Typedefs.Typedefs
+import Typedefs.Parse
+
+import TParsec
+import TParsec.Running
 
 import Data.Vect
 
@@ -26,54 +32,57 @@ import Util.Max
 
 %include c "fficat.h"
 
-data ProcError = FErr FileError | PErr ParseError
+data ProcError = FErr FileError | PErr ParseError | TPErr Parse.Error
 
 Show ProcError where
   show (FErr ferr) = "Filesystem error: " ++ show ferr
   show (PErr (ErrorMsg err)) = "Parse error: " ++ err
+  show (TPErr err) = "Tparsec error: " ++ show err
 
 processArgs : List String -> Either ParseError CommandLineOpts
 processArgs (_ :: opts) = runParserFully parseCmdlineOpts opts
 processArgs  _          = Left (ErrorMsg "Not enough arguments")
 
-readInput : String -> (String -> Either ParseError a) -> IO (Either ProcError (List a))
-readInput fn parseLine = do Right str <- readFile fn
-                             | Left err => pure (Left $ FErr err)
-                            pure $ leftMap PErr $ traverse parseLine $ lines str
+readInput : String -> (String -> Result Error a) -> IO (Either ProcError a)
+readInput fn parse = do Right str <- readFile fn
+                         | Left err => pure (Left $ FErr err)
+                        pure $ result (Left . TPErr) (Left . TPErr) Right $ parse str
 
-readFSM : InFSM -> IO (Either ProcError (List (Nat, Nat)))
-readFSM (FSMFile f) = readInput f parseLine
-  where
-  parseLine : String -> Either ParseError (Nat, Nat)
-  parseLine str = do toks <- maybeToEither (ErrorMsg "malformed FSM file") (validateLength (split (== ' ') str) 2)
-                     [v0,v1] <- traverse (maybeToEither (ErrorMsg "not a number") . parseNat) toks
-                     pure (v0,v1)
+readTypedefs : InTD -> IO (Either ProcError (NEList (n : Nat ** TNamed n)))
+readTypedefs (TDFile f) = readInput f parseTNameds
 
-readFFI : InFFI -> IO (Either ProcError (List (Nat, String)))
-readFFI (FFIFile f) = readInput f parseLine
+ParserF : Type -> Nat -> Type
+ParserF = Parser (TParsecT Error Void Identity) chars
+
+fsmParser : All (ParserF (NEList (Nat, String), NEList (Nat, Nat, String)))
+fsmParser = states `and` (withSpaces (string "---") `rand` transitions)
   where
-  parseLine : String -> Either ParseError (Nat, String)
-  parseLine str = do [tok,fun] <- maybeToEither (ErrorMsg "malformed FFI file") (validateLength (split (== ' ') str) 2)
-                     e <- maybeToEither (ErrorMsg "not a number") (parseNat tok)
-                     pure (e,fun)
+  states : All (ParserF (NEList (Nat, String)))
+  states = nelist $ decimalNat `and` withSpaces alphas
+  transitions : All (ParserF (NEList (Nat, Nat, String)))
+  transitions = nelist $ decimalNat `and` (withSpaces decimalNat `and` withSpaces alphas)
+
+readFSM : InFSM -> IO (Either ProcError (NEList (Nat, String), NEList (Nat, Nat, String)))
+readFSM (FSMFile f) = readInput f (\s => getResult $ parseResult s fsmParser)
 
 runWithOptions : CoreOpts -> IO ()
-runWithOptions (MkCoreOpts fsmf ffif firings) =
+runWithOptions (MkCoreOpts tdf fsmf firings) =
   do disableBuffering  -- don't remove this!
+     Right tdef <- readTypedefs tdf
+       | Left err => putStrLn ("Typedefs read error: " ++ show err)
      Right fsm <- readFSM fsmf
-       | _ => putStrLn "FSM read error"
-     Right ffi <- readFFI ffif
-       | _ => putStrLn "FFI read error"
-     case constructMap ffi of
-       Just m =>
-         let v = ffiEdges fsm in
-         case validateContents firings (length fsm) of
-           Just vf =>
-             case firingPath v vf of
-               Just (s**t**p) => pure $ mapMor (ffiFunctor v m) s t p ()
-               Nothing => putStrLn "malformed firing sequence: misaligned path"
-           Nothing => putStrLn "malformed firing sequence: numbers outside of graph"
-       Nothing => putStrLn "unknown FFI function in map"
+       | Left err => putStrLn ("FSM read error:" ++ show err)
+     putStrLn "test"
+  -- case constructMap ffi of
+  --   Just m =>
+  --     let v = ffiEdges fsm in
+  --     case validateContents firings (length fsm) of
+  --       Just vf =>
+  --         case firingPath v vf of
+  --           Just (s**t**p) => pure $ mapMor (ffiFunctor v m) s t p ()
+  --           Nothing => putStrLn "malformed firing sequence: misaligned path"
+  --       Nothing => putStrLn "malformed firing sequence: numbers outside of graph"
+  --   Nothing => putStrLn "unknown FFI function in map"
 
 partial
 --main : IO' FFI_JS ()

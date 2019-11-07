@@ -8,12 +8,12 @@ modules =
   Computer.ComputerC,
   Computer.Example2,
   Computer.Example2Helper,
-  Main2
+  Main
 
-main = Main2
+main = Main
 
 executable = fficat
 
-pkgs = contrib, idris-ct, typedefs-core
+pkgs = contrib, idris-ct, tparsec, optparse, typedefs-core
 
 opts = "--cg-opt Computer/example2.c"

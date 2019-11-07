@@ -13,17 +13,17 @@ Show InFSM where
   show (FSMFile str) = str
 
 public export
-data InFFI = FFIFile String
+data InTD = TDFile String
 
 public export
-Show InFFI where
-  show (FFIFile str) = str
+Show InTD where
+  show (TDFile str) = str
 
 inFSMP : Parser InFSM
 inFSMP = FSMFile <$> strOption (long "fsm")
 
-inFFIP : Parser InFFI
-inFFIP = FFIFile <$> strOption (long "ffi")
+inTDP : Parser InTD
+inTDP = TDFile <$> strOption (long "tdef")
 
 firingsP : Parser (List Nat)
 firingsP = option parseNatSeq (long "fire" . short 'f')
@@ -34,33 +34,33 @@ firingsP = option parseNatSeq (long "fire" . short 'f')
 public export
 record CoreOpts where
   constructor MkCoreOpts
-  fsm : InFSM
-  ffi : InFFI
+  tdef    : InTD
+  fsm     : InFSM
   firings : List Nat
 
 public export
 data CommandLineOpts = Help | Run CoreOpts | HelpFallback
 
 Show CoreOpts where
-  show (MkCoreOpts fsm ffi firings) = "fsm : " ++ show fsm ++ " ffi : " ++ show ffi ++ " firings : " ++ show firings
+  show (MkCoreOpts tdef fsm firings) = "fsm : " ++ show fsm ++ " tdef : " ++ show tdef ++ " firings : " ++ show firings
 
 export
 helpMessage : String
 helpMessage = """
 Usage:
-  core --fsm GRAPHFILE --ffi FFIMAP (--fire | -f) FIRINGS
+  core --tdef TDEFSFILE --fsm GRAPHFILE (--fire | -f) FIRINGS
 
+  --tdef     : path to the Typedefs definition file
   --fsm      : path to the FSM graph spec file
-  --ffi      : path to the FFI mapping file
   --fire, -f : comma-separated list of edge labels (currently natural numbers) to fire
 """
 
 export
 fallbackMessage : String
-fallbackMessage = "Wrong arguments, expected --help or --fsm GRAPHFILE --ffi FFIMAP (--fire | -f) FIRINGS"
+fallbackMessage = "Wrong arguments, expected --help or --tdef TDEFSFILE --fsm GRAPHFILE (--fire | -f) FIRINGS"
 
 parseCoreOpts : Parser CoreOpts
-parseCoreOpts = [| MkCoreOpts inFSMP inFFIP firingsP |]
+parseCoreOpts = [| MkCoreOpts inTDP inFSMP firingsP |]
 
 export
 parseCmdlineOpts : Parser CommandLineOpts
