@@ -18,7 +18,7 @@ import Typedefs.Parse
 import TParsec
 import TParsec.Running
 
-import Data.Vect
+import Free.Graph
 
 import Data.SortedMap
 import Data.Vect
@@ -26,6 +26,8 @@ import Options.Applicative
 import Cmdline
 import Util.Misc
 import Util.Max
+
+import Computer.Example2A
 
 %access public export
 %default total
@@ -70,9 +72,15 @@ runWithOptions (MkCoreOpts tdf fsmf firings) =
   do disableBuffering  -- don't remove this!
      Right tdef <- readTypedefs tdf
        | Left err => putStrLn ("Typedefs read error: " ++ show err)
-     Right fsm <- readFSM fsmf
+     Right (vs, es) <- readFSM fsmf
        | Left err => putStrLn ("FSM read error:" ++ show err)
-     putStrLn "test"
+     printLn tdef
+     printLn vs
+     printLn es
+     putStrLn "-------"
+     let mgraph = mkGraph (parseVertices vs) es
+     printLn $ the Nat $ maybe 0 (\(MkGraph vt edg) => Vect.length edg) mgraph
+
   -- case constructMap ffi of
   --   Just m =>
   --     let v = ffiEdges fsm in
