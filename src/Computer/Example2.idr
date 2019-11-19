@@ -51,10 +51,34 @@ import Typedefs.Names
 
 data EcommerceState = Guest | Cart | PurchaseCompleted
 
+GuestNotCart : Guest = Cart -> Void
+GuestNotCart Refl impossible
+
+GuestNotPurchaseCompleted : Guest = PurchaseCompleted -> Void
+GuestNotPurchaseCompleted Refl impossible
+
+CartNotPurchaseCompleted : Cart = PurchaseCompleted -> Void
+CartNotPurchaseCompleted Refl impossible
+
+DecEq EcommerceState where
+  decEq Guest Guest = Yes Refl
+  decEq Guest Cart = No GuestNotCart
+  decEq Guest PurchaseCompleted = No GuestNotPurchaseCompleted
+  decEq Cart Guest = No (negEqSym GuestNotCart)
+  decEq Cart Cart = Yes Refl
+  decEq Cart PurchaseCompleted = No CartNotPurchaseCompleted
+  decEq PurchaseCompleted Guest = No (negEqSym GuestNotPurchaseCompleted)
+  decEq PurchaseCompleted Cart = No (negEqSym CartNotPurchaseCompleted)
+  decEq PurchaseCompleted PurchaseCompleted = Yes Refl
+
+Eq EcommerceState where
+  Guest             == Guest             = True
+  Cart              == Cart              = True
+  PurchaseCompleted == PurchaseCompleted = True
+  _                 == _                 = False
+
 EcommerceGraph : Graph
-EcommerceGraph = MkGraph
-  EcommerceState
-  [(Guest, Cart), (Cart, Cart), (Cart, PurchaseCompleted)]
+EcommerceGraph = edgeList {n = 3} [(Guest, Cart), (Cart, Cart), (Cart, PurchaseCompleted)]
 
 -- Proof that the set of vertices is finite
 
@@ -145,7 +169,7 @@ checkout (Inn cartContent) = do
 -- we provide the path
 
 path : Path EcommerceGraph Guest PurchaseCompleted
-path = [Here, There Here, There Here, There $ There Here]
+path = edgeListPath $ Here `Cons` (There Here `Cons` (There Here `Cons` ((There $ There Here) `Cons` Empty)))
 
 -- and finally we compute
 
