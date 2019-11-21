@@ -6,6 +6,7 @@ modules =
   GraphFunctor.ClosedTypedefsAsCategory,
   GraphFunctor.GraphEmbedding,
   Computer.ComputerC,
+  Computer.IGraph,
   Computer.Example2,
   Computer.Example2Helper,
   Main

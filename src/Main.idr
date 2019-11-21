@@ -3,10 +3,10 @@ module Main
 import Basic.Category
 import Basic.Functor
 import Idris.TypesAsCategory
-import GraphFunctor.Graph
-import Free.Graph
-import GraphFunctor.FreeFunctor
-import GraphFunctor.FFICategory
+--import GraphFunctor.Graph
+--import Free.Graph
+--import GraphFunctor.FreeFunctor
+--import GraphFunctor.FFICategory
 
 --import Computer.Computer
 --import Computer.Example1
@@ -27,12 +27,16 @@ import Cmdline
 import Util.Misc
 import Util.Max
 
+import Computer.IGraph
 import Computer.Example2A
 
 %access public export
 %default total
 
 %include c "fficat.h"
+
+Show (Fin n) where
+  show = show . finToNat
 
 data ProcError = FErr FileError | PErr ParseError | TPErr Parse.Error
 
@@ -79,7 +83,10 @@ runWithOptions (MkCoreOpts tdf fsmf firings) =
      printLn es
      putStrLn "-------"
      let mgraph = mkGraph (parseVertices vs) es
-     printLn $ the Nat $ maybe 0 (\(MkGraph vt edg) => Vect.length edg) mgraph
+     let labels = lookupLabels firings es
+     let path = [| firingPath mgraph labels |]
+     ?wat
+     --printLn mgraph --$ the Nat $ maybe 0 (\(MkGraph vt edg) => Vect.length edg) mgraph
 
   -- case constructMap ffi of
   --   Just m =>

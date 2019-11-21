@@ -25,18 +25,18 @@ inFSMP = FSMFile <$> strOption (long "fsm")
 inTDP : Parser InTD
 inTDP = TDFile <$> strOption (long "tdef")
 
-firingsP : Parser (List Nat)
-firingsP = option parseNatSeq (long "fire" . short 'f')
-  where
-  parseNatSeq : String -> Either ParseError (List Nat)
-  parseNatSeq = traverse (maybeToEither (ErrorMsg "not a number") . parseNat) . split (== ',')
+firingsP : Parser (List String)
+firingsP = option (Right . split (== ',')) (long "fire" . short 'f')
+--  where
+--  parseNatSeq : String -> Either ParseError (List Nat)
+--  parseNatSeq = traverse (maybeToEither (ErrorMsg "not a number") . parseNat) . split (== ',')
 
 public export
 record CoreOpts where
   constructor MkCoreOpts
   tdef    : InTD
   fsm     : InFSM
-  firings : List Nat
+  firings : List String
 
 public export
 data CommandLineOpts = Help | Run CoreOpts | HelpFallback

@@ -21,14 +21,14 @@
 
 module Computer.Example2A
 
+import Util.Elem
 import Basic.Category
 import Computer.ComputerC
 import Computer.Example2Helper
 import Control.Isomorphism
 import Data.NEList
 import Data.Vect
-import Free.Graph
-import Free.Path
+import Computer.IGraph
 import GraphFunctor.GraphEmbedding
 import Typedefs.Typedefs
 import Typedefs.Names
@@ -42,12 +42,39 @@ parseVertices : (vs : NEList (Nat, String)) -> Vect (length vs) (Nat, String)
 parseVertices = toVect
 
 -- first param is vertex mapping
-mkGraph : Vect len (Nat, String) -> NEList (Nat, Nat, String) -> Maybe Graph
-mkGraph {len} vs es = map (MkGraph {n=length es} (Fin len)) $
+mkGraph : Vect len (Nat, String) -> NEList (Nat, Nat, String) -> Maybe (Graph (Fin len))
+mkGraph {len} vs es = map (MkGraph {n=length es}) $
   traverse (\(fro, to, _) => [| MkPair (rlookup fro) (rlookup to) |]) (toVect es)
     where
      rlookup : Nat -> Maybe (Fin len)
      rlookup n = findIndex (\(m, _) => m == n) vs
+
+edgeNumProof : (vm : Vect len (Nat, String)) -> (em : NEList (Nat, Nat, String)) -> case mkGraph vm em of
+                                                                                      Just gr => numEdges gr = length em
+                                                                                      Nothing => ()
+edgeNumProof vm (MkNEList e em) = ?wat
+
+-- TODO verify that edge labels are distinct
+lookupLabels : List String -> (em : NEList (Nat, Nat, String)) -> Maybe (List (Fin (length em)))
+lookupLabels lbs em = traverse rlookup lbs
+  where
+    em' : Vect (length em) (Nat, Nat, String)
+    em' = toVect em
+    rlookup : String -> Maybe (Fin (length em))
+    rlookup l = findIndex (\(_, _, l') => l == l') em'
+
+-- TODO lookup labels
+firingPath : (g : Graph (Fin len)) -> List (Fin (numEdges g)) -> Maybe (s ** t ** Path g s t)
+firingPath g [] = Nothing
+firingPath g [e] = let ((i,j)**el) = indexElem e (edges g) in Just (i ** j ** [el])
+firingPath g (e::es) = firingPath g es >>= go
+  where
+  go : (s ** t ** Path g s t) -> Maybe (s ** t ** Path g s t)
+  go (s**t**p) =
+    let ((i,j)**el) = indexElem e (edges g) in
+    case decEq j s of
+      Yes eq => Just (i ** t ** el :: (rewrite eq in p))
+      No _ => Nothing
 
 {-
 %include c "Computer/example2.h"
