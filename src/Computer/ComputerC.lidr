@@ -34,6 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > import GraphFunctor.GraphEmbedding
 > import Idris.TypesAsCategoryExtensional
 > import Monad.KleisliCategory
+> import Monad.KleisliCategoryHelpers
 > import Monad.IOMonad
 > import Monad.Monad
 > import Typedefs.Typedefs
