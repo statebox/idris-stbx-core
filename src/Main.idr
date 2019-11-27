@@ -71,6 +71,11 @@ fsmParser = states `and` (withSpaces (string "---") `rand` transitions)
 readFSM : InFSM -> IO (Either ProcError (NEList (Nat, String), NEList (Nat, Nat, String)))
 readFSM (FSMFile f) = readInput f (\s => getResult $ parseResult s fsmParser)
 
+buildPath : (graphPrf : (graph : Graph (Fin lenV) ** numEdges graph = lenE))
+         -> List (Fin lenE)
+         -> Maybe (s ** t ** Path (fst graphPrf) s t)
+buildPath graphPrf labels = firingPath (fst graphPrf) (rewrite snd graphPrf in labels)
+
 runWithOptions : CoreOpts -> IO ()
 runWithOptions (MkCoreOpts tdf fsmf firings) =
   do disableBuffering  -- don't remove this!
@@ -82,10 +87,13 @@ runWithOptions (MkCoreOpts tdf fsmf firings) =
      printLn vs
      printLn es
      putStrLn "-------"
-     let mgraph = mkGraph (parseVertices vs) es
-     let labels = lookupLabels firings es
-     let path = [| firingPath mgraph labels |]
-     ?wat
+     let medges  = parseEdges (toVect vs) (toVect es)
+     let mgraph  = mkGraph <$> medges
+     let mlabels = lookupLabels (toVect es) firings
+     let mpath   = buildPath {lenE=length es} {lenV=length vs} <$> mgraph
+     -- let mpath = mgraph >>= (\graphPrf => mlabels >>= (\labels => firingPath (fst graphPrf) (rewrite snd graphPrf in labels)))
+     ?asdf
+     putStrLn "done"
      --printLn mgraph --$ the Nat $ maybe 0 (\(MkGraph vt edg) => Vect.length edg) mgraph
 
   -- case constructMap ffi of

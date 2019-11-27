@@ -23,8 +23,8 @@ module Computer.Example2A
 
 import Util.Elem
 import Basic.Category
-import Computer.ComputerC
-import Computer.Example2Helper
+-- import Computer.ComputerC
+-- import Computer.Example2Helper
 import Control.Isomorphism
 import Data.NEList
 import Data.Vect
@@ -36,34 +36,56 @@ import Typedefs.Names
 %access public export
 %default total
 
--- TODO validate that vertex labels are distinct
--- TODO pass in NEList (Nat, TDef) for vertices instead
-parseVertices : (vs : NEList (Nat, String)) -> Vect (length vs) (Nat, String)
-parseVertices = toVect
+parseEdges : Vect lenV (Nat, String) -> Vect lenE (Nat, Nat, String) -> Maybe (Vect lenE (Fin lenV, Fin lenV))
+parseEdges {lenV} vertices edges = traverse (\(from, to, _) => [| MkPair (rlookup from) (rlookup to) |]) edges
+  where
+    rlookup : Nat -> Maybe (Fin lenV)
+    rlookup n = findIndex (\(m, _) => m == n) vertices
+
+mkGraph : Vect lenE (Fin lenV, Fin lenV) -> (graph : Graph (Fin lenV) ** numEdges graph = lenE)
+mkGraph edges = (MkGraph edges ** Refl)
 
 -- first param is vertex mapping
-mkGraph : Vect len (Nat, String) -> NEList (Nat, Nat, String) -> Maybe (Graph (Fin len))
-mkGraph {len} vs es = map (MkGraph {n=length es}) $
-  traverse (\(fro, to, _) => [| MkPair (rlookup fro) (rlookup to) |]) (toVect es)
-    where
-     rlookup : Nat -> Maybe (Fin len)
-     rlookup n = findIndex (\(m, _) => m == n) vs
+-- mkGraph : Vect lenV (Nat, String) -> Vect lenE (Nat, Nat, String) -> Maybe (graph : Graph (Fin lenV) ** numEdges graph = lenE)
+-- mkGraph {lenV} {lenE} vertices edges = ?asdf
+--   where
+--     rlookup : Nat -> Maybe (Fin lenV)
+--     rlookup n = findIndex (\(m, _) => m == n) vertices
 
-edgeNumProof : (vm : Vect len (Nat, String)) -> (em : NEList (Nat, Nat, String)) -> case mkGraph vm em of
-                                                                                      Just gr => numEdges gr = length em
-                                                                                      Nothing => ()
-edgeNumProof vm (MkNEList e em) = ?wat
+--     graphEdges : Maybe (Vect lenE (Fin lenV, Fin lenV))
+--     graphEdges = traverse (\(from, to, _) => [| MkPair (rlookup from) (rlookup to) |]) edges
+
+--     graph : Maybe (Graph (Fin lenV))
+--     graph = MkGraph {n=lenE} <$> graphEdges
+
+--     prf : case graph of
+--             Just g  => numEdges g = lenE
+--             Nothing => ()
+--     prf with (graph)
+--       prf | Just g  = ?qwer
+--       prf | Nothing = ()
+  -- MkGraph {n=lenE} <$>
+  -- traverse (\(from, to, _) => [| MkPair (rlookup from) (rlookup to) |]) edges
+  --   where
+  --     rlookup : Nat -> Maybe (Fin lenV)
+  --     rlookup n = findIndex (\(m, _) => m == n) vertices
+
+-- edgeNumProof : (vertices : Vect lenV (Nat, String))
+--             -> (edges : Vect lenE (Nat, Nat, String))
+--             -> case mkGraph vertices edges of
+--                Just graph => numEdges graph = lenE
+--                Nothing => ()
+-- edgeNumProof vertices edges with (mkGraph vertices edges)
+--   edgeNumProof vertices edges | Just graph = ?wat
+--   edgeNumProof vertices edges | Nothing    = ()
 
 -- TODO verify that edge labels are distinct
-lookupLabels : List String -> (em : NEList (Nat, Nat, String)) -> Maybe (List (Fin (length em)))
-lookupLabels lbs em = traverse rlookup lbs
+lookupLabels : (edges : Vect len (Nat, Nat, String)) -> List String -> Maybe (List (Fin len))
+lookupLabels {len} edges = traverse rlookup
   where
-    em' : Vect (length em) (Nat, Nat, String)
-    em' = toVect em
-    rlookup : String -> Maybe (Fin (length em))
-    rlookup l = findIndex (\(_, _, l') => l == l') em'
+    rlookup : String -> Maybe (Fin len)
+    rlookup l = findIndex (\(_, _, l') => l == l') edges
 
--- TODO lookup labels
 firingPath : (g : Graph (Fin len)) -> List (Fin (numEdges g)) -> Maybe (s ** t ** Path g s t)
 firingPath g [] = Nothing
 firingPath g [e] = let ((i,j)**el) = indexElem e (edges g) in Just (i ** j ** [el])
