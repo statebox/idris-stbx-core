@@ -108,17 +108,11 @@ runWithOptions (MkCoreOpts tdf fsmf firings) =
      printLn vs
      printLn es
      putStrLn "-------"
-     let medges  = parseEdges (toVect vs) (toVect es)
-     let mgraph  = mkGraph <$> medges
-     let mlabels = lookupLabels (toVect es) firings
-     --let mpath = case mkGraph <$> medges of
-     --                 Just (graph ** prf) => ?what -- buildPath {lenV=S (length (tail vs))} {lenE=(S (length (tail es)))} graph prf <$> mlabels
-     --                 Nothing             => Nothing
-     -- let mpath   = buildPath {lenE=length es} {lenV=length vs} graph prf
-     -- let mpath = mgraph >>= (\graphPrf => mlabels >>= (\labels => firingPath (fst graphPrf) (rewrite snd graphPrf in labels)))
-     putStrLn "done"
-     -- printLn mgraph --$ the Nat $ maybe 0 (\(MkGraph vt edg) => Vect.length edg) mgraph
-     
+     case (parseEdges (toVect vs) (toVect es), lookupLabels (toVect es) firings) of
+          (Just edges, Just labels) => let (graph ** prf) = mkGraph edges
+                                           path = buildPath graph prf labels
+                                        in pure ()
+          _ => pure ()
 
   -- case constructMap ffi of
   --   Just m =>
