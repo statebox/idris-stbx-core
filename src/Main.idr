@@ -38,12 +38,13 @@ import Computer.Example2A
 Show (Fin n) where
   show = show . finToNat
 
-data ProcError = FErr FileError | PErr ParseError | TPErr Parse.Error
+data ProcError = FErr FileError | PErr ParseError | TPErr Parse.Error | TDefErr
 
 Show ProcError where
   show (FErr ferr) = "Filesystem error: " ++ show ferr
   show (PErr (ErrorMsg err)) = "Parse error: " ++ err
   show (TPErr err) = "Tparsec error: " ++ show err
+  show (TDefErr) = "Typedefs error: not closed."
 
 processArgs : List String -> Either ParseError CommandLineOpts
 processArgs (_ :: opts) = runParserFully parseCmdlineOpts opts
@@ -54,8 +55,17 @@ readInput fn parse = do Right str <- readFile fn
                          | Left err => pure (Left $ FErr err)
                         pure $ result (Left . TPErr) (Left . TPErr) Right $ parse str
 
-readTypedefs : InTD -> IO (Either ProcError (NEList (n : Nat ** TNamed n)))
-readTypedefs (TDFile f) = readInput f parseTNameds
+checkClosed' : (n ** TNamed n) -> Either ProcError (TNamed 0)
+checkClosed' (Z ** def) = pure def
+checkClosed' _ = Left TDefErr
+
+checkClosed : NEList (n ** TNamed n) -> Either ProcError (NEList (TNamed 0))
+checkClosed = traverse checkClosed'
+
+readTypedefs : InTD -> IO (Either ProcError (NEList (TNamed 0)))
+readTypedefs (TDFile f) = do Right ls <- readInput f parseTNameds
+                               | Left err => pure (Left err)
+                             pure $ checkClosed ls
 
 ParserF : Type -> Nat -> Type
 ParserF = Parser (TParsecT Error Void Identity) chars
@@ -71,10 +81,21 @@ fsmParser = states `and` (withSpaces (string "---") `rand` transitions)
 readFSM : InFSM -> IO (Either ProcError (NEList (Nat, String), NEList (Nat, Nat, String)))
 readFSM (FSMFile f) = readInput f (\s => getResult $ parseResult s fsmParser)
 
-buildPath : (graphPrf : (graph : Graph (Fin lenV) ** numEdges graph = lenE))
+buildPath : (graph : Graph (Fin lenV))
+         -> (prf : numEdges graph = lenE)
          -> List (Fin lenE)
-         -> Maybe (s ** t ** Path (fst graphPrf) s t)
-buildPath graphPrf labels = firingPath (fst graphPrf) (rewrite snd graphPrf in labels)
+         -> Maybe (s ** t ** Path graph s t)
+buildPath graph prf labels = firingPath graph (rewrite prf in labels)
+
+-- buildFunctorToTDef : {g : Graph vertices} -> (vertices -> TDef 0) -> CFunctor (FreeCategory g) (CompletePreorder (TDef 0))
+-- buildFunctorToTDef {g} f = (completePreorderMorphism f) `functorComposition` collapser (FreeCategory g)
+
+
+
+-- createFunctionFromVerticesToTdefs : Vect len (Nat, String) -> List (TNamed 0) -> ((Nat, String) -> TDef 0)
+-- createFunctionFromVerticesToTdefs vertices tdefs = lookforalllabel
+--        yes -> Just 
+--        no -> Nothing
 
 runWithOptions : CoreOpts -> IO ()
 runWithOptions (MkCoreOpts tdf fsmf firings) =
@@ -90,11 +111,14 @@ runWithOptions (MkCoreOpts tdf fsmf firings) =
      let medges  = parseEdges (toVect vs) (toVect es)
      let mgraph  = mkGraph <$> medges
      let mlabels = lookupLabels (toVect es) firings
-     let mpath   = buildPath {lenE=length es} {lenV=length vs} <$> mgraph
+     --let mpath = case mkGraph <$> medges of
+     --                 Just (graph ** prf) => ?what -- buildPath {lenV=S (length (tail vs))} {lenE=(S (length (tail es)))} graph prf <$> mlabels
+     --                 Nothing             => Nothing
+     -- let mpath   = buildPath {lenE=length es} {lenV=length vs} graph prf
      -- let mpath = mgraph >>= (\graphPrf => mlabels >>= (\labels => firingPath (fst graphPrf) (rewrite snd graphPrf in labels)))
-     ?asdf
      putStrLn "done"
-     --printLn mgraph --$ the Nat $ maybe 0 (\(MkGraph vt edg) => Vect.length edg) mgraph
+     -- printLn mgraph --$ the Nat $ maybe 0 (\(MkGraph vt edg) => Vect.length edg) mgraph
+     
 
   -- case constructMap ffi of
   --   Just m =>

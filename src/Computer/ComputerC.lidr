@@ -42,33 +42,33 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 > %access public export
 > %default total
 >
-> assembleFunctor :
->   -- a graph
->      (g : Graph)
->   -- the data for building a functor to the category of closed typedefs
->   -> (iso : Iso (vertices g) (Fin k))
->   -> (v : Vect k (obj ClosedTypedefsAsCategory.closedTypedefsAsCategory))
->   -> Vect (length $ edges g) (mor' ClosedTypedefsAsCategory.closedTypedefsAsCategory)
->   -- maybe return a functor from the path category to the category of closed typedefs
->   -> Maybe (CFunctor (pathCategory g) ClosedTypedefsAsCategory.closedTypedefsAsCategory)
-> assembleFunctor g iso v e =
->   (freeFunctor g) <$> (graphEmbedding {cat = ClosedTypedefsAsCategory.closedTypedefsAsCategory} iso v e)
+> --assembleFunctor :
+> --  -- a graph
+> --     (g : Graph)
+> --  -- the data for building a functor to the category of closed typedefs
+> --  -> (iso : Iso (vertices g) (Fin k))
+> --  -> (v : Vect k (obj ClosedTypedefsAsCategory.closedTypedefsAsCategory))
+> --  -> Vect (length $ edges g) (mor' ClosedTypedefsAsCategory.closedTypedefsAsCategory)
+> --  -- maybe return a functor from the path category to the category of closed typedefs
+> --  -> Maybe (CFunctor (pathCategory g) ClosedTypedefsAsCategory.closedTypedefsAsCategory)
+> --assembleFunctor g iso v e =
+> --  (freeFunctor g) <$> (graphEmbedding {cat = ClosedTypedefsAsCategory.closedTypedefsAsCategory} iso v e)
 >
-> compute :
->   -- a graph
->      (g : Graph)
->   -- initial and final vertices
->   -> (initialVertex, finalVertex : Graph.vertices g)
->   -- a functor to the category of closed typedefs
->   -> (func : CFunctor (pathCategory g) ClosedTypedefsAsCategory.closedTypedefsAsCategory)
->   -- a path in the graph from `initialVertex` to `finalVertex`
->   -> Path g initialVertex finalVertex
->   -- a value of the initial type
->   -> Ty [] (mapObj func initialVertex)
->   -- and we return a value of the final type
->   -> Ty [] (mapObj func finalVertex)
-> compute g initialVertex finalVertex func path initialValue =
->   (mapMor func initialVertex finalVertex path) initialValue
+> --compute :
+> --  -- a graph
+> --     (g : Graph)
+> --  -- initial and final vertices
+> --  -> (initialVertex, finalVertex : Graph.vertices g)
+> --  -- a functor to the category of closed typedefs
+> --  -> (func : CFunctor (pathCategory g) ClosedTypedefsAsCategory.closedTypedefsAsCategory)
+> --  -- a path in the graph from `initialVertex` to `finalVertex`
+> --  -> Path g initialVertex finalVertex
+> --  -- a value of the initial type
+> --  -> Ty [] (mapObj func initialVertex)
+> --  -- and we return a value of the final type
+> --  -> Ty [] (mapObj func finalVertex)
+> --compute g initialVertex finalVertex func path initialValue =
+> --  (mapMor func initialVertex finalVertex path) initialValue
 >
 > cClosedTypedefsKleiliCategory : Category
 > cClosedTypedefsKleiliCategory = ClosedTypedefsAsCategory.closedTypedefsAsKleisliCategory $ ioMonad FFI_C
