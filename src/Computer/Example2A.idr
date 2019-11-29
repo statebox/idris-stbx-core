@@ -21,17 +21,14 @@
 
 module Computer.Example2A
 
-import Util.Elem
-import Basic.Category
--- import Computer.ComputerC
--- import Computer.Example2Helper
-import Control.Isomorphism
-import Data.NEList
+-- base
 import Data.Vect
-import Computer.IGraph
-import GraphFunctor.GraphEmbedding
-import Typedefs.Typedefs
-import Typedefs.Names
+
+-- idris-ct
+import Graph.Graph
+import Graph.Path
+
+import Util.Elem
 
 %access public export
 %default total
@@ -44,40 +41,6 @@ parseEdges {lenV} vertices edges = traverse (\(from, to, _) => [| MkPair (rlooku
 
 mkGraph : Vect lenE (Fin lenV, Fin lenV) -> (graph : Graph (Fin lenV) ** numEdges graph = lenE)
 mkGraph edges = (MkGraph edges ** Refl)
-
--- first param is vertex mapping
--- mkGraph : Vect lenV (Nat, String) -> Vect lenE (Nat, Nat, String) -> Maybe (graph : Graph (Fin lenV) ** numEdges graph = lenE)
--- mkGraph {lenV} {lenE} vertices edges = ?asdf
---   where
---     rlookup : Nat -> Maybe (Fin lenV)
---     rlookup n = findIndex (\(m, _) => m == n) vertices
-
---     graphEdges : Maybe (Vect lenE (Fin lenV, Fin lenV))
---     graphEdges = traverse (\(from, to, _) => [| MkPair (rlookup from) (rlookup to) |]) edges
-
---     graph : Maybe (Graph (Fin lenV))
---     graph = MkGraph {n=lenE} <$> graphEdges
-
---     prf : case graph of
---             Just g  => numEdges g = lenE
---             Nothing => ()
---     prf with (graph)
---       prf | Just g  = ?qwer
---       prf | Nothing = ()
-  -- MkGraph {n=lenE} <$>
-  -- traverse (\(from, to, _) => [| MkPair (rlookup from) (rlookup to) |]) edges
-  --   where
-  --     rlookup : Nat -> Maybe (Fin lenV)
-  --     rlookup n = findIndex (\(m, _) => m == n) vertices
-
--- edgeNumProof : (vertices : Vect lenV (Nat, String))
---             -> (edges : Vect lenE (Nat, Nat, String))
---             -> case mkGraph vertices edges of
---                Just graph => numEdges graph = lenE
---                Nothing => ()
--- edgeNumProof vertices edges with (mkGraph vertices edges)
---   edgeNumProof vertices edges | Just graph = ?wat
---   edgeNumProof vertices edges | Nothing    = ()
 
 -- TODO verify that edge labels are distinct
 lookupLabels : (edges : Vect len (Nat, Nat, String)) -> List String -> Maybe (List (Fin len))
@@ -97,134 +60,3 @@ firingPath g (e::es) = firingPath g es >>= go
     case decEq j s of
       Yes eq => Just (i ** t ** el :: (rewrite eq in p))
       No _ => Nothing
-
-{-
-%include c "Computer/example2.h"
-
--- Consider this graph
---
---                 --------------
---              |--| AddProduct |-->|
---              |  --------------   |
---              |                   |
---              --------    ---------
---                      \  /
---         ---------     \/    ------------
--- Guest --| Login |--> Cart --| Checkout |--> PurchaseCompleted
---         ---------           ------------
-
-data EcommerceState = Guest | Cart | PurchaseCompleted
-
-EcommerceGraph : Graph
-EcommerceGraph = MkGraph
-  EcommerceState
-  [(Guest, Cart), (Cart, Cart), (Cart, PurchaseCompleted)]
-
--- Proof that the set of vertices is finite
-
-EcommerceGraphIsFinite : Iso (vertices EcommerceGraph) (Fin 3)
-EcommerceGraphIsFinite = MkIso
-  graphToFin
-  finToGraph
-  finToGraphToFin
-  graphToFinToGraph
-    where
-      graphToFin : EcommerceState -> Fin 3
-      graphToFin Guest             = FZ
-      graphToFin Cart              = FS FZ
-      graphToFin PurchaseCompleted = FS $ FS FZ
-
-      finToGraph : Fin 3 -> EcommerceState
-      finToGraph FZ           = Guest
-      finToGraph (FS FZ)      = Cart
-      finToGraph (FS (FS FZ)) = PurchaseCompleted
-
-      finToGraphToFin : (n : Fin 3)
-                     -> (graphToFin . finToGraph) n = n
-      finToGraphToFin FZ           = Refl
-      finToGraphToFin (FS FZ)      = Refl
-      finToGraphToFin (FS (FS FZ)) = Refl
-
-      graphToFinToGraph : (s : EcommerceState)
-                       -> (finToGraph . graphToFin) s = s
-      graphToFinToGraph Guest             = Refl
-      graphToFinToGraph Cart              = Refl
-      graphToFinToGraph PurchaseCompleted = Refl
-
--- we need to define a semantic
---
--- Guest             -> ()
--- Cart              -> [(ProductId, Quantity)]
--- PurchaseCompleted -> InvoiceId
---
--- where
---
--- ProductId is a sum type with 4 cases
--- Quantity  is a natural number
--- InvoiceId is a natural number
-
-InitialState : TDef 0
-InitialState = Unit
-
-ProductId : TDef 0
-ProductId = TSum [Unit, Unit, Unit, Unit]
-
-Quantity : TDef 0
-Quantity = Natural
-
-CartItem : TDef 0
-CartItem = TProd [ProductId, Quantity]
-
-CartContent : TDef 0
-CartContent = ListT CartItem
-
-InvoiceId : TDef 0
-InvoiceId = Natural
-
--- we also need to map the arrows of the graph
-
--- login just creates an empty cart
-
-login : Ty [] Unit -> IO $ Ty [] CartContent
-login () = pure $ Inn (Left ())
-
-
--- add product asks the use for a product id and a quantity,
--- and adds it to the cart
-
-addProduct : Ty [] CartContent -> IO $ Ty [] CartContent
-addProduct cartContent = do
-  productId <- readProductIdFromUser
-  quantity  <- readQuantityFromUser
-  pure $ Inn (Right $ ( (productId, weakenNat quantity)
-                      , cartContent))
-
--- checkout generates a random invoice id
-
-checkout : Ty [] CartContent -> IO $ Ty [] InvoiceId
-checkout (Inn cartContent) = do
-  randomNat <- generateInvoiceNumber
-  pure $ natToNatural randomNat
-
--- we provide the path
-
-path : Path EcommerceGraph Guest PurchaseCompleted
-path = [Here, There Here, There Here, There $ There Here]
-
--- and finally we compute
-
-walkOnTheWildSide : Maybe (IO $ Ty [] InvoiceId)
-walkOnTheWildSide = compute'
-  EcommerceGraph
-  EcommerceGraphIsFinite
-  [InitialState, CartContent, InvoiceId]
-  [ (  InitialState ** CartContent
-    ** MkExtensionalTypeMorphism login)
-  , (  CartContent ** CartContent
-    ** MkExtensionalTypeMorphism addProduct)
-  , (  CartContent ** InvoiceId
-    ** MkExtensionalTypeMorphism checkout)
-  ]
-  path
-  ()
--}
