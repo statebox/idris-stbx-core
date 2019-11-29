@@ -28,6 +28,10 @@ import Data.Vect
 import Graph.Graph
 import Graph.Path
 
+-- typedefs
+import Typedefs.Names
+import Typedefs.Typedefs
+
 import Util.Elem
 
 %access public export
@@ -60,3 +64,11 @@ firingPath g (e::es) = firingPath g es >>= go
     case decEq j s of
       Yes eq => Just (i ** t ** el :: (rewrite eq in p))
       No _ => Nothing
+
+vertexAsTypedefs : List (TNamed 0) -> (Nat, String) -> Maybe (Nat, TDef 0)
+vertexAsTypedefs availableTypedefs (n, label) =
+  let tnamed = find (\(TName name def) => name == label) availableTypedefs
+  in (\(TName _ def) => (n, def)) <$> tnamed
+
+verticesAsTypedefs : List (TNamed 0) -> Vect l (Nat, String) -> Maybe (Vect l (Nat, TDef 0))
+verticesAsTypedefs availableTypedefs vertices = traverse (vertexAsTypedefs availableTypedefs) vertices

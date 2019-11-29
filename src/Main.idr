@@ -95,7 +95,7 @@ buildPath graph prf labels = firingPath graph (rewrite prf in labels)
 
 -- createFunctionFromVerticesToTdefs : Vect len (Nat, String) -> List (TNamed 0) -> ((Nat, String) -> TDef 0)
 -- createFunctionFromVerticesToTdefs vertices tdefs = lookforalllabel
---        yes -> Just 
+--        yes -> Just
 --        no -> Nothing
 
 runWithOptions : CoreOpts -> IO ()
@@ -114,7 +114,10 @@ runWithOptions (MkCoreOpts tdf fsmf firings) = do
       let (graph ** prf) = mkGraph edges
           mpath = buildPath graph prf labels
       in case mpath of
-        Just path => ?asdf
+        Just path =>
+          case verticesAsTypedefs (NEList.toList tdef) (toVect vs) of
+            Just verticesTypedefs => ?asdf
+            Nothing               => putStrLn "Vertices have invalid typedefs"
         Nothing   => putStrLn "Invalid path"
     (Just _    , Nothing    ) => putStrLn "Labels lookup failed"
     _                         => putStrLn "Edges parsing failed"
