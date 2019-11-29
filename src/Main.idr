@@ -99,21 +99,25 @@ buildPath graph prf labels = firingPath graph (rewrite prf in labels)
 --        no -> Nothing
 
 runWithOptions : CoreOpts -> IO ()
-runWithOptions (MkCoreOpts tdf fsmf firings) =
-  do disableBuffering  -- don't remove this!
-     Right tdef <- readTypedefs tdf
-       | Left err => putStrLn ("Typedefs read error: " ++ show err)
-     Right (vs, es) <- readFSM fsmf
-       | Left err => putStrLn ("FSM read error:" ++ show err)
-     printLn tdef
-     printLn vs
-     printLn es
-     putStrLn "-------"
-     case (parseEdges (toVect vs) (toVect es), lookupLabels (toVect es) firings) of
-          (Just edges, Just labels) => let (graph ** prf) = mkGraph edges
-                                           path = buildPath graph prf labels
-                                        in pure ()
-          _ => pure ()
+runWithOptions (MkCoreOpts tdf fsmf firings) = do
+  disableBuffering  -- don't remove this!
+  Right tdef <- readTypedefs tdf
+    | Left err => putStrLn ("Typedefs read error: " ++ show err)
+  Right (vs, es) <- readFSM fsmf
+    | Left err => putStrLn ("FSM read error:" ++ show err)
+  printLn tdef
+  printLn vs
+  printLn es
+  putStrLn "-------"
+  case (parseEdges (toVect vs) (toVect es), lookupLabels (toVect es) firings) of
+    (Just edges, Just labels) =>
+      let (graph ** prf) = mkGraph edges
+          mpath = buildPath graph prf labels
+      in case mpath of
+        Just path => ?asdf
+        Nothing   => putStrLn "Invalid path"
+    (Just _    , Nothing    ) => putStrLn "Labels lookup failed"
+    _                         => putStrLn "Edges parsing failed"
 
   -- case constructMap ffi of
   --   Just m =>
