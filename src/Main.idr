@@ -1,39 +1,39 @@
 module Main
 
+-- base
+import Data.Vect
+
+-- contrib
+import Data.SortedMap
+
+-- idris-ct
 import Basic.Category
 import Basic.Functor
+import Graph.Graph
+import Graph.Path
 import Idris.TypesAsCategory
---import GraphFunctor.Graph
---import Free.Graph
---import GraphFunctor.FreeFunctor
---import GraphFunctor.FFICategory
 
---import Computer.Computer
---import Computer.Example1
+-- optparse
+import Options.Applicative
 
-import Data.NEList
+-- typedefs
 import Typedefs.Typedefs
 import Typedefs.Parse
 
+-- tparsec
+import Data.NEList
 import TParsec
 import TParsec.Running
 
-import Free.Graph
-
-import Data.SortedMap
-import Data.Vect
-import Options.Applicative
+import Computer.Example2A
 import Cmdline
 import Util.Misc
 import Util.Max
 
-import Computer.IGraph
-import Computer.Example2A
-
 %access public export
 %default total
 
-%include c "fficat.h"
+-- %include c "fficat.h"
 
 Show (Fin n) where
   show = show . finToNat
@@ -55,17 +55,18 @@ readInput fn parse = do Right str <- readFile fn
                          | Left err => pure (Left $ FErr err)
                         pure $ result (Left . TPErr) (Left . TPErr) Right $ parse str
 
-checkClosed' : (n ** TNamed n) -> Either ProcError (TNamed 0)
-checkClosed' (Z ** def) = pure def
-checkClosed' _ = Left TDefErr
+checkClosedTNamed : (n ** TNamed n) -> Either ProcError (TNamed 0)
+checkClosedTNamed (Z ** def) = pure def
+checkClosedTNamed _ = Left TDefErr
 
 checkClosed : NEList (n ** TNamed n) -> Either ProcError (NEList (TNamed 0))
-checkClosed = traverse checkClosed'
+checkClosed = traverse checkClosedTNamed
 
 readTypedefs : InTD -> IO (Either ProcError (NEList (TNamed 0)))
-readTypedefs (TDFile f) = do Right ls <- readInput f parseTNameds
-                               | Left err => pure (Left err)
-                             pure $ checkClosed ls
+readTypedefs (TDFile f) = do
+  Right ls <- readInput f parseTNameds
+    | Left err => pure (Left err)
+  pure $ checkClosed ls
 
 ParserF : Type -> Nat -> Type
 ParserF = Parser (TParsecT Error Void Identity) chars
