@@ -119,7 +119,7 @@ runWithOptions (MkCoreOpts tdf fsmf firings) = do
         Just path =>
           case (verticesAsTypedefs (NEList.toList tdef) (toVect vs), edgesAsMorphisms edges) of
             (Just verticesTypedefs, Just edgesMorphisms) =>
-              let a = compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) ?four ?five ?six
+              let a = compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) (rewrite prf in edgesMorphisms) (snd $ snd path) ?six
               in ?asdf
               -- case compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) ?four ?five ?six of
               --   Just computation => ?asdf -- do
