@@ -1,6 +1,7 @@
 module Main
 
 -- base
+import Control.Isomorphism
 import Data.Vect
 
 -- contrib
@@ -11,7 +12,7 @@ import Basic.Category
 import Basic.Functor
 import Graph.Graph
 import Graph.Path
-import Idris.TypesAsCategory
+import Idris.TypesAsCategoryExtensional
 
 -- optparse
 import Options.Applicative
@@ -25,8 +26,10 @@ import Data.NEList
 import TParsec
 import TParsec.Running
 
+import Computer.Computer
 import Computer.Example2A
 import Cmdline
+import GraphFunctor.GraphEmbedding
 import Util.Misc
 import Util.Max
 
@@ -109,15 +112,22 @@ runWithOptions (MkCoreOpts tdf fsmf firings) = do
   printLn vs
   printLn es
   putStrLn "-------"
-  case (parseEdges (toVect vs) (toVect es), lookupLabels (toVect es) firings) of
-    (Just edges, Just labels) =>
-      let (graph ** prf) = mkGraph edges
-          mpath = buildPath graph prf labels
-      in case mpath of
+  case (parseEdges (toVect vs) (toVect es), lookupEdges (toVect es) firings) of
+    (Just edges, Just pathEdges) =>
+      let (graph ** prf) = mkGraph ((\edge => (fst edge, fst $ snd edge)) <$> edges)
+      in case buildPath graph prf pathEdges of
         Just path =>
-          case verticesAsTypedefs (NEList.toList tdef) (toVect vs) of
-            Just verticesTypedefs => ?asdf
-            Nothing               => putStrLn "Vertices have invalid typedefs"
+          case (verticesAsTypedefs (NEList.toList tdef) (toVect vs), edgesAsMorphisms edges) of
+            (Just verticesTypedefs, Just edgesMorphisms) =>
+              let a = compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) ?four ?five ?six
+              in ?asdf
+              -- case compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) ?four ?five ?six of
+              --   Just computation => ?asdf -- do
+              --     -- result <- computation
+              --     -- ?asdf
+              --   Nothing          => putStrLn "error while performing the computation"
+            (Just _               , Nothing            ) => putStrLn "Unrecognised morphism associated to an edge"
+            _                                            => putStrLn "Vertices have invalid typedefs"
         Nothing   => putStrLn "Invalid path"
     (Just _    , Nothing    ) => putStrLn "Labels lookup failed"
     _                         => putStrLn "Edges parsing failed"

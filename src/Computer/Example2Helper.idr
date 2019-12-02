@@ -7,6 +7,8 @@ import Typedefs.Names
 %access public export
 %default total
 
+%include c "Computer/example2.h"
+
 -- typedefs
 
 Unit : TDef n
@@ -19,6 +21,24 @@ ListT : TDef 0 -> TDef 0
 ListT t = TMu
   [ ("Nil", Unit)
   , ("Cons", TProd [weakenTDef t 1 LTEZero, TVar 0])]
+
+InitialState : TDef 0
+InitialState = Unit
+
+ProductId : TDef 0
+ProductId = TSum [Unit, Unit, Unit, Unit]
+
+Quantity : TDef 0
+Quantity = Natural
+
+CartItem : TDef 0
+CartItem = TProd [ProductId, Quantity]
+
+CartContent : TDef 0
+CartContent = ListT CartItem
+
+InvoiceId : TDef 0
+InvoiceId = Natural
 
 -- functions
 

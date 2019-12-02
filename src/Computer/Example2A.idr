@@ -25,6 +25,7 @@ module Computer.Example2A
 import Data.Vect
 
 -- idris-ct
+import Basic.Category
 import Graph.Graph
 import Graph.Path
 
@@ -32,23 +33,28 @@ import Graph.Path
 import Typedefs.Names
 import Typedefs.Typedefs
 
+import Computer.Computer
+import Computer.Example2Helper
+import GraphFunctor.GraphEmbedding
 import Util.Elem
 
 %access public export
 %default total
 
-parseEdges : Vect lenV (Nat, String) -> Vect lenE (Nat, Nat, String) -> Maybe (Vect lenE (Fin lenV, Fin lenV))
-parseEdges {lenV} vertices edges = traverse (\(from, to, _) => [| MkPair (rlookup from) (rlookup to) |]) edges
-  where
-    rlookup : Nat -> Maybe (Fin lenV)
-    rlookup n = findIndex (\(m, _) => m == n) vertices
+parseEdges : Vect lenV (Nat, String) -> Vect lenE (Nat, Nat, String) -> Maybe (Vect lenE (Fin lenV, Fin lenV, String))
+parseEdges {lenV} vertices edges = traverse
+  (\(from, to, label) => [| MkPair (rlookup from) [| MkPair (rlookup to) (pure label) |] |])
+  edges
+    where
+      rlookup : Nat -> Maybe (Fin lenV)
+      rlookup n = findIndex (\(m, _) => m == n) vertices
 
 mkGraph : Vect lenE (Fin lenV, Fin lenV) -> (graph : Graph (Fin lenV) ** numEdges graph = lenE)
 mkGraph edges = (MkGraph edges ** Refl)
 
 -- TODO verify that edge labels are distinct
-lookupLabels : (edges : Vect len (Nat, Nat, String)) -> List String -> Maybe (List (Fin len))
-lookupLabels {len} edges = traverse rlookup
+lookupEdges : (edges : Vect len (Nat, Nat, String)) -> List String -> Maybe (List (Fin len))
+lookupEdges {len} edges = traverse rlookup
   where
     rlookup : String -> Maybe (Fin len)
     rlookup l = findIndex (\(_, _, l') => l == l') edges
@@ -72,3 +78,37 @@ vertexAsTypedefs availableTypedefs (n, label) =
 
 verticesAsTypedefs : List (TNamed 0) -> Vect l (Nat, String) -> Maybe (Vect l (Nat, TDef 0))
 verticesAsTypedefs availableTypedefs vertices = traverse (vertexAsTypedefs availableTypedefs) vertices
+
+-- login just creates an empty cart
+
+login : Ty [] Unit -> IO $ Ty [] CartContent
+login () = pure $ Inn (Left ())
+
+
+-- add product asks the use for a product id and a quantity,
+-- and adds it to the cart
+
+addProduct : Ty [] CartContent -> IO $ Ty [] CartContent
+addProduct cartContent = do
+  productId <- readProductIdFromUser
+  quantity  <- readQuantityFromUser
+  pure $ Inn (Right $ ( (productId, weakenNat quantity)
+                      , cartContent))
+
+-- checkout generates a random invoice id
+
+checkout : Ty [] CartContent -> IO $ Ty [] InvoiceId
+checkout (Inn cartContent) = do
+  randomNat <- generateInvoiceNumber
+  pure $ natToNatural randomNat
+
+edgeAsMorphism : (Fin lenV, Fin lenV, String) -> Maybe (mor' $ Computer.cClosedTypedefsKleiliCategory FFI_C)
+edgeAsMorphism (_, _, label) =
+  if      label == "login"      then Just (InitialState ** CartContent ** MkExtensionalTypeMorphism login)
+  else if label == "addProduct" then Just (CartContent  ** CartContent ** MkExtensionalTypeMorphism addProduct)
+  else if label == "checkout"   then Just (CartContent  ** InvoiceId   ** MkExtensionalTypeMorphism checkout)
+  else Nothing
+
+edgesAsMorphisms : Vect lenE (Fin lenV, Fin lenV, String)
+                -> Maybe (Vect lenE (mor' $ Computer.cClosedTypedefsKleiliCategory FFI_C))
+edgesAsMorphisms edges = traverse edgeAsMorphism edges
