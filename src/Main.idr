@@ -101,6 +101,24 @@ buildPath graph prf labels = firingPath graph (rewrite prf in labels)
 --        yes -> Just
 --        no -> Nothing
 
+computeWithOptions : {vs : NEList (Nat, String)}
+                  -> (graph : Graph (Fin $ length vs))
+                  -> (verticesTypedefs : Vect (length vs) (TDef 0))
+                  -> Vect (numEdges graph) (mor' $ Computer.cClosedTypedefsKleiliCategory FFI_C)
+                  -> Path graph initialVertex finalVertex
+                  -> (Maybe (IO (Ty [] (Vect.index finalVertex verticesTypedefs))) -> IO ())
+                  -> IO ()
+computeWithOptions {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path cont with (Vect.index initialVertex verticesTypedefs) proof prf
+  computeWithOptions {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path cont | T1 =
+    (cont $ (Computer.compute {ffi=FFI_C}
+                              graph
+                              (isoRefl {a=Fin (length vs)})
+                              verticesTypedefs
+                              edgesMorphisms
+                              path
+                              (rewrite sym prf in ())))
+  computeWithOptions {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path cont | _ = putStrLn "path not starting at Unit"
+
 runWithOptions : CoreOpts -> IO ()
 runWithOptions (MkCoreOpts tdf fsmf firings) = do
   disableBuffering  -- don't remove this!
@@ -118,9 +136,25 @@ runWithOptions (MkCoreOpts tdf fsmf firings) = do
       in case buildPath graph prf pathEdges of
         Just path =>
           case (verticesAsTypedefs (NEList.toList tdef) (toVect vs), edgesAsMorphisms edges) of
-            (Just verticesTypedefs, Just edgesMorphisms) =>
-              let a = compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) (rewrite prf in edgesMorphisms) (snd $ snd path) ?six
-              in ?asdf
+            (Just verticesTypedefs, Just edgesMorphisms) => computeWithOptions {vs}
+                                                                               graph
+                                                                               (snd <$> verticesTypedefs)
+                                                                               (rewrite prf in edgesMorphisms)
+                                                                               (snd $ snd path)
+                                                                               (\mComputation => case mComputation of
+                                                                                                  Just computation => do
+                                                                                                                        _ <- computation
+                                                                                                                        putStrLn "done!"
+                                                                                                  Nothing          => putStrLn "error while performing the computation")
+              -- case Vect.index (fst path) (snd <$> verticesTypedefs) of
+              --   T1 => let
+              --           a = compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) (rewrite prf in edgesMorphisms) (snd $ snd path) ()
+              --         in ?asdf
+              --   _  => putStrLn "path not starting at unit"
+              -- let
+              --   -- b = Vect.index (fst path) (snd <$> verticesTypedefs)
+              --   a = compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) (rewrite prf in edgesMorphisms) (snd $ snd path) ?six
+              -- in ?asdf
               -- case compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) ?four ?five ?six of
               --   Just computation => ?asdf -- do
               --     -- result <- computation
