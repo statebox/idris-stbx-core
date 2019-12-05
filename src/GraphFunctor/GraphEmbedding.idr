@@ -58,19 +58,41 @@ extractMorphism {to} {i} {j} v e edge =
    (Yes Refl, Yes Refl) => pure e'
    _ => empty
 
-assembleElemM : Monad m =>
-     (ge : Vect n (gv, gv))
+assembleElemM : -- Monad m =>
+     Show gv => -- TODO: remove
+     Show (obj cat) => -- TODO: remove
+     (edges : Vect n (gv, gv))
   -> (to : gv -> Fin k)
-  -> (v : Vect k (obj cat))
-  -> (f : (i, j : gv) -> Elem (i, j) ge -> m (mor cat (Vect.index (to i) v) (Vect.index (to j) v)))
-  -> m ((i, j : gv) -> Elem (i, j) ge -> mor cat (Vect.index (to i) v) (Vect.index (to j) v))
-assembleElemM      {cat} []            to v f = pure (\_,_ => absurd)
-assembleElemM {gv} {cat} ((i,j) :: xs) to v f =
-  do x1 <- f i j Here
-     x2 <- assembleElemM {cat} xs to v (\k,l,el => f k l (There el))
-     pure $ \k,l,el => case el of
-                     Here => x1
-                     There el' => x2 k l el'
+  -> (vertices : Vect k (obj cat))
+  -> (f : (i, j : gv) -> Elem (i, j) edges -> Maybe (mor cat (Vect.index (to i) vertices) (Vect.index (to j) vertices)))
+  -> Maybe ((i, j : gv) -> Elem (i, j) edges -> mor cat (Vect.index (to i) vertices) (Vect.index (to j) vertices))
+-- assembleElemM      {cat} []            to vertices f = pure (\_,_ => absurd)
+-- assembleElemM {gv} {cat} ((i,j) :: xs) to vertices f =
+assembleElemM {gv} {cat} edges to vertices f = do
+  a <- pure $ unsafePerformIO $ do
+                          putStrLn "--- assembleElemM ---"
+                          printLn edges
+                          printLn vertices
+  case edges of
+    [] => pure (\_,_ => absurd)
+    ((i,j) :: xs) => do
+      b <- pure $ unsafePerformIO $ do
+                    putStrLn "--- assembleElemM inside"
+                    printLn a
+                    printLn i
+                    printLn j
+                    putStrLn "f i j Here"
+                    printLn $ isJust (f i j Here)
+                    putStrLn "any other string"
+                    printLn $ isJust (assembleElemM {cat} xs to vertices (\k, l, el => f k l (There el)))
+      (\a', b', k, l, el => case el of
+                              Here      => a'
+                              There el' => b' k l el') <$> f i j Here <*> assembleElemM {cat} xs to vertices (\k, l, el => f k l (There el))
+  -- do x1 <- f i j Here
+  --    x2 <- assembleElemM {cat} xs to vertices (\k,l,el => f k l (There el))
+  --    pure $ \k,l,el => case el of
+  --                    Here => x1
+  --                    There el' => x2 k l el'
 
 -- assembleMorphisms :
 --      DecEq (obj cat)
