@@ -79,6 +79,12 @@ vertexAsTypedefs availableTypedefs (n, label) =
 verticesAsTypedefs : List (TNamed 0) -> Vect l (Nat, String) -> Maybe (Vect l (Nat, TDef 0))
 verticesAsTypedefs availableTypedefs vertices = traverse (vertexAsTypedefs availableTypedefs) vertices
 
+buildPath : (graph : Graph (Fin lenV))
+         -> (prf : numEdges graph = lenE)
+         -> List (Fin lenE)
+         -> Maybe (s ** t ** Path graph s t)
+buildPath graph prf labels = firingPath graph (rewrite prf in labels)
+
 unwrap : TNamed 0 -> TDef 0
 unwrap (TName _ def) = def
 

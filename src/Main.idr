@@ -38,29 +38,31 @@ import Util.Max
 %access public export
 %default total
 
-buildPath : (graph : Graph (Fin lenV))
-         -> (prf : numEdges graph = lenE)
-         -> List (Fin lenE)
-         -> Maybe (s ** t ** Path graph s t)
-buildPath graph prf labels = firingPath graph (rewrite prf in labels)
+data ComputeError
+  = ComputationError
+  | PathDoesNotStartAtUnit
 
-computeWithOptions : {vs : NEList (Nat, String)}
+Show ComputeError where
+  show ComputationError       = "error while performing the computation"
+  show PathDoesNotStartAtUnit = "path not starting at Unit"
+
+computeOnPath : {vs : NEList (Nat, String)}
                   -> (graph : Graph (Fin $ length vs))
                   -> (verticesTypedefs : Vect (length vs) (TDef 0))
                   -> Vect (numEdges graph) (mor' $ Computer.cClosedTypedefsKleiliCategory FFI_C)
                   -> Path graph initialVertex finalVertex
-                  -> (Maybe (IO (Ty [] (Vect.index finalVertex verticesTypedefs))) -> IO ())
-                  -> IO ()
-computeWithOptions {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path cont with (Vect.index initialVertex verticesTypedefs) proof prf
-  computeWithOptions {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path cont | T1 =
-    (cont $ (Computer.compute {ffi=FFI_C}
-                              graph
-                              (isoRefl {a=Fin (length vs)})
-                              verticesTypedefs
-                              edgesMorphisms
-                              path
-                              (rewrite sym prf in ())))
-  computeWithOptions {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path cont | _ = putStrLn "path not starting at Unit"
+                  -> Either ComputeError (IO (Ty [] (Vect.index finalVertex verticesTypedefs)))
+computeOnPath {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path with (Vect.index initialVertex verticesTypedefs) proof prf
+  computeOnPath {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path | T1 =
+    maybe (Left ComputationError) Right $
+      Computer.compute {ffi=FFI_C}
+                       graph
+                       (isoRefl {a=Fin (length vs)})
+                       verticesTypedefs
+                       edgesMorphisms
+                       path
+                       (rewrite sym prf in ())
+  computeOnPath {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path | _ = Left PathDoesNotStartAtUnit
 
 runWithOptions : CoreOpts -> IO ()
 runWithOptions (MkCoreOpts (TDFile tdf) (FSMFile fsmf) firings) = do
@@ -76,14 +78,13 @@ runWithOptions (MkCoreOpts (TDFile tdf) (FSMFile fsmf) firings) = do
         Just (initialVertex ** finalVertex ** path) => do
           case (verticesAsTypedefs (NEList.toList tdef) (toVect vs), edgesAsMorphisms edges) of
             (Just verticesTypedefs, Just edgesMorphisms) =>
-              computeWithOptions {vs}
-                                  graph
-                                  (snd <$> verticesTypedefs)
-                                  (rewrite prf in edgesMorphisms)
-                                  path
-                                  (\mComputation => case mComputation of
-                                                     Just computation => ignore computation
-                                                     Nothing          => putStrLn "error while performing the computation")
+              case computeOnPath {vs}
+                                 graph
+                                 (snd <$> verticesTypedefs)
+                                 (rewrite prf in edgesMorphisms)
+                                 path of
+                Right computation => ignore computation
+                Left  error       => printLn error
             (Just _               , Nothing            ) => putStrLn "Unrecognised morphism associated to an edge"
             _                                            => putStrLn "Vertices have invalid typedefs"
         Nothing   => putStrLn "Invalid path"
