@@ -1,4 +1,4 @@
-module Cmdline
+module Parser.Cmdline
 
 import Options.Applicative
 import Util.Misc
@@ -27,9 +27,6 @@ inTDP = TDFile <$> strOption (long "tdef")
 
 firingsP : Parser (List String)
 firingsP = option (Right . split (== ',')) (long "fire" . short 'f')
---  where
---  parseNatSeq : String -> Either ParseError (List Nat)
---  parseNatSeq = traverse (maybeToEither (ErrorMsg "not a number") . parseNat) . split (== ',')
 
 public export
 record CoreOpts where
@@ -62,8 +59,12 @@ fallbackMessage = "Wrong arguments, expected --help or --tdef TDEFSFILE --fsm GR
 parseCoreOpts : Parser CoreOpts
 parseCoreOpts = [| MkCoreOpts inTDP inFSMP firingsP |]
 
-export
 parseCmdlineOpts : Parser CommandLineOpts
 parseCmdlineOpts = (Run <$> parseCoreOpts)
                <|> flag' Help (long "help" . short 'h')
                <|> pure HelpFallback
+
+export
+processArgs : List String -> Either ParseError CommandLineOpts
+processArgs (_ :: opts) = runParserFully parseCmdlineOpts opts
+processArgs  _          = Left (ErrorMsg "Not enough arguments")
