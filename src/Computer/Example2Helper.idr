@@ -9,36 +9,27 @@ import Typedefs.Names
 
 %include c "Computer/example2.h"
 
--- typedefs
+Natural : TNamed 0
+Natural = TName "Natural" $ TMu [("ZZ", T1), ("SS", TVar 0)]
 
-Unit : TDef n
-Unit = T1
+InitialState : TNamed 0
+InitialState = TName "InitialState" $ T1
 
-Natural : TDef 0
-Natural = TMu [("ZZ", Unit), ("SS", TVar 0)]
+ProductId : TNamed 0
+ProductId = TName "ProductId" $ TSum [T1, T1, T1, T1]
 
-ListT : TDef 0 -> TDef 0
-ListT t = TMu
-  [ ("Nil", Unit)
-  , ("Cons", TProd [weakenTDef t 1 LTEZero, TVar 0])]
+Quantity : TNamed 0
+Quantity = TName "Quantity" $ wrap Natural
 
-InitialState : TDef 0
-InitialState = Unit
+CartItem : TNamed 0
+CartItem = TName "CartItem" $ TProd [wrap ProductId, wrap Quantity]
 
-ProductId : TDef 0
-ProductId = TSum [Unit, Unit, Unit, Unit]
+CartContent : TNamed 0
+CartContent = TName "CartContent" $ TMu [("NilN", T1), ("ConsN", TProd [weakenTDef (TApp CartItem []) 1 LTEZero, TVar 0])]
+--CartContent = ListT CartItem
 
-Quantity : TDef 0
-Quantity = Natural
-
-CartItem : TDef 0
-CartItem = TProd [ProductId, Quantity]
-
-CartContent : TDef 0
-CartContent = ListT CartItem
-
-InvoiceId : TDef 0
-InvoiceId = Natural
+InvoiceId : TNamed 0
+InvoiceId = TName "InvoiceId" $ wrap Natural
 
 -- functions
 
@@ -64,11 +55,11 @@ generateRandomInt = foreign FFI_C "generateInt" (() -> IO Int)
 generateInvoiceNumber : IO Nat
 generateInvoiceNumber = cast <$> generateRandomInt ()
 
-natToNatural : Nat -> Ty [] Natural
+natToNatural : Nat -> Ty [] (Typedefs.wrap Natural)
 natToNatural Z     = Inn (Left ())
 natToNatural (S n) = Inn (Right $ natToNatural n)
 
-readQuantityFromUser : IO $ Ty [] Natural
+readQuantityFromUser : IO $ Ty [] (Typedefs.wrap Natural)
 readQuantityFromUser = do
   intFromUser <- readIntFromUser "quantity"
   pure $ natToNatural . cast $ intFromUser

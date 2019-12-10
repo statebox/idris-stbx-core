@@ -1,6 +1,6 @@
-0 initialState
-1 cartContent
-2 invoiceId
+0 InitialState
+1 CartContent
+2 InvoiceId
 ---
 0 1 login
 1 1 addProduct

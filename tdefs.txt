@@ -1,14 +1,14 @@
-(name initialState 1)
+(name InitialState 1)
 
-(name productId (+ 1 1 1 1))
+(name ProductId (+ 1 1 1 1))
 
-(name natural (mu (Z 1) (S (var 0))))
+(name Natural (mu (ZZ 1) (SS (var 0))))
 
-(name quantity natural)
+(name Quantity Natural)
 
-(name cartItem (* productId quantity))
+(name CartItem (* ProductId Quantity))
 
-(name cartContent (mu (NilN 1)
-                      (ConsN (* cartItem (var 0)))))
+(name CartContent (mu (NilN 1)
+                      (ConsN (* CartItem (var 0)))))
 
-(name invoiceId natural)
+(name InvoiceId Natural)

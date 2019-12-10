@@ -41,7 +41,7 @@ import Util.Max
 
 -- %include c "fficat.h"
 
-Show (Fin n) where
+[showFin] Show (Fin n) where
   show = show . finToNat
 
 data ProcError = FErr FileError | PErr ParseError | TPErr Parse.Error | TDefErr
@@ -114,6 +114,7 @@ computeWithOptions : {vs : NEList (Nat, String)}
 computeWithOptions {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path cont with (Vect.index initialVertex verticesTypedefs) proof prf
   computeWithOptions {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path cont | T1 =
     (cont $ (Computer.compute {ffi=FFI_C}
+                              @{showFin}
                               graph
                               (isoRefl {a=Fin (length vs)})
                               verticesTypedefs
@@ -129,73 +130,28 @@ runWithOptions (MkCoreOpts tdf fsmf firings) = do
     | Left err => putStrLn ("Typedefs read error: " ++ show err)
   Right (vs, es) <- readFSM fsmf
     | Left err => putStrLn ("FSM read error:" ++ show err)
-  printLn tdef
-  printLn vs
-  printLn es
-  putStrLn "-------"
   case (parseEdges (toVect vs) (toVect es), lookupEdges (toVect es) firings) of
     (Just edges, Just pathEdges) =>
       let (graph ** prf) = mkGraph ((\edge => (fst edge, fst $ snd edge)) <$> edges)
       in case buildPath graph prf pathEdges of
         Just (initialVertex ** finalVertex ** path) => do
-          printLn edges
-          printLn pathEdges
-          printLn graph
-          printLn $ initialVertex
-          printLn $ finalVertex
-          printLn path
-          putStrLn "-------"
           case (verticesAsTypedefs (NEList.toList tdef) (toVect vs), edgesAsMorphisms edges) of
-            (Just verticesTypedefs, Just edgesMorphisms) => do
-                                                              printLn verticesTypedefs
-                                                              -- printLn ((\edgeMorphism => (fst edgeMorphism, fst $ snd edgeMorphism)) <$> edgesMorphisms)
-                                                              putStrLn "-------"
-                                                              computeWithOptions {vs}
-                                                                                 graph
-                                                                                 (snd <$> verticesTypedefs)
-                                                                                 (rewrite prf in edgesMorphisms)
-                                                                                 path
-                                                                                 (\mComputation => case mComputation of
-                                                                                                    Just computation => do
-                                                                                                                          _ <- computation
-                                                                                                                          putStrLn "done!"
-                                                                                                    Nothing          => putStrLn "error while performing the computation")
-              -- case Vect.index (fst path) (snd <$> verticesTypedefs) of
-              --   T1 => let
-              --           a = compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) (rewrite prf in edgesMorphisms) (snd $ snd path) ()
-              --         in ?asdf
-              --   _  => putStrLn "path not starting at unit"
-              -- let
-              --   -- b = Vect.index (fst path) (snd <$> verticesTypedefs)
-              --   a = compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) (rewrite prf in edgesMorphisms) (snd $ snd path) ?six
-              -- in ?asdf
-              -- case compute {ffi=FFI_C} graph (isoRefl {a=Fin (length vs)}) (snd <$> verticesTypedefs) ?four ?five ?six of
-              --   Just computation => ?asdf -- do
-              --     -- result <- computation
-              --     -- ?asdf
-              --   Nothing          => putStrLn "error while performing the computation"
+            (Just verticesTypedefs, Just edgesMorphisms) =>
+              computeWithOptions {vs}
+                                  graph
+                                  (snd <$> verticesTypedefs)
+                                  (rewrite prf in edgesMorphisms)
+                                  path
+                                  (\mComputation => case mComputation of
+                                                     Just computation => ignore computation
+                                                     Nothing          => putStrLn "error while performing the computation")
             (Just _               , Nothing            ) => putStrLn "Unrecognised morphism associated to an edge"
             _                                            => putStrLn "Vertices have invalid typedefs"
         Nothing   => putStrLn "Invalid path"
     (Just _    , Nothing    ) => putStrLn "Labels lookup failed"
     _                         => putStrLn "Edges parsing failed"
 
-  -- case constructMap ffi of
-  --   Just m =>
-  --     let v = ffiEdges fsm in
-  --     case validateContents firings (length fsm) of
-  --       Just vf =>
-  --         case firingPath v vf of
-  --           Just (s**t**p) => pure $ mapMor (ffiFunctor v m) s t p ()
-  --           Nothing => putStrLn "malformed firing sequence: misaligned path"
-  --       Nothing => putStrLn "malformed firing sequence: numbers outside of graph"
-  --   Nothing => putStrLn "unknown FFI function in map"
-
 partial
---main : IO' FFI_JS ()
---main = do
---  _ <- pure $ applyReflect' (Left ())
---  pure ()
 main : IO ()
 main = do Right options <- processArgs <$> getArgs
             | Left (ErrorMsg msg) => putStrLn msg
@@ -203,24 +159,3 @@ main = do Right options <- processArgs <$> getArgs
                Help => putStrLn helpMessage
                HelpFallback => putStrLn fallbackMessage
                Run o => runWithOptions o
-
-test : Maybe (  (i, j : Fin 3)
-             -> Elem (i, j) [(FZ, FS FZ), (FS FZ, FS FZ), (FS FZ, FS $ FS FZ)]
-             -> mor (Computer.cClosedTypedefsKleiliCategory FFI_C) (Vect.index i [InitialState, CartContent, InvoiceId]) (Vect.index j [InitialState, CartContent, InvoiceId]))
-test = assembleElemM
-  {n=3}
-  {k=3}
-  {gv=Fin 3}
-  {cat = Computer.cClosedTypedefsKleiliCategory FFI_C}
-  -- {m = Maybe}
-  [(FZ, FS FZ), (FS FZ, FS FZ), (FS FZ, FS $ FS FZ)]
-  (id {a=Fin 3})
-  [InitialState, CartContent, InvoiceId]
-  (\k, l => extractMorphism {cat = Computer.cClosedTypedefsKleiliCategory FFI_C}
-                            {f = Maybe}
-                            {to=id {a=Fin 3}}
-                            [InitialState, CartContent, InvoiceId]
-                            [ (InitialState ** CartContent ** MkExtensionalTypeMorphism login)
-                            , (CartContent  ** CartContent ** MkExtensionalTypeMorphism addProduct)
-                            , (CartContent  ** InvoiceId   ** MkExtensionalTypeMorphism checkout)
-                            ])

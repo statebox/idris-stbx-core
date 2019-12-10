@@ -79,16 +79,19 @@ vertexAsTypedefs availableTypedefs (n, label) =
 verticesAsTypedefs : List (TNamed 0) -> Vect l (Nat, String) -> Maybe (Vect l (Nat, TDef 0))
 verticesAsTypedefs availableTypedefs vertices = traverse (vertexAsTypedefs availableTypedefs) vertices
 
+unwrap : TNamed 0 -> TDef 0
+unwrap (TName _ def) = def
+
 -- login just creates an empty cart
 
-login : Ty [] Unit -> IO $ Ty [] CartContent
+login : Ty [] T1 -> IO $ Ty [] (unwrap CartContent)
 login () = pure $ Inn (Left ())
 
 
 -- add product asks the use for a product id and a quantity,
 -- and adds it to the cart
 
-addProduct : Ty [] CartContent -> IO $ Ty [] CartContent
+addProduct : Ty [] (unwrap CartContent) -> IO $ Ty [] (unwrap CartContent)
 addProduct cartContent = do
   productId <- readProductIdFromUser
   quantity  <- readQuantityFromUser
@@ -97,16 +100,16 @@ addProduct cartContent = do
 
 -- checkout generates a random invoice id
 
-checkout : Ty [] CartContent -> IO $ Ty [] InvoiceId
+checkout : Ty [] (unwrap CartContent) -> IO $ Ty [] (unwrap InvoiceId)
 checkout (Inn cartContent) = do
   randomNat <- generateInvoiceNumber
   pure $ natToNatural randomNat
 
 edgeAsMorphism : (Fin lenV, Fin lenV, String) -> Maybe (mor' $ Computer.cClosedTypedefsKleiliCategory FFI_C)
 edgeAsMorphism (_, _, label) =
-  if      label == "login"      then Just (InitialState ** CartContent ** MkExtensionalTypeMorphism login)
-  else if label == "addProduct" then Just (CartContent  ** CartContent ** MkExtensionalTypeMorphism addProduct)
-  else if label == "checkout"   then Just (CartContent  ** InvoiceId   ** MkExtensionalTypeMorphism checkout)
+  if      label == "login"      then Just ((unwrap InitialState) ** (unwrap CartContent) ** MkExtensionalTypeMorphism login)
+  else if label == "addProduct" then Just ((unwrap CartContent)  ** (unwrap CartContent) ** MkExtensionalTypeMorphism addProduct)
+  else if label == "checkout"   then Just ((unwrap CartContent)  ** (unwrap InvoiceId)   ** MkExtensionalTypeMorphism checkout)
   else Nothing
 
 edgesAsMorphisms : Vect lenE (Fin lenV, Fin lenV, String)

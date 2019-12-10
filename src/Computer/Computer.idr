@@ -88,30 +88,16 @@ compute:
   -> Ty [] (Vect.index (to iso initialVertex) vertices)
   -- and we return a value of the final type
   -> Maybe (IO' ffi (Ty [] (Vect.index (to iso finalVertex) vertices)))
-compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue with (assembleElemM {cat = Computer.cClosedTypedefsKleiliCategory ffi}
-                                                                                                           --{m = Maybe}
+compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue with (assert_total $ assembleElemM {cat = Computer.cClosedTypedefsKleiliCategory ffi}
+                                                                                                           {f = Maybe}
                                                                                                            (Graph.edges graph)
                                                                                                            (to iso)
                                                                                                            vertices
-                                                                                                           (\k, l => extractMorphism {cat = Computer.cClosedTypedefsKleiliCategory ffi}
+                                                                                                           (\_, _ => extractMorphism {cat = Computer.cClosedTypedefsKleiliCategory ffi}
                                                                                                                                      {f = Maybe}
                                                                                                                                      vertices
                                                                                                                                      (rewrite sym $ numEdgesPrf graph in edges)))
-  compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue | Nothing                = -- Nothing
-    (Just $ do putStrLn' "#------#"
-               printLn' graph
-               printLn' vertices
-               printLn' $ (\edge => (fst edge, fst $ snd edge)) <$> edges
-               printLn' $ isJust (assembleElemM {cat = Computer.cClosedTypedefsKleiliCategory ffi}
-                                                --{m = Maybe}
-                                                (Graph.edges graph)
-                                                (to iso)
-                                                vertices
-                                                (\k, l => extractMorphism {cat = Computer.cClosedTypedefsKleiliCategory ffi}
-                                                                          {f = Maybe}
-                                                                          vertices
-                                                                          (rewrite sym $ numEdgesPrf graph in edges)))
-               ?asdf) <+> Nothing
+  compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue | Nothing                = Nothing
   compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue | Just morphismsFunction = let
       graphEmbedding = MkGraphEmbedding {cat=Computer.cClosedTypedefsKleiliCategory ffi} (flip Vect.index vertices . (to iso)) morphismsFunction
       func = freeFunctor graph graphEmbedding
