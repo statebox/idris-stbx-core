@@ -1,7 +1,6 @@
 module Parser.Cmdline
 
 import Options.Applicative
-import Util.Misc
 
 %default total
 

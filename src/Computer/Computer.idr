@@ -21,55 +21,62 @@
 
 module Computer.Computer
 
+-- base
+import Control.Isomorphism
+import Data.Vect
+
+-- idris-ct
 import Basic.Category
 import Basic.Functor
-import Control.Isomorphism
-import Data.Fin
-import Data.Vect
 import Graph.FreeFunctor
 import Graph.Graph
 import Graph.Path
 import Graph.PathCategory
-import GraphFunctor.ClosedTypedefsAsCategory
-import GraphFunctor.GraphEmbedding
 import Idris.TypesAsCategoryExtensional
 import Monad.IOMonad
 import Monad.Monad
+
+-- typedefs-core
 import Typedefs.Typedefs
 import Typedefs.TypedefsDecEq
 
+import GraphFunctor.GraphEmbedding
+import TypedefsCategory.ClosedTypedefsAsCategory
+
 %access public export
 %default total
-
-cClosedTypedefsKleiliCategory : FFI -> Category
-cClosedTypedefsKleiliCategory ffi = ClosedTypedefsAsCategory.closedTypedefsAsKleisliCategory $ ioMonad ffi
 
 compute:
   -- a graph
      (graph : Graph v)
   -- the data for building a functor to the category of closed typedefs
   -> (iso : Iso v (Fin k))
-  -> (vertices : Vect k (obj $ Computer.cClosedTypedefsKleiliCategory ffi))
-  -> Vect (numEdges graph) (mor' $ Computer.cClosedTypedefsKleiliCategory ffi)
+  -> (vertices : Vect k (obj $ ioClosedTypedefsKleisliCategory ffi))
+  -> Vect (numEdges graph) (mor' $ ioClosedTypedefsKleisliCategory ffi)
   -- a path in the graph
   -> Path graph initialVertex finalVertex
   -- a value of the initial type
   -> Ty [] (Vect.index (to iso initialVertex) vertices)
   -- and we return a value of the final type
   -> Maybe (IO' ffi (Ty [] (Vect.index (to iso finalVertex) vertices)))
-compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue with (assert_total $ assembleElemM {cat = Computer.cClosedTypedefsKleiliCategory ffi}
-                                                                                                           {f = Maybe}
-                                                                                                           (Graph.edges graph)
-                                                                                                           (to iso)
-                                                                                                           vertices
-                                                                                                           (\_, _ => extractMorphism {cat = Computer.cClosedTypedefsKleiliCategory ffi}
-                                                                                                                                     {f = Maybe}
-                                                                                                                                     vertices
-                                                                                                                                     (rewrite sym $ numEdgesPrf graph in edges)))
-  compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue | Nothing                = Nothing
-  compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue | Just morphismsFunction = let
-      graphEmbedding = MkGraphEmbedding {cat=Computer.cClosedTypedefsKleiliCategory ffi} (flip Vect.index vertices . (to iso)) morphismsFunction
-      func = freeFunctor graph graphEmbedding
-      mor = mapMor func initialVertex finalVertex path
-    in
-      Just $ ExtensionalTypeMorphism.func mor initialValue
+compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue
+  with (assert_total $ assembleElemM {cat = ioClosedTypedefsKleisliCategory ffi}
+                                     {f = Maybe}
+                                     (Graph.edges graph)
+                                     (to iso)
+                                     vertices
+                                     (\_, _ => extractMorphism {cat = ioClosedTypedefsKleisliCategory ffi}
+                                                               {f = Maybe}
+                                                               vertices
+                                                               (rewrite sym $ numEdgesPrf graph in edges)))
+  compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue
+    | Nothing                = Nothing
+  compute {ffi} {initialVertex} {finalVertex} graph iso vertices edges path initialValue
+    | Just morphismsFunction = let
+        graphEmbedding = MkGraphEmbedding {cat=ioClosedTypedefsKleisliCategory ffi}
+                                          (flip Vect.index vertices . (to iso))
+                                          morphismsFunction
+        func = freeFunctor graph graphEmbedding
+        mor = mapMor func initialVertex finalVertex path
+      in
+        Just $ ExtensionalTypeMorphism.func mor initialValue

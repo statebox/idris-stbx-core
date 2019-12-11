@@ -63,23 +63,3 @@ assembleElemM {gv} {cat} ((i,j) :: xs) to vertices g =
                           There el' => b' k l el')
   <$> g i j Here
   <*> assembleElemM {cat} xs to vertices (\k, l, el => g k l (There el))
-
--- assembleMorphisms :
---      DecEq (obj cat)
---   => Monad m
---   => Alternative m
---   => (ge : Vect n (gv, gv))
---   -> (to : gv -> Fin k)
---   -> (v : Vect k (obj cat))
---   -> (e : Vect (length ge) (mor' cat))
---   -> m ((i, j : gv) -> Elem (i, j) ge -> mor cat (Vect.index (to i) v) (Vect.index (to j) v))
--- assembleMorphisms {m} {cat} ge to v e = assembleElemM {cat} ge to v (\k,l => extractMorphism {f=m} {cat} {to} {ge} {i=k} {j=l} v e)
-
--- graphEmbedding : DecEq (obj cat) =>
---      Iso (vertices g) (Fin k)
---   -> Vect k (obj cat)
---   -> Vect (length $ edges g) (mor' cat)
---   -> Maybe (GraphEmbedding g cat)
--- graphEmbedding {cat} {g} iso v e =
---   MkGraphEmbedding (flip Vect.index v . (to iso)) <$>
---     assembleMorphisms {cat} (edges g) (to iso) v e

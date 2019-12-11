@@ -19,13 +19,12 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -- \fi
 
-module Computer.Example2A
+module Parser.Graph
 
 -- base
 import Data.Vect
 
 -- idris-ct
-import Basic.Category
 import Graph.Graph
 import Graph.Path
 
@@ -33,9 +32,6 @@ import Graph.Path
 import Typedefs.Names
 import Typedefs.Typedefs
 
-import Computer.Computer
-import Computer.Example2Helper
-import GraphFunctor.GraphEmbedding
 import Util.Elem
 
 %access public export
@@ -84,40 +80,3 @@ buildPath : (graph : Graph (Fin lenV))
          -> List (Fin lenE)
          -> Maybe (s ** t ** Path graph s t)
 buildPath graph prf labels = firingPath graph (rewrite prf in labels)
-
-unwrap : TNamed 0 -> TDef 0
-unwrap (TName _ def) = def
-
--- login just creates an empty cart
-
-login : Ty [] T1 -> IO $ Ty [] (unwrap CartContent)
-login () = pure $ Inn (Left ())
-
-
--- add product asks the use for a product id and a quantity,
--- and adds it to the cart
-
-addProduct : Ty [] (unwrap CartContent) -> IO $ Ty [] (unwrap CartContent)
-addProduct cartContent = do
-  productId <- readProductIdFromUser
-  quantity  <- readQuantityFromUser
-  pure $ Inn (Right $ ( (productId, weakenNat quantity)
-                      , cartContent))
-
--- checkout generates a random invoice id
-
-checkout : Ty [] (unwrap CartContent) -> IO $ Ty [] (unwrap InvoiceId)
-checkout (Inn cartContent) = do
-  randomNat <- generateInvoiceNumber
-  pure $ natToNatural randomNat
-
-edgeAsMorphism : (Fin lenV, Fin lenV, String) -> Maybe (mor' $ Computer.cClosedTypedefsKleiliCategory FFI_C)
-edgeAsMorphism (_, _, label) =
-  if      label == "login"      then Just ((unwrap InitialState) ** (unwrap CartContent) ** MkExtensionalTypeMorphism login)
-  else if label == "addProduct" then Just ((unwrap CartContent)  ** (unwrap CartContent) ** MkExtensionalTypeMorphism addProduct)
-  else if label == "checkout"   then Just ((unwrap CartContent)  ** (unwrap InvoiceId)   ** MkExtensionalTypeMorphism checkout)
-  else Nothing
-
-edgesAsMorphisms : Vect lenE (Fin lenV, Fin lenV, String)
-                -> Maybe (Vect lenE (mor' $ Computer.cClosedTypedefsKleiliCategory FFI_C))
-edgesAsMorphisms edges = traverse edgeAsMorphism edges

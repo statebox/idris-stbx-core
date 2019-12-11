@@ -1,15 +1,32 @@
+-- \iffalse
+-- SPDX-License-Identifier: AGPL-3.0-only
+
+-- This file is part of `idris-ct` Category Theory in Idris library.
+
+-- Copyright (C) 2019 Stichting Statebox <https://statebox.nl>
+
+-- This program is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Affero General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Affero General Public License for more details.
+
+-- You should have received a copy of the GNU Affero General Public License
+-- along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-- \fi
+
 module Main
 
 -- base
 import Control.Isomorphism
 import Data.Vect
 
--- contrib
-import Data.SortedMap
-
 -- idris-ct
 import Basic.Category
-import Basic.Functor
 import Graph.Graph
 import Graph.Path
 import Idris.TypesAsCategoryExtensional
@@ -18,22 +35,19 @@ import Idris.TypesAsCategoryExtensional
 import Options.Applicative
 
 -- typedefs
-import Typedefs.Parse
 import Typedefs.Typedefs
 
 -- tparsec
 import Data.NEList
-import TParsec
-import TParsec.Running
 
 import Computer.Computer
-import Computer.Example2A
+import Computer.EcommerceExample
 import GraphFunctor.GraphEmbedding
 import ErrDef
 import Parser.Cmdline
+import Parser.Graph
 import Parser.Input
-import Util.Misc
-import Util.Max
+import TypedefsCategory.ClosedTypedefsAsCategory
 
 %access public export
 %default total
@@ -47,11 +61,11 @@ Show ComputeError where
   show PathDoesNotStartAtUnit = "path not starting at Unit"
 
 computeOnPath : {vs : NEList (Nat, String)}
-                  -> (graph : Graph (Fin $ length vs))
-                  -> (verticesTypedefs : Vect (length vs) (TDef 0))
-                  -> Vect (numEdges graph) (mor' $ Computer.cClosedTypedefsKleiliCategory FFI_C)
-                  -> Path graph initialVertex finalVertex
-                  -> Either ComputeError (IO (Ty [] (Vect.index finalVertex verticesTypedefs)))
+             -> (graph : Graph (Fin $ length vs))
+             -> (verticesTypedefs : Vect (length vs) (TDef 0))
+             -> Vect (numEdges graph) (mor' $ ioClosedTypedefsKleisliCategory FFI_C)
+             -> Path graph initialVertex finalVertex
+             -> Either ComputeError (IO (Ty [] (Vect.index finalVertex verticesTypedefs)))
 computeOnPath {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path with (Vect.index initialVertex verticesTypedefs) proof prf
   computeOnPath {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path | T1 =
     maybe (Left ComputationError) Right $

@@ -1,5 +1,0 @@
-0 printA
-1 printB
-2 printC
-3 printD
-4 printE

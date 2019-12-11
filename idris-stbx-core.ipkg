@@ -11,4 +11,4 @@ executable = fficat
 
 pkgs = contrib, idris-ct, tparsec, optparse, typedefs-core
 
-opts = "--cg-opt Computer/example2.c"
+opts = "--cg-opt Computer/ecommerceExample.c"
