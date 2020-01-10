@@ -50,6 +50,10 @@ identity n = MkHypergraph 0 FinZElim (MkIso
 
 
 coprodFin : {m : Nat} -> {n : Nat} -> {a : Type} -> (Fin m -> a) -> (Fin n -> a) -> Fin (m + n) -> a
+injLFin : (m : Nat) -> (n : Nat) -> Fin m -> Fin (m + n)
+injLFin _ n = weakenN n
+injRFin : (m : Nat) -> (n : Nat) -> Fin n -> Fin (m + n)
+injRFin m _ = shift m
 
 compose : (g1 : Hypergraph s a k m) -> (g2: Hypergraph s a m n) -> Hypergraph s a k n
 compose (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
@@ -58,8 +62,21 @@ compose (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
   (coprodFin t1 t2)
   (MkIso composeTo composeFrom ?wat ?whut)
   where
+    injL : (e: Fin h1 ** Fin (fst (a (t1 e)))) -> (e: Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 e))))
+    injL (e ** i) = (injLFin h1 h2 e ** ?il)
+    injR : (e: Fin h2 ** Fin (fst (a (t2 e)))) -> (e: Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 e))))
+    injR (e ** i) = (injRFin h1 h2 e ** ?ir)
+    coprod
+      : (((e: Fin h1 ** Fin (snd (a (t1 e))))) -> r)
+     -> (((f: Fin h2 ** Fin (snd (a (t2 f))))) -> r)
+     -> (e: Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e)))) -> r
+    coprod l r (e ** o) = coprodFin (\h1 => l (h1 ** ?ol)) (\h2 => r (h2 ** ?or)) e
+
     composeTo : Either (Fin k) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e)))) ->
                 Either (Fin n) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
+    composeTo = either (z . to w1 . Left) (coprod (z . to w1 . Right) (map injR . to w2 . Right))
+      where
+        z = either (map injR . to w2 . Left) (Right . injL)
 
     composeFrom : Either (Fin n) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f)))) ->
                   Either (Fin k) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
