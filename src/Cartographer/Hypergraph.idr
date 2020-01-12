@@ -72,14 +72,15 @@ compose (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
   (coprodFin t1 t2)
   (MkIso composeTo composeFrom ?wat ?whut)
   where
-    injL : (e: Fin h1 ** Fin (fst (a (t1 e)))) -> (e: Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 e))))
+    injL : {p : (Nat, Nat) -> Nat} -> (e: Fin h1 ** Fin (p (a (t1 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
     injL (e ** i) = (injLFin h1 h2 e ** rewrite proofL t1 t2 e in i)
-    injR : (e: Fin h2 ** Fin (fst (a (t2 e)))) -> (e: Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 e))))
+    injR : {p : (Nat, Nat) -> Nat} -> (e: Fin h2 ** Fin (p (a (t2 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
     injR (e ** i) = (injRFin h1 h2 e ** rewrite proofR t1 t2 e in i)
     coprod
-      : (((e: Fin h1 ** Fin (snd (a (t1 e))))) -> r)
-     -> (((f: Fin h2 ** Fin (snd (a (t2 f))))) -> r)
-     -> (e: Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e)))) -> r
+      : {p : (Nat, Nat) -> Nat}
+     -> (((e: Fin h1 ** Fin (p (a (t1 e))))) -> r)
+     -> (((f: Fin h2 ** Fin (p (a (t2 f))))) -> r)
+     -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e)))) -> r
     coprod l r (e ** o) = coprodFin (\h1 => l (h1 ** ?ol)) (\h2 => r (h2 ** ?or)) e
 
     composeTo : Either (Fin k) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e)))) ->
@@ -90,6 +91,9 @@ compose (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
 
     composeFrom : Either (Fin n) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f)))) ->
                   Either (Fin k) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
+    composeFrom = either (z . from w2 . Left) (coprod (map injL . from w1 . Right) (z . from w2 . Right))
+      where
+        z = either (map injL . from w1 . Left) (Right . injR)
 
  -- https://hackmd.io/jD2Avh0xSTm1-Yr40bdEBA
 
