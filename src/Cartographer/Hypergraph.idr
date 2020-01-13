@@ -65,6 +65,20 @@ proofR : {m : Nat} -> {n : Nat} -> (l : Fin m -> a) -> (r : Fin n -> a) -> (i : 
 proofR {m = Z} _ _ _ = Refl
 proofR {m = S m'} l r i = proofR {m = m'} (l . FS) r i
 
+injL : {s : Type} -> {a : s -> (Nat, Nat)} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
+    -> {p : (Nat, Nat) -> Nat} -> (e: Fin h1 ** Fin (p (a (t1 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
+injL {h1} {h2} {t1} {t2} (e ** i) = (injLFin h1 h2 e ** rewrite proofL t1 t2 e in i)
+injR : {s : Type} -> {a : s -> (Nat, Nat)} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
+    -> {p : (Nat, Nat) -> Nat} -> (e: Fin h2 ** Fin (p (a (t2 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
+injR {h1} {h2} {t1} {t2} (e ** i) = (injRFin h1 h2 e ** rewrite proofR t1 t2 e in i)
+coprod
+   : {s : Type} -> {a : s -> (Nat, Nat)} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
+  -> {p : (Nat, Nat) -> Nat}
+  -> (((e: Fin h1 ** Fin (p (a (t1 e))))) -> r)
+  -> (((f: Fin h2 ** Fin (p (a (t2 f))))) -> r)
+  -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e)))) -> r
+coprod {h1} {h2} {t1} {t2} l r (e ** o) = coprodFin (\h1 => l (h1 ** ?ol)) (\h2 => r (h2 ** ?or)) e
+
 compose : (g1 : Hypergraph s a k m) -> (g2: Hypergraph s a m n) -> Hypergraph s a k n
 compose (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
   -- Either won't work later if we need to prove Eckmann-Hilton
@@ -72,17 +86,6 @@ compose (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
   (coprodFin t1 t2)
   (MkIso composeTo composeFrom ?wat ?whut)
   where
-    injL : {p : (Nat, Nat) -> Nat} -> (e: Fin h1 ** Fin (p (a (t1 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
-    injL (e ** i) = (injLFin h1 h2 e ** rewrite proofL t1 t2 e in i)
-    injR : {p : (Nat, Nat) -> Nat} -> (e: Fin h2 ** Fin (p (a (t2 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
-    injR (e ** i) = (injRFin h1 h2 e ** rewrite proofR t1 t2 e in i)
-    coprod
-      : {p : (Nat, Nat) -> Nat}
-     -> (((e: Fin h1 ** Fin (p (a (t1 e))))) -> r)
-     -> (((f: Fin h2 ** Fin (p (a (t2 f))))) -> r)
-     -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e)))) -> r
-    coprod l r (e ** o) = coprodFin (\h1 => l (h1 ** ?ol)) (\h2 => r (h2 ** ?or)) e
-
     composeTo : Either (Fin k) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e)))) ->
                 Either (Fin n) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
     composeTo = either (z . to w1 . Left) (coprod (z . to w1 . Right) (map injR . to w2 . Right))
@@ -101,16 +104,32 @@ zero : {s : Type} -> {a : s -> (Nat, Nat)} -> Hypergraph s a 0 0
 zero = identity 0
 
 add : Hypergraph s a k l -> Hypergraph s a m n -> Hypergraph s a (k + m) (l + n)
-add (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
+add {k} {l} {m} {n} (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
   (h1 + h2)
   (coprodFin t1 t2)
-  ?wut -- (MkIso addTo addFrom ?toFromAdd ?fromToAdd)
+  (MkIso addTo addFrom ?toFromAdd ?fromToAdd)
   where
     addTo : Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e)))) ->
             Either (Fin (l + n)) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
+    addTo = either (coprodFin (f1 . Left) (f2 . Left)) (coprod (f1 . Right) (f2 . Right))
+      where
+        f1 : Either (Fin k) (e: Fin h1 ** Fin (snd (a (t1 e)))) ->
+             Either (Fin (l + n)) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
+        f1 = either (Left . injLFin l n) (Right . injL) . to w1
+        f2 : Either (Fin m) (e: Fin h2 ** Fin (snd (a (t2 e)))) ->
+             Either (Fin (l + n)) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
+        f2 = either (Left . injRFin l n) (Right . injR) . to w2
 
     addFrom : Either (Fin (l + n)) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f)))) ->
               Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
+    addFrom = either (coprodFin (f1 . Left) (f2 . Left)) (coprod (f1 . Right) (f2 . Right))
+      where
+        f1 : Either (Fin l) (e: Fin h1 ** Fin (fst (a (t1 e)))) ->
+             Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
+        f1 = either (Left . injLFin k m) (Right . injL) . from w1
+        f2 : Either (Fin n) (e: Fin h2 ** Fin (fst (a (t2 e)))) ->
+             Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
+        f2 = either (Left . injRFin k m) (Right . injR) . from w2
 
 {-
 data PortRole = Source | Target
