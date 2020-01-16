@@ -30,6 +30,16 @@ record Hypergraph (sigma : Type) (arity : sigma -> (Nat, Nat)) (k : Nat) (m : Na
                (Either (Fin m) (f: Fin h ** Fin (Basics.fst . arity . Typ $ f)))
 
 
+alwaysLeft : {f : Fin Z -> Type} -> Iso (Either l (e : Fin Z ** f e)) l
+alwaysLeft {f} = MkIso (either id (absurd . DPair.fst)) Left (\_ => Refl) fromTo
+  where 
+  fromTo : (x : Either l (e : Fin 0 ** f e)) -> Left (either Basics.id (\y => absurd $ fst y) x) = x
+  fromTo (Left a) = Refl
+  fromTo (Right b) = absurd $ fst b
+
+-- Iso (Either (Fin n) (e: Fin 0 ** Fin (Basics.snd . arity . Typ $ e)))
+--     (Either (Fin n) (f: Fin 0 ** Fin (Basics.fst . arity . Typ $ f)))
+
 singleton : {s : Type} -> {a : s -> (Nat, Nat)} -> (edge : s) -> Hypergraph s a (fst (a edge)) (snd (a edge))
 singleton edge = MkHypergraph 1 (const edge) (MkIso
   (either (\i => Right (FZ ** i)) (Left . snd))
@@ -37,10 +47,7 @@ singleton edge = MkHypergraph 1 (const edge) (MkIso
   ?toFromSing ?fromToSing)
 
 identity : {s : Type} -> {a : s -> (Nat, Nat)} -> (n : Nat) -> Hypergraph s a n n
-identity n = MkHypergraph 0 FinZElim (MkIso
-  (map (FinZElim . fst))
-  (map (FinZElim . fst))
-  ?toFromId ?fromToId)
+identity n = MkHypergraph 0 FinZElim (alwaysLeft `isoTrans` isoSym alwaysLeft)
 
 -- mkRight : Iso (Either (Fin k) (e :        he1     ** Fin (snd (a (t1 e)))))                           (Either (Fin m) (f : he1 ** Fin (fst (a (t1 f))))) ->
 --           Iso (Either (Fin k) (e : Either he1 he2 ** Fin (snd (a (either (Delay t1) (Delay t2) e))))) b
@@ -48,19 +55,23 @@ identity n = MkHypergraph 0 FinZElim (MkIso
 -- mkLeft : Iso (Either (Fin k) (e :        he2     ** Fin (snd (a (t2 e)))))                           (Either (Fin m) (f : he1 ** Fin (fst (a (t1 f))))) ->
 --          Iso b (Either (Fin k) (e : Either he1 he2 ** Fin (snd (a (either (Delay t1) (Delay t2) e)))))
 
+-- === Fin proofs ====
 
 coprodFin : {m : Nat} -> {n : Nat} -> (Fin m -> a) -> (Fin n -> a) -> Fin (m + n) -> a
 coprodFin {m = Z} _ r i = r i
 coprodFin {m = S m'} l r FZ = l FZ
 coprodFin {m = S m'} l r (FS i) = coprodFin {m = m'} (l . FS) r i
+
 injLFin : (m : Nat) -> (n : Nat) -> Fin m -> Fin (m + n)
 injLFin _ n = weakenN n
 injRFin : (m : Nat) -> (n : Nat) -> Fin n -> Fin (m + n)
 injRFin m _ = shift m
+
 proofL : {m : Nat} -> {n : Nat} -> (l : Fin m -> a) -> (r : Fin n -> a) -> (i : Fin m) -> coprodFin l r (injLFin m n i) = l i
 proofL {m = Z} _ _ i = FinZElim i
 proofL {m = S m'} _ _ FZ = Refl
 proofL {m = S m'} l r (FS i) = proofL {m = m'} (l . FS) r i
+
 proofR : {m : Nat} -> {n : Nat} -> (l : Fin m -> a) -> (r : Fin n -> a) -> (i : Fin n) -> coprodFin l r (injRFin m n i) = r i
 proofR {m = Z} _ _ _ = Refl
 proofR {m = S m'} l r i = proofR {m = m'} (l . FS) r i
@@ -71,6 +82,7 @@ injL {h1} {h2} {t1} {t2} (e ** i) = (injLFin h1 h2 e ** rewrite proofL t1 t2 e i
 injR : {s : Type} -> {a : s -> (Nat, Nat)} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
     -> {p : (Nat, Nat) -> Nat} -> (e: Fin h2 ** Fin (p (a (t2 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
 injR {h1} {h2} {t1} {t2} (e ** i) = (injRFin h1 h2 e ** rewrite proofR t1 t2 e in i)
+
 coprod
    : {s : Type} -> {a : s -> (Nat, Nat)} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
   -> {p : (Nat, Nat) -> Nat}
@@ -79,7 +91,7 @@ coprod
   -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e)))) -> r
 coprod {h1} {h2} {t1} {t2} l r (e ** o) = coprodFin (\h1 => l (h1 ** ?ol)) (\h2 => r (h2 ** ?or)) e
 
-compose : (g1 : Hypergraph s a k m) -> (g2: Hypergraph s a m n) -> Hypergraph s a k n
+compose : (g1 : Hypergraph s a k m) -> (g2 : Hypergraph s a m n) -> Hypergraph s a k n
 compose (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
   -- Either won't work later if we need to prove Eckmann-Hilton
   (h1 + h2)
@@ -130,7 +142,7 @@ add {k} {l} {m} {n} (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergra
         f2 : Either (Fin n) (e: Fin h2 ** Fin (fst (a (t2 e)))) ->
              Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
         f2 = either (Left . injRFin k m) (Right . injR) . from w2
-
+        
 {-
 data PortRole = Source | Target
 
