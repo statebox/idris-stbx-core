@@ -1,165 +1,117 @@
 module Cartographer.Hypergraph
 
--- import Data.SortedMap
--- import Data.SortedSet
 import Data.Fin
-import Control.Isomorphism
 
 %access public export
 %default total
 
-data BoundarySigType = Sig | Tau
 
-data Boundary = LeftB | RightB
+--== Perm ==--
 
--- arityExtender : {Sigma : Type} -> (arity : Sigma -> (Nat, Nat)) -> (n,m: Nat) -> Either Sigma BoundarySigType -> (Nat, Nat)
--- arityExtender arity n m (Left sigma) = arity sigma
--- arityExtender arity n m (Right Sig) = (0, n)
--- arityExtender arity n m (Right Tau) = (m, 0)
+data Perm : {o : Type} -> List o -> List o -> Type where
+  Nil : Perm [] []
+  Ins : Perm as (l ++ r) -> Perm (a :: as) (l ++ [a] ++ r)
 
--- (typ : HyperEdge -> Sigma) -> (k,m : Nat) -> (typ' : Either HyperEdge BoundarySigtype -> Either )
+permId : (as : List o) -> Perm as as
+permId [] = Nil
+permId (a::as) = Ins {l=[]} (permId as)
 
-record Hypergraph (sigma : Type) (arity : sigma -> (Nat, Nat)) (k : Nat) (m : Nat) where
+permComp : Perm as bs -> Perm bs cs -> Perm as cs
+permComp Nil Nil = Nil
+permComp (Ins ab) bc = ?c
+
+permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
+permAdd Nil p = p
+permAdd {ds} (Ins {l} {r} {a} ab) cd =
+  rewrite sym (appendAssociative l (a :: r) ds) in
+    Ins {l=l} {r=r++ds} (rewrite appendAssociative l r ds in permAdd ab cd)
+
+swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
+swap [] r = rewrite appendNilRightNeutral r in permId r
+swap (a::as) r = Ins (swap as r)
+
+
+--== Hypergraph ==--
+
+sumArity : {h : Nat} -> (f : Fin h -> List o) -> List o
+sumArity {h=Z} _ = []
+sumArity {h=S n} f = f FZ ++ sumArity {h=n} (f . FS)
+
+record Hypergraph (sigma : Type) (arityIn : sigma -> List o) (arityOut : sigma -> List o) (k : List o) (m : List o) where
   constructor MkHypergraph
   -- HyperEdge count
   h : Nat
   Typ : Fin h -> sigma
-  -- For wiring we don't need pairs, no dangling wires + no loop condition means
-  -- number of inputs is isomorphic to number of outputs.
-  wiring : Iso (Either (Fin k) (e: Fin h ** Fin (Basics.snd . arity . Typ $ e)))
-               (Either (Fin m) (f: Fin h ** Fin (Basics.fst . arity . Typ $ f)))
+  wiring : Perm (k ++ sumArity (arityOut . Typ)) (m ++ sumArity (arityIn . Typ))
 
+singleton : {s : Type} -> {ai, ao : s -> List o} -> (edge : s) -> Hypergraph s ai ao (ai edge) (ao edge)
+singleton edge = MkHypergraph 1 (const edge) perm
+  where
+    perm : Perm (ai edge ++ ao edge ++ []) (ao edge ++ ai edge ++ [])
+    perm = rewrite appendNilRightNeutral (ao edge) in
+           rewrite appendNilRightNeutral (ai edge) in
+             swap (ai edge) (ao edge)
 
-alwaysLeft : {f : Fin Z -> Type} -> Iso (Either l (e : Fin Z ** f e)) l
-alwaysLeft {f} = MkIso (either id (absurd . DPair.fst)) Left (\_ => Refl) fromTo
-  where 
-  fromTo : (x : Either l (e : Fin 0 ** f e)) -> Left (either Basics.id (\y => absurd $ fst y) x) = x
-  fromTo (Left a) = Refl
-  fromTo (Right b) = absurd $ fst b
-
--- Iso (Either (Fin n) (e: Fin 0 ** Fin (Basics.snd . arity . Typ $ e)))
---     (Either (Fin n) (f: Fin 0 ** Fin (Basics.fst . arity . Typ $ f)))
-
-singleton : {s : Type} -> {a : s -> (Nat, Nat)} -> (edge : s) -> Hypergraph s a (fst (a edge)) (snd (a edge))
-singleton edge = MkHypergraph 1 (const edge) (MkIso
-  (either (\i => Right (FZ ** i)) (Left . snd))
-  (either (\i => Right (FZ ** i)) (Left . snd))
-  ?toFromSing ?fromToSing)
-
-identity : {s : Type} -> {a : s -> (Nat, Nat)} -> (n : Nat) -> Hypergraph s a n n
-identity n = MkHypergraph 0 FinZElim (alwaysLeft `isoTrans` isoSym alwaysLeft)
-
--- mkRight : Iso (Either (Fin k) (e :        he1     ** Fin (snd (a (t1 e)))))                           (Either (Fin m) (f : he1 ** Fin (fst (a (t1 f))))) ->
---           Iso (Either (Fin k) (e : Either he1 he2 ** Fin (snd (a (either (Delay t1) (Delay t2) e))))) b
-
--- mkLeft : Iso (Either (Fin k) (e :        he2     ** Fin (snd (a (t2 e)))))                           (Either (Fin m) (f : he1 ** Fin (fst (a (t1 f))))) ->
---          Iso b (Either (Fin k) (e : Either he1 he2 ** Fin (snd (a (either (Delay t1) (Delay t2) e)))))
-
--- === Fin proofs ====
+identity : {s : Type} -> {ai, ao : s -> List o} -> (n : List o) -> Hypergraph s ai ao n n
+identity n = MkHypergraph 0 FinZElim (rewrite appendNilRightNeutral n in permId n)
 
 coprodFin : {m : Nat} -> {n : Nat} -> (Fin m -> a) -> (Fin n -> a) -> Fin (m + n) -> a
 coprodFin {m = Z} _ r i = r i
 coprodFin {m = S m'} l r FZ = l FZ
 coprodFin {m = S m'} l r (FS i) = coprodFin {m = m'} (l . FS) r i
 
-injLFin : (m : Nat) -> (n : Nat) -> Fin m -> Fin (m + n)
-injLFin _ n = weakenN n
-injRFin : (m : Nat) -> (n : Nat) -> Fin n -> Fin (m + n)
-injRFin m _ = shift m
-
-proofL : {m : Nat} -> {n : Nat} -> (l : Fin m -> a) -> (r : Fin n -> a) -> (i : Fin m) -> coprodFin l r (injLFin m n i) = l i
-proofL {m = Z} _ _ i = FinZElim i
-proofL {m = S m'} _ _ FZ = Refl
-proofL {m = S m'} l r (FS i) = proofL {m = m'} (l . FS) r i
-
-proofR : {m : Nat} -> {n : Nat} -> (l : Fin m -> a) -> (r : Fin n -> a) -> (i : Fin n) -> coprodFin l r (injRFin m n i) = r i
-proofR {m = Z} _ _ _ = Refl
-proofR {m = S m'} l r i = proofR {m = m'} (l . FS) r i
-
-injL : {s : Type} -> {a : s -> (Nat, Nat)} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
-    -> {p : (Nat, Nat) -> Nat} -> (e: Fin h1 ** Fin (p (a (t1 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
-injL {h1} {h2} {t1} {t2} (e ** i) = (injLFin h1 h2 e ** rewrite proofL t1 t2 e in i)
-injR : {s : Type} -> {a : s -> (Nat, Nat)} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
-    -> {p : (Nat, Nat) -> Nat} -> (e: Fin h2 ** Fin (p (a (t2 e)))) -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e))))
-injR {h1} {h2} {t1} {t2} (e ** i) = (injRFin h1 h2 e ** rewrite proofR t1 t2 e in i)
-
 coprod
-   : {s : Type} -> {a : s -> (Nat, Nat)} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
-  -> {p : (Nat, Nat) -> Nat}
-  -> (((e: Fin h1 ** Fin (p (a (t1 e))))) -> r)
-  -> (((f: Fin h2 ** Fin (p (a (t2 f))))) -> r)
-  -> (e: Fin (h1 + h2) ** Fin (p (a (coprodFin t1 t2 e)))) -> r
-coprod {h1} {h2} {t1} {t2} l r (e ** o) = coprodFin (\h1 => l (h1 ** ?ol)) (\h2 => r (h2 ** ?or)) e
+   : {s : Type} -> {a : s -> List o} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
+  -> sumArity (a . t1) ++ sumArity (a . t2) = sumArity (a . coprodFin t1 t2)
+coprod {h1=Z} {a} {t2} = Refl
+coprod {h1=S h} {t1} = sym (appendAssociative _ _ _) `trans` cong (coprod {h1=h} {t1=t1 . FS})
 
-compose : (g1 : Hypergraph s a k m) -> (g2 : Hypergraph s a m n) -> Hypergraph s a k n
-compose (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
-  -- Either won't work later if we need to prove Eckmann-Hilton
+compose : (g1 : Hypergraph s ai ao k m) -> (g2 : Hypergraph s ai ao m n) -> Hypergraph s ai ao k n
+compose (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
   (h1 + h2)
   (coprodFin t1 t2)
-  (MkIso composeTo composeFrom ?wat ?whut)
+  perm
   where
-    composeTo : Either (Fin k) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e)))) ->
-                Either (Fin n) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
-    composeTo = either (z . to w1 . Left) (coprod (z . to w1 . Right) (map injR . to w2 . Right))
-      where
-        z = either (map injR . to w2 . Left) (Right . injL)
+    helper2 : Perm (m ++ s2) (n ++ f2) -> Perm ((m ++ f1) ++ s2) (n ++ (f2 ++ f1))
+    helper2 {s2} {f1} {f2} c2 =
+      rewrite sym $ appendAssociative m f1 s2 in
+      rewrite appendAssociative n f2 f1 in
+        permComp (permId m `permAdd` swap f1 s2)
+        (rewrite appendAssociative m s2 f1 in
+          c2 `permAdd` permId f1)
 
-    composeFrom : Either (Fin n) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f)))) ->
-                  Either (Fin k) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
-    composeFrom = either (z . from w2 . Left) (coprod (map injL . from w1 . Right) (z . from w2 . Right))
-      where
-        z = either (map injL . from w1 . Left) (Right . injR)
+    helper : Perm (k ++ s1) (m ++ f1) -> Perm (m ++ s2) (n ++ f2) -> s1 ++ s2 = s12 -> f1 ++ f2 = f12 -> Perm (k ++ s12) (n ++ f12)
+    helper {s1} {s2} {f1} {f2} c1 c2 cps cpf =
+      rewrite sym cps in
+      rewrite sym cpf in
+      rewrite appendAssociative k s1 s2 in
+        (c1 `permAdd` permId s2) `permComp` helper2 c2 `permComp` (permId n `permAdd` swap f2 f1)
 
- -- https://hackmd.io/jD2Avh0xSTm1-Yr40bdEBA
+    perm : Perm (k ++ sumArity (ao . coprodFin t1 t2)) (n ++ sumArity (ai . coprodFin t1 t2))
+    perm = helper c1 c2 coprod coprod
 
-zero : {s : Type} -> {a : s -> (Nat, Nat)} -> Hypergraph s a 0 0
-zero = identity 0
+zero : {s : Type} -> {ai, ao : s -> List o} -> Hypergraph s ai ao [] []
+zero = identity []
 
-add : Hypergraph s a k l -> Hypergraph s a m n -> Hypergraph s a (k + m) (l + n)
-add {k} {l} {m} {n} (MkHypergraph h1 t1 w1) (MkHypergraph h2 t2 w2) = MkHypergraph
+add : Hypergraph s ai ao k l -> Hypergraph s ai ao m n -> Hypergraph s ai ao (k ++ m) (l ++ n)
+add {k} {l} {m} {n} (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
   (h1 + h2)
   (coprodFin t1 t2)
-  (MkIso addTo addFrom ?toFromAdd ?fromToAdd)
+  perm
   where
-    addTo : Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e)))) ->
-            Either (Fin (l + n)) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
-    addTo = either (coprodFin (f1 . Left) (f2 . Left)) (coprod (f1 . Right) (f2 . Right))
-      where
-        f1 : Either (Fin k) (e: Fin h1 ** Fin (snd (a (t1 e)))) ->
-             Either (Fin (l + n)) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
-        f1 = either (Left . injLFin l n) (Right . injL) . to w1
-        f2 : Either (Fin m) (e: Fin h2 ** Fin (snd (a (t2 e)))) ->
-             Either (Fin (l + n)) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f))))
-        f2 = either (Left . injRFin l n) (Right . injR) . to w2
+    helper2 : Perm ((a ++ b) ++ (c ++ d)) ((a ++ c) ++ (b ++ d))
+    helper2 {a} {b} {c} {d} =
+      rewrite appendAssociative (a ++ b) c d in
+      rewrite appendAssociative (a ++ c) b d in
+      rewrite sym $ appendAssociative a b c in
+      rewrite sym $ appendAssociative a c b in
+      (permId a `permAdd` swap b c) `permAdd` permId d
 
-    addFrom : Either (Fin (l + n)) (f : Fin (h1 + h2) ** Fin (fst (a (coprodFin t1 t2 f)))) ->
-              Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
-    addFrom = either (coprodFin (f1 . Left) (f2 . Left)) (coprod (f1 . Right) (f2 . Right))
-      where
-        f1 : Either (Fin l) (e: Fin h1 ** Fin (fst (a (t1 e)))) ->
-             Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
-        f1 = either (Left . injLFin k m) (Right . injL) . from w1
-        f2 : Either (Fin n) (e: Fin h2 ** Fin (fst (a (t2 e)))) ->
-             Either (Fin (k + m)) (e : Fin (h1 + h2) ** Fin (snd (a (coprodFin t1 t2 e))))
-        f2 = either (Left . injRFin k m) (Right . injR) . from w2
-        
-{-
-data PortRole = Source | Target
+    helper : Perm (k ++ s1) (l ++ f1) -> Perm (m ++ s2) (n ++ f2) -> s1 ++ s2 = s12 -> f1 ++ f2 = f12 -> Perm ((k ++ m) ++ s12) ((l ++ n) ++ f12)
+    helper {s1} {s2} {f1} {f2} c1 c2 cps cpf =
+      rewrite sym cps in
+      rewrite sym cpf in
+        helper2 `permComp` ((c1 `permAdd` c2) `permComp` helper2)
 
-HyperEdgeId : Type
-HyperEdgeId = Nat
-
-data Port : (a : PortRole) -> (f : Type -> Type) -> Type where
-  MkPort : f HyperEdgeId -> Int -> Port a f
-
-record Hypergraph (sig : Type) (f : Type -> Type) where
-  constructor MkHypergraph
-  connections     : List (Port Source f, Port Target f)
-  signatures      : SortedMap HyperEdgeId sig
-  nextHyperEdgeId : HyperEdgeId
-
-
-data Open a = Gen a | Boundary
-
-OpenHypergraph sig = Hypergraph sig Open
--}
+    perm : Perm ((k ++ m) ++ sumArity (ao . coprodFin t1 t2)) ((l ++ n) ++ sumArity (ai . coprodFin t1 t2))
+    perm = helper c1 c2 coprod coprod
