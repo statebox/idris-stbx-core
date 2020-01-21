@@ -16,9 +16,22 @@ permId : (as : List o) -> Perm as as
 permId [] = Nil
 permId (a::as) = Ins {l=[]} (permId as)
 
-permComp : Perm as bs -> Perm bs cs -> Perm as cs
-permComp Nil Nil = Nil
-permComp (Ins ab) bc = ?c
+place : Perm (l ++ [a] ++ r) cs -> (l' ** r' ** cs = l' ++ [a] ++ r')
+place {l=[]} (Ins {l=l'} {r=r'} _) = (l' ** r' ** Refl)
+place {l=x::xs} (Ins cs') = case place cs' of (l' ** r' ** prf) => ?p
+
+deleted : Perm {o} (l ++ [a] ++ r) cs -> List o
+deleted p = case place p of (l' ** r' ** _) => l' ++ r'
+
+delete : (p : Perm (l ++ [a] ++ r) cs) -> Perm (l ++ r) (deleted p)
+
+permComp : {o : Type} -> Perm {o} as bs -> Perm bs cs -> Perm as cs
+permComp Nil p = p
+permComp (Ins {l} {a} {r} ab') bc =
+  case place bc of
+    (l' ** r' ** prf) => rewrite prf in
+      Ins {l=l'} {r=r'} $
+        permComp ab' (delete {l} {a} {r} bc)
 
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd Nil p = p
@@ -30,6 +43,13 @@ swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
 swap [] r = rewrite appendNilRightNeutral r in permId r
 swap (a::as) r = Ins (swap as r)
 
+permEqLength : Perm as bs -> length as = length bs
+permEqLength Nil = Refl
+permEqLength (Ins {l} {r} as) = cong {f=S} (permEqLength as) `trans` h l r
+  where
+    h : (l, r : List o) -> S (length (l ++ r)) = length (l ++ [a] ++ r)
+    h [] r = Refl
+    h (l::ls) r = cong {f=S} (h ls r)
 
 --== Hypergraph ==--
 
