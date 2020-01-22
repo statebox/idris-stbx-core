@@ -16,14 +16,19 @@ permId : (as : List o) -> Perm as as
 permId [] = Nil
 permId (a::as) = Ins {l=[]} (permId as)
 
-place : Perm (l ++ [a] ++ r) cs -> (l' ** r' ** cs = l' ++ [a] ++ r')
+place : {o : Type} -> {cs : List o} -> Perm {o=o} (l ++ [a] ++ r) cs -> (l' : List o ** r' : List o ** cs = l' ++ [a] ++ r')
 place {l=[]} (Ins {l=l'} {r=r'} _) = (l' ** r' ** Refl)
-place {l=x::xs} (Ins cs') = case place cs' of (l' ** r' ** prf) => ?p
+place {o} {a} {l=x::xs} (Ins {l=lc} {r=rc} p) =
+  case place p of
+    (ld ** rd ** prf) =>
+      hlp lc ld
+      where
+      hlp : (lc : List o) -> (ld : List o) -> (l' ** r' ** cs = l' ++ [a] ++ r')
+      hlp [] ld = ?p1 -- ((x::ld) ** rd ** cong {f=(::) x} prf)
+      hlp (c::lc') [] = ?p2 -- ([] ** (lc' ++ [x] ++ rc) ** ?p2)
+      hlp (c::lc') (d::ld') = ?p3 -- case hlp lc' ld' of (le ** re ** prf) => ?p3)
 
-deleted : Perm {o} (l ++ [a] ++ r) cs -> List o
-deleted p = case place p of (l' ** r' ** _) => l' ++ r'
-
-delete : (p : Perm (l ++ [a] ++ r) cs) -> Perm (l ++ r) (deleted p)
+delete : Perm (l ++ [a] ++ r) (l' ++ [a] ++ r') -> Perm (l ++ r) (l' ++ r')
 
 permComp : {o : Type} -> Perm {o} as bs -> Perm bs cs -> Perm as cs
 permComp Nil p = p
@@ -31,7 +36,7 @@ permComp (Ins {l} {a} {r} ab') bc =
   case place bc of
     (l' ** r' ** prf) => rewrite prf in
       Ins {l=l'} {r=r'} $
-        permComp ab' (delete {l} {a} {r} bc)
+        permComp ab' (delete {l} {a} {r} {l'} {r'} (rewrite sym prf in bc))
 
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd Nil p = p
