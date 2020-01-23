@@ -1,6 +1,7 @@
 module Cartographer.Hypergraph
 
 import Data.Fin
+import Data.List
 
 %access public export
 %default total
@@ -8,27 +9,56 @@ import Data.Fin
 
 --== Perm ==--
 
+data Sandwich : List t -> List t -> t -> List t -> Type where
+  HereS : Sandwich (a::rs) [] a rs
+  ThereS : Sandwich lars ls a rs -> Sandwich (l::lars) (l::ls) a rs
+
 data Perm : {o : Type} -> List o -> List o -> Type where
   Nil : Perm [] []
-  Ins : Perm as (l ++ r) -> Perm (a :: as) (l ++ [a] ++ r)
+  Ins : Sandwich lar l a r -> Perm as (l++r) -> Perm (a::as) lar
 
 permId : (as : List o) -> Perm as as
-permId [] = Nil
-permId (a::as) = Ins {l=[]} (permId as)
+permId []      = Nil
+permId (a::as) = Ins HereS (permId as)
 
-place : {o : Type} -> {cs : List o} -> Perm {o=o} (l ++ [a] ++ r) cs -> (l' : List o ** r' : List o ** cs = l' ++ [a] ++ r')
-place {l=[]} (Ins {l=l'} {r=r'} _) = (l' ** r' ** Refl)
-place {o} {a} {l=x::xs} (Ins {l=lc} {r=rc} p) =
-  case place p of
-    (ld ** rd ** prf) =>
-      hlp lc ld
-      where
-      hlp : (lc : List o) -> (ld : List o) -> (l' ** r' ** cs = l' ++ [a] ++ r')
-      hlp [] ld = ?p1 -- ((x::ld) ** rd ** cong {f=(::) x} prf)
-      hlp (c::lc') [] = ?p2 -- ([] ** (lc' ++ [x] ++ rc) ** ?p2)
-      hlp (c::lc') (d::ld') = ?p3 -- case hlp lc' ld' of (le ** re ** prf) => ?p3)
+
+  --Ins : Perm as (l ++ r) -> Perm (a :: as) (l ++ [a] ++ r)
+--  Ins : Perm as (l ++ r) -> lar = l ++ [a] ++ r -> Perm (a :: as) lar --(l ++ [a] ++ r)
+{-
+permId : (as : List o) -> Perm as as
+permId [] = Nil
+permId (a::as) = Ins {l=[]} (permId as) Refl
+
+place : {as, bs : List o} -> Elem a as -> Perm as bs -> Elem a bs
 
 delete : Perm (l ++ [a] ++ r) (l' ++ [a] ++ r') -> Perm (l ++ r) (l' ++ r')
+delete Nil = ?wat
+delete (Ins p qe) = ?wat2
+
+
+--place : {o : Type} -> {cs : List o} -> Perm {o} (l ++ [a] ++ r) cs -> (l' : List o ** r' : List o ** cs = l' ++ [a] ++ r')
+--place         {l=[]}    (Ins {l=l'}    {r=r'} _ eq)   = (l' ** r' ** eq)
+--place {o} {a} {l=x::xs} (Ins {l=[]}    {r=rc} p Refl) = 
+--  let (ld ** rd ** prf) = place {a} p in 
+--  ((x::ld) ** rd ** cong {f=(::) x} prf) 
+--place {o} {a} {l=x::xs} (Ins {l=c::lc} {r=rc} p Refl) = 
+--  case place {a} p of  
+--   ([]     **rd**prf) => 
+--     let (Refl, tprf) = consInjective prf in 
+--     ([] ** (lc ++ [x] ++ rc) ** Refl)
+--   ((d::ld)**rd**prf) => 
+--     let (Refl, tprf) = consInjective prf in 
+     
+
+--  case place p of
+--    (ld ** rd ** prf) => ?wat
+--    (ld ** rd ** prf) =>
+--      hlp rd lc ld prf
+  --where
+  --  hlp : (rd : List o) -> (lc : List o) -> (ld : List o) -> (lc ++ rc = ld ++ [a] ++ rd) -> (l' ** r' ** cs = l' ++ [a] ++ r')
+  --  hlp rd []       ld       prf = ((x::ld) ** rd ** ?wat) --cong {f=(::) x} prf)
+  --  hlp rd (c::lc') []       prf = ?p2 -- ([] ** (lc' ++ [x] ++ rc) ** ?p2)
+  --  hlp rd (c::lc') (d::ld') prf = ?p3 -- case hlp lc' ld' of (le ** re ** prf) => ?p3)
 
 permComp : {o : Type} -> Perm {o} as bs -> Perm bs cs -> Perm as cs
 permComp Nil p = p
@@ -140,3 +170,4 @@ add {k} {l} {m} {n} (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergra
 
     perm : Perm ((k ++ m) ++ sumArity (ao . coprodFin t1 t2)) ((l ++ n) ++ sumArity (ai . coprodFin t1 t2))
     perm = helper c1 c2 coprod coprod
+      -}
