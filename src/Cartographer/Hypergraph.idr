@@ -9,82 +9,87 @@ import Data.List
 
 --== Perm ==--
 
-data Sandwich : List t -> List t -> t -> List t -> Type where
-  HereS : Sandwich (a::rs) [] a rs
-  ThereS : Sandwich lars ls a rs -> Sandwich (l::lars) (l::ls) a rs
+data Sandwich : List t -> t -> List t -> List t -> Type where
+  HereS  : Sandwich [] a rs (a::rs)
+  ThereS : Sandwich ls a rs lars -> Sandwich (l::ls) a rs (l::lars)
+
+swEq : Sandwich l a r lar -> l ++ [a] ++ r = lar
+swEq HereS = Refl
+swEq (ThereS sw) = cong (swEq sw)
+
+sandwich : (l : List t) -> Sandwich l a r (l ++ [a] ++ r)
+sandwich []      = HereS
+sandwich (l::ls) = ThereS (sandwich ls)
+
+appended : Sandwich l a r lar -> Sandwich l a (r ++ s) (lar ++ s)
+appended HereS = HereS
+appended (ThereS sw) = ThereS (appended sw)
+
+-- Sandwich2 ll l rl la a ra cs means ll ++ [l] ++ rl = cs and la ++ [a] ++ ra = ll ++ rl (i.e. cs without l)
+data Sandwich2 : List t -> t -> List t -> List t -> t -> List t -> List t -> Type where
+  There2 : Sandwich2 ll l rl la a ra cs -> Sandwich2 (x::ll) l rl (x::la) a ra (x::cs)
+  HereL  : Sandwich la a ra cs -> Sandwich2 [] l cs la a ra (l::cs)
+  HereA  : Sandwich ll l rl cs -> Sandwich2 (a::ll) l rl [] a (ll ++ rl) (a::cs)
+
+swMerge : Sandwich ll l rl cs -> Sandwich la a ra (ll ++ rl) -> Sandwich2 ll l rl la a ra cs
+swMerge HereS sa = HereL sa
+swMerge {ll=a::ll'} (ThereS sl) HereS = HereA sl
+swMerge {ll=x::ll'} {la=x::la'} (ThereS sl) (ThereS sa) = There2 (swMerge sl sa)
+
+data Combined : List t -> t -> List t -> List t -> t -> List t -> List t -> Type where
+  LA : Sandwich (ll ++ [l] ++ m) a ra cs
+    -> Sandwich ll l (m ++ ra) ((ll ++ [l] ++ m) ++ ra)
+    -> m ++ [a] ++ ra = rl
+    -> ll ++ m = la
+    -> Combined ll l rl la a ra cs
+  AL : Sandwich la a (m ++ [l] ++ rl) cs
+    -> Sandwich (la ++ m) l rl (la ++ (m ++ [l] ++ rl))
+    -> la ++ [a] ++ m = ll
+    -> m ++ rl = ra
+    -> Combined ll l rl la a ra cs
+
+sandwich2Combined : Sandwich2 ll l rl la a ra cs -> Combined ll l rl la a ra cs
+sandwich2Combined (HereL sa) = LA (ThereS sa) HereS (swEq sa) Refl
+sandwich2Combined (HereA sl) = case swEq sl of Refl => AL HereS sl Refl Refl
+sandwich2Combined (There2 s2) = case sandwich2Combined s2 of
+  LA sa sl Refl Refl => LA (ThereS sa) (ThereS sl) Refl Refl
+  AL sa sl Refl Refl => AL (ThereS sa) (ThereS sl) Refl Refl
 
 data Perm : {o : Type} -> List o -> List o -> Type where
   Nil : Perm [] []
-  Ins : Sandwich lar l a r -> Perm as (l++r) -> Perm (a::as) lar
+  Ins : Perm as (l++r) -> Sandwich l a r lar -> Perm (a::as) lar
 
 permId : (as : List o) -> Perm as as
 permId []      = Nil
-permId (a::as) = Ins HereS (permId as)
+permId (a::as) = Ins (permId as) HereS
 
-
-  --Ins : Perm as (l ++ r) -> Perm (a :: as) (l ++ [a] ++ r)
---  Ins : Perm as (l ++ r) -> lar = l ++ [a] ++ r -> Perm (a :: as) lar --(l ++ [a] ++ r)
-{-
-permId : (as : List o) -> Perm as as
-permId [] = Nil
-permId (a::as) = Ins {l=[]} (permId as) Refl
-
-place : {as, bs : List o} -> Elem a as -> Perm as bs -> Elem a bs
-
-delete : Perm (l ++ [a] ++ r) (l' ++ [a] ++ r') -> Perm (l ++ r) (l' ++ r')
-delete Nil = ?wat
-delete (Ins p qe) = ?wat2
-
-
---place : {o : Type} -> {cs : List o} -> Perm {o} (l ++ [a] ++ r) cs -> (l' : List o ** r' : List o ** cs = l' ++ [a] ++ r')
---place         {l=[]}    (Ins {l=l'}    {r=r'} _ eq)   = (l' ** r' ** eq)
---place {o} {a} {l=x::xs} (Ins {l=[]}    {r=rc} p Refl) = 
---  let (ld ** rd ** prf) = place {a} p in 
---  ((x::ld) ** rd ** cong {f=(::) x} prf) 
---place {o} {a} {l=x::xs} (Ins {l=c::lc} {r=rc} p Refl) = 
---  case place {a} p of  
---   ([]     **rd**prf) => 
---     let (Refl, tprf) = consInjective prf in 
---     ([] ** (lc ++ [x] ++ rc) ** Refl)
---   ((d::ld)**rd**prf) => 
---     let (Refl, tprf) = consInjective prf in 
-     
-
---  case place p of
---    (ld ** rd ** prf) => ?wat
---    (ld ** rd ** prf) =>
---      hlp rd lc ld prf
-  --where
-  --  hlp : (rd : List o) -> (lc : List o) -> (ld : List o) -> (lc ++ rc = ld ++ [a] ++ rd) -> (l' ** r' ** cs = l' ++ [a] ++ r')
-  --  hlp rd []       ld       prf = ((x::ld) ** rd ** ?wat) --cong {f=(::) x} prf)
-  --  hlp rd (c::lc') []       prf = ?p2 -- ([] ** (lc' ++ [x] ++ rc) ** ?p2)
-  --  hlp rd (c::lc') (d::ld') prf = ?p3 -- case hlp lc' ld' of (le ** re ** prf) => ?p3)
-
-permComp : {o : Type} -> Perm {o} as bs -> Perm bs cs -> Perm as cs
-permComp Nil p = p
-permComp (Ins {l} {a} {r} ab') bc =
-  case place bc of
-    (l' ** r' ** prf) => rewrite prf in
-      Ins {l=l'} {r=r'} $
-        permComp ab' (delete {l} {a} {r} {l'} {r'} (rewrite sym prf in bc))
+swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
+swap []      r = rewrite appendNilRightNeutral r in permId r
+swap (l::ls) r = Ins (swap ls r) (sandwich r)
 
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd Nil p = p
-permAdd {ds} (Ins {l} {r} {a} ab) cd =
-  rewrite sym (appendAssociative l (a :: r) ds) in
-    Ins {l=l} {r=r++ds} (rewrite appendAssociative l r ds in permAdd ab cd)
+permAdd {ds} (Ins {l} {r} {a} ab sw) cd = Ins {l=l} {r=r++ds} (rewrite appendAssociative l r ds in permAdd ab cd) (appended sw)
 
-swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
-swap [] r = rewrite appendNilRightNeutral r in permId r
-swap (a::as) r = Ins (swap as r)
+data Deleted : List t -> t -> List t -> List t -> Type where
+  Del : Perm (l ++ r) (l' ++ r') -> Sandwich l' a r' cs -> Deleted l a r cs
 
-permEqLength : Perm as bs -> length as = length bs
-permEqLength Nil = Refl
-permEqLength (Ins {l} {r} as) = cong {f=S} (permEqLength as) `trans` h l r
-  where
-    h : (l, r : List o) -> S (length (l ++ r)) = length (l ++ [a] ++ r)
-    h [] r = Refl
-    h (l::ls) r = cong {f=S} (h ls r)
+rewriteRight : bs = cs -> Perm as bs -> Perm as cs
+rewriteRight r p = rewrite sym r in p
+
+delete : Sandwich l a r bs -> Perm bs cs -> Deleted l a r cs
+delete HereS       (Ins bc sw) = Del bc sw
+delete (ThereS sw) (Ins bc sl) =
+  case delete sw bc of
+    Del bc' sa =>
+      case sandwich2Combined (swMerge sl sa) of
+        LA {ra} {m} {ll} sa' sl' Refl Refl => Del (Ins (rewriteRight (sym $ appendAssociative ll m ra) bc') sl') sa'
+        AL {la} {m} {rl} sa' sl' Refl Refl => Del (Ins (rewriteRight (      appendAssociative la m rl) bc') sl') sa'
+
+permComp : {o : Type} -> Perm {o} as bs -> Perm bs cs -> Perm as cs
+permComp Nil p = p
+permComp (Ins ab' sw) bc =
+  case delete sw bc of Del bc' sw' => Ins (permComp ab' bc') sw'
 
 --== Hypergraph ==--
 
@@ -170,4 +175,3 @@ add {k} {l} {m} {n} (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergra
 
     perm : Perm ((k ++ m) ++ sumArity (ao . coprodFin t1 t2)) ((l ++ n) ++ sumArity (ai . coprodFin t1 t2))
     perm = helper c1 c2 coprod coprod
-      -}
