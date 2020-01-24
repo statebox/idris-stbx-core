@@ -86,10 +86,22 @@ delete (ThereS sw) (Ins bc sl) =
         LA {ra} {m} {ll} sa' sl' Refl Refl => Del (Ins (rewriteRight (sym $ appendAssociative ll m ra) bc') sl') sa'
         AL {la} {m} {rl} sa' sl' Refl Refl => Del (Ins (rewriteRight (      appendAssociative la m rl) bc') sl') sa'
 
-permComp : {o : Type} -> Perm {o} as bs -> Perm bs cs -> Perm as cs
+permComp : Perm as bs -> Perm bs cs -> Perm as cs
 permComp Nil p = p
 permComp (Ins ab' sw) bc =
   case delete sw bc of Del bc' sw' => Ins (permComp ab' bc') sw'
+
+permCompLeftId : (ab : Perm as bs) -> permComp (permId as) ab = ab
+permCompLeftId Nil = Refl
+permCompLeftId (Ins ab' sw) = cong {f=\p => Ins p sw} (permCompLeftId ab')
+
+deleteId : (sw : Sandwich l a r bs) -> delete sw (permId bs) = Del (permId (l ++ r)) sw
+deleteId HereS = Refl
+deleteId (ThereS sw) = case deleteId sw of r => ?d
+
+permCompRightId : (ab : Perm as bs) -> permComp ab (permId bs) = ab
+permCompRightId Nil = Refl
+permCompRightId (Ins {l} {r} ab' sw) = case deleteId sw of r => ?q
 
 --== Hypergraph ==--
 
