@@ -7,7 +7,7 @@ import Data.List
 %default total
 
 
---== Perm ==--
+--== Sandwich ==--
 
 data Sandwich : List t -> t -> List t -> List t -> Type where
   HereS  : Sandwich [] a rs (a::rs)
@@ -25,25 +25,31 @@ appended : Sandwich l a r lar -> Sandwich l a (r ++ s) (lar ++ s)
 appended HereS = HereS
 appended (ThereS sw) = ThereS (appended sw)
 
--- Combined ll l rl la a ra cs means ll ++ [l] ++ rl = cs and la ++ [a] ++ ra = ll ++ rl (i.e. cs without l)
-data Combined : List t -> t -> List t -> List t -> t -> List t -> List t -> Type where
-  LA : Sandwich (ll ++ [l] ++ m) a ra cs
-    -> Sandwich ll l (m ++ ra) ((ll ++ [l] ++ m) ++ ra)
-    -> m ++ [a] ++ ra = rl
-    -> ll ++ m = la
-    -> Combined ll l rl la a ra cs
-  AL : Sandwich la a (m ++ [l] ++ rl) cs
-    -> Sandwich (la ++ m) l rl (la ++ (m ++ [l] ++ rl))
-    -> la ++ [a] ++ m = ll
-    -> m ++ rl = ra
-    -> Combined ll l rl la a ra cs
+-- Sandwich2 lb b rb la a ra cs means lb ++ [b] ++ rb = cs and la ++ [a] ++ ra = lb ++ rb (i.e. cs without b)
+-- It contains 2 sandwiches, one which points to `a` into `cs` and one which points to `b` into `cs` without `a`
+-- So it swaps the order of inserting of `b` and `a`
+data Sandwich2 : List t -> t -> List t -> List t -> t -> List t -> List t -> Type where
+  -- cs = lb ++ [b] ++ m ++ [a] ++ ra
+  BA : Sandwich (lb ++ [b] ++ m) a ra cs
+    -> Sandwich lb b (m ++ ra) ((lb ++ [b] ++ m) ++ ra)
+    -> m ++ [a] ++ ra = rb
+    -> lb ++ m = la
+    -> Sandwich2 lb b rb la a ra cs
+  -- cs = la ++ [a] ++ m ++ [b] ++ rb
+  AB : Sandwich la a (m ++ [b] ++ rb) cs
+    -> Sandwich (la ++ m) b rb (la ++ (m ++ [b] ++ rb))
+    -> la ++ [a] ++ m = lb
+    -> m ++ rb = ra
+    -> Sandwich2 lb b rb la a ra cs
 
-swComb : Sandwich ll l rl cs -> Sandwich la a ra (ll ++ rl) -> Combined ll l rl la a ra cs
-swComb HereS sa = LA (ThereS sa) HereS (swEq sa) Refl
-swComb {ll=a::ll'} (ThereS sl) HereS = case swEq sl of Refl => AL HereS sl Refl Refl
-swComb {ll=x::ll'} {la=x::la'} (ThereS sl) (ThereS sa) = case swComb sl sa of
-  LA sa sl Refl Refl => LA (ThereS sa) (ThereS sl) Refl Refl
-  AL sa sl Refl Refl => AL (ThereS sa) (ThereS sl) Refl Refl
+swComb : Sandwich lb b rb cs -> Sandwich la a ra (lb ++ rb) -> Sandwich2 lb b rb la a ra cs
+swComb HereS sa = BA (ThereS sa) HereS (swEq sa) Refl
+swComb {lb=a::lb'} (ThereS sb) HereS = case swEq sb of Refl => AB HereS sb Refl Refl
+swComb {lb=x::lb'} {la=x::la'} (ThereS sb) (ThereS sa) = case swComb sb sa of
+  BA sa sb Refl Refl => BA (ThereS sa) (ThereS sb) Refl Refl
+  AB sa sb Refl Refl => AB (ThereS sa) (ThereS sb) Refl Refl
+
+--== Perm ==--
 
 data Perm : {o : Type} -> List o -> List o -> Type where
   Nil : Perm [] []
@@ -59,39 +65,36 @@ swap (l::ls) r = Ins (swap ls r) (sandwich r)
 
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd Nil p = p
-permAdd {ds} (Ins {l} {r} {a} ab sw) cd = Ins {l=l} {r=r++ds} (rewrite appendAssociative l r ds in permAdd ab cd) (appended sw)
-
-data Deleted : List t -> t -> List t -> List t -> Type where
-  Del : Perm (l ++ r) (l' ++ r') -> Sandwich l' a r' cs -> Deleted l a r cs
+permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewrite appendAssociative l r ds in permAdd ab cd) (appended sw)
 
 rewriteRight : bs = cs -> Perm as bs -> Perm as cs
 rewriteRight r p = rewrite sym r in p
 
-delete : Sandwich l a r bs -> Perm bs cs -> Deleted l a r cs
-delete HereS       (Ins bc sw) = Del bc sw
-delete (ThereS sw) (Ins bc sl) =
-  case delete sw bc of
-    Del bc' sa =>
-      case swComb sl sa of
-        LA {ra} {m} {ll} sa' sl' Refl Refl => Del (Ins (rewriteRight (sym $ appendAssociative ll m ra) bc') sl') sa'
-        AL {la} {m} {rl} sa' sl' Refl Refl => Del (Ins (rewriteRight (      appendAssociative la m rl) bc') sl') sa'
+shuffle : Perm bs cs -> Sandwich l a r bs -> Perm (a :: l ++ r) cs
+shuffle (Ins bc sw) HereS       = Ins bc sw
+shuffle (Ins bc sb) (ThereS sw) =
+  case shuffle bc sw of
+    Ins bc' sa =>
+      case swComb sb sa of
+        BA {lb} {m} {ra} sa' sb' Refl Refl => Ins (Ins (rewriteRight (sym $ appendAssociative lb m ra) bc') sb') sa'
+        AB {la} {m} {rb} sa' sb' Refl Refl => Ins (Ins (rewriteRight (      appendAssociative la m rb) bc') sb') sa'
 
 permComp : Perm as bs -> Perm bs cs -> Perm as cs
 permComp Nil p = p
 permComp (Ins ab' sw) bc =
-  case delete sw bc of Del bc' sw' => Ins (permComp ab' bc') sw'
+  case shuffle bc sw of Ins bc' sw' => Ins (permComp ab' bc') sw'
 
 permCompLeftId : (ab : Perm as bs) -> permComp (permId as) ab = ab
 permCompLeftId Nil = Refl
 permCompLeftId (Ins ab' sw) = cong {f=\p => Ins p sw} (permCompLeftId ab')
 
-deleteId : (sw : Sandwich l a r bs) -> delete sw (permId bs) = Del (permId (l ++ r)) sw
-deleteId HereS = Refl
-deleteId (ThereS sw) = case deleteId sw of r => ?d
+shuffleId : (sw : Sandwich l a r bs) -> shuffle (permId bs) sw = Ins (permId (l ++ r)) sw
+shuffleId HereS = Refl
+shuffleId (ThereS sw) = case shuffleId sw of r => ?d
 
 permCompRightId : (ab : Perm as bs) -> permComp ab (permId bs) = ab
 permCompRightId Nil = Refl
-permCompRightId (Ins {l} {r} ab' sw) = case deleteId sw of r => ?q
+permCompRightId (Ins {l} {r} ab' sw) = case shuffleId sw of r => ?q
 
 --== Hypergraph ==--
 
