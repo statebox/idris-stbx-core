@@ -25,17 +25,7 @@ appended : Sandwich l a r lar -> Sandwich l a (r ++ s) (lar ++ s)
 appended HereS = HereS
 appended (ThereS sw) = ThereS (appended sw)
 
--- Sandwich2 ll l rl la a ra cs means ll ++ [l] ++ rl = cs and la ++ [a] ++ ra = ll ++ rl (i.e. cs without l)
-data Sandwich2 : List t -> t -> List t -> List t -> t -> List t -> List t -> Type where
-  There2 : Sandwich2 ll l rl la a ra cs -> Sandwich2 (x::ll) l rl (x::la) a ra (x::cs)
-  HereL  : Sandwich la a ra cs -> Sandwich2 [] l cs la a ra (l::cs)
-  HereA  : Sandwich ll l rl cs -> Sandwich2 (a::ll) l rl [] a (ll ++ rl) (a::cs)
-
-swMerge : Sandwich ll l rl cs -> Sandwich la a ra (ll ++ rl) -> Sandwich2 ll l rl la a ra cs
-swMerge HereS sa = HereL sa
-swMerge {ll=a::ll'} (ThereS sl) HereS = HereA sl
-swMerge {ll=x::ll'} {la=x::la'} (ThereS sl) (ThereS sa) = There2 (swMerge sl sa)
-
+-- Combined ll l rl la a ra cs means ll ++ [l] ++ rl = cs and la ++ [a] ++ ra = ll ++ rl (i.e. cs without l)
 data Combined : List t -> t -> List t -> List t -> t -> List t -> List t -> Type where
   LA : Sandwich (ll ++ [l] ++ m) a ra cs
     -> Sandwich ll l (m ++ ra) ((ll ++ [l] ++ m) ++ ra)
@@ -48,10 +38,10 @@ data Combined : List t -> t -> List t -> List t -> t -> List t -> List t -> Type
     -> m ++ rl = ra
     -> Combined ll l rl la a ra cs
 
-sandwich2Combined : Sandwich2 ll l rl la a ra cs -> Combined ll l rl la a ra cs
-sandwich2Combined (HereL sa) = LA (ThereS sa) HereS (swEq sa) Refl
-sandwich2Combined (HereA sl) = case swEq sl of Refl => AL HereS sl Refl Refl
-sandwich2Combined (There2 s2) = case sandwich2Combined s2 of
+swComb : Sandwich ll l rl cs -> Sandwich la a ra (ll ++ rl) -> Combined ll l rl la a ra cs
+swComb HereS sa = LA (ThereS sa) HereS (swEq sa) Refl
+swComb {ll=a::ll'} (ThereS sl) HereS = case swEq sl of Refl => AL HereS sl Refl Refl
+swComb {ll=x::ll'} {la=x::la'} (ThereS sl) (ThereS sa) = case swComb sl sa of
   LA sa sl Refl Refl => LA (ThereS sa) (ThereS sl) Refl Refl
   AL sa sl Refl Refl => AL (ThereS sa) (ThereS sl) Refl Refl
 
@@ -82,7 +72,7 @@ delete HereS       (Ins bc sw) = Del bc sw
 delete (ThereS sw) (Ins bc sl) =
   case delete sw bc of
     Del bc' sa =>
-      case sandwich2Combined (swMerge sl sa) of
+      case swComb sl sa of
         LA {ra} {m} {ll} sa' sl' Refl Refl => Del (Ins (rewriteRight (sym $ appendAssociative ll m ra) bc') sl') sa'
         AL {la} {m} {rl} sa' sl' Refl Refl => Del (Ins (rewriteRight (      appendAssociative la m rl) bc') sl') sa'
 
