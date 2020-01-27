@@ -21,6 +21,14 @@ swEq : Sandwich l a r lar -> l ++ [a] ++ r = lar
 swEq  HereS      = Refl
 swEq (ThereS sw) = cong (swEq sw)
 
+congHereS : (rs1 = rs2) -> (HereS {a} {rs=rs1} = HereS {a} {rs=rs2})
+congHereS Refl = Refl
+
+congThereS : {t : Type} -> {l : t} -> (ls1 = ls2) -> (rs1 = rs2) -> (lars1 = lars2)
+          -> {sw1 : Sandwich ls1 a rs1 lars1} -> {sw2 : Sandwich ls2 a rs2 lars2}
+          -> (sw1 = sw2) -> ThereS {ls=ls1} {a} {rs=rs1} {lars=lars1} {l} sw1 = ThereS {ls=ls2} {a} {rs=rs2} {lars=lars2} {l} sw2
+congThereS Refl Refl Refl Refl = Refl
+
 sandwich : (l : List t) -> Sandwich l a r (l ++ [a] ++ r)
 sandwich []      = HereS
 sandwich (l::ls) = ThereS (sandwich ls)
@@ -28,6 +36,11 @@ sandwich (l::ls) = ThereS (sandwich ls)
 appended : Sandwich l a r lar -> Sandwich l a (r ++ s) (lar ++ s)
 appended  HereS      = HereS
 appended (ThereS sw) = ThereS (appended sw)
+
+appendedNilRightNeutral : (sw: Sandwich l a r lar) -> appended {s=[]} sw = sw
+appendedNilRightNeutral (HereS {rs}) = congHereS (appendNilRightNeutral rs)
+appendedNilRightNeutral (ThereS {lars} {rs} sw) =
+  congThereS Refl (appendNilRightNeutral rs) (appendNilRightNeutral lars) (appendedNilRightNeutral sw)
 
 -- Sandwich2 lb b rb la a ra cs means lb ++ [b] ++ rb = cs and la ++ [a] ++ ra = lb ++ rb (i.e. cs without b)
 -- It contains 2 sandwiches, one which points to `a` into `cs` and one which points to `b` into `cs` without `a`
@@ -62,24 +75,32 @@ data Perm : {o : Type} -> List o -> List o -> Type where
 insInjective: Ins {l=l1} {r=r1} p1 s1 = Ins {l=l2} {r=r2} p2 s2 -> (l1 = l2, r1 = r2, p1 = p2, s1 = s2)
 insInjective Refl = (Refl, Refl, Refl, Refl)
 
+insCong : (as1 = as2) -> (l1 = l2) -> (r1 = r2) -> {p1 : Perm as1 (l1++r1)} -> {p2 : Perm as2 (l2++r2)} -> (p1 = p2)
+       -> {s1 : Sandwich l1 a r1 lar1} -> {s2 : Sandwich l2 a r2 lar2} -> (s1 = s2)
+       -> Ins {l=l1} {r=r1} p1 s1 = Ins {l=l2} {r=r2} p2 s2
+insCong Refl Refl Refl Refl {s1} {s2} s = case (swEq s1, swEq s2, s) of
+  (Refl, Refl, Refl) => Refl
+
+rewriteRight : cs = bs -> Perm as bs -> Perm as cs
+rewriteRight Refl p = p
+
+rewriteRightIgnore : {p1 : Perm as bs} -> {p2 : Perm cs ds} -> p1 = p2 -> rewriteRight prf p1 = p2
+rewriteRightIgnore Refl {prf=Refl} = Refl
+
+rewriteLeft : cs = as -> Perm as bs -> Perm cs bs
+rewriteLeft Refl p = p
+
 permId : (as : List o) -> Perm as as
 permId []      = Nil
 permId (a::as) = Ins (permId as) HereS
 
 swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
-swap []      r = rewrite appendNilRightNeutral r in permId r
+swap []      r = rewriteRight (appendNilRightNeutral r) (permId r)
 swap (l::ls) r = Ins (swap ls r) (sandwich r)
 
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd       Nil                p  = p
-permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewrite appendAssociative l r ds in permAdd ab cd) (appended sw)
-
-permNilRightNeutral : (p : Perm as bs) -> permAdd p Nil = p
-permNilRightNeutral Nil = Refl
-permNilRightNeutral {as=a::as1} (Ins {l=lx} {r=rx} p s) = ?wat
-
-rewriteRight : cs = bs -> Perm as bs -> Perm as cs
-rewriteRight Refl p = p
+permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewriteRight (appendAssociative l r ds) $ permAdd ab cd) (appended sw)
 
 shuffle : Perm bs cs -> Sandwich l a r bs -> Perm (a :: l ++ r) cs
 shuffle (Ins bc sw)  HereS      = Ins bc sw
@@ -111,6 +132,15 @@ permCompRightId {bs} (Ins {l} {r} ab' sw) with (shuffle (permId bs) sw) proof sh
     let (Refl, Refl, Refl, Refl) = insInjective $ trans shprf (shuffleId sw) in
       rewrite permCompRightId ab' in Refl
 
+permAddNilRightNeutral : (ab : Perm as bs) -> permAdd ab Nil = ab
+permAddNilRightNeutral Nil = Refl
+permAddNilRightNeutral {as=a::as1} (Ins {r} p s) =
+  insCong (appendNilRightNeutral as1)
+          Refl
+          (appendNilRightNeutral r)
+          (rewriteRightIgnore (permAddNilRightNeutral p))
+          (appendedNilRightNeutral s)
+
 --== Hypergraph ==--
 
 sumArity : {h : Nat} -> (a : sigma -> List o) -> Vect h sigma -> List o
@@ -128,12 +158,12 @@ singleton : {s : Type} -> {ai, ao : s -> List o} -> (edge : s) -> Hypergraph s a
 singleton edge = MkHypergraph 1 [edge] perm
   where
     perm : Perm (ai edge ++ ao edge ++ []) (ao edge ++ ai edge ++ [])
-    perm = rewrite appendNilRightNeutral (ao edge) in
-           rewrite appendNilRightNeutral (ai edge) in
+    perm = rewriteLeft (cong $ appendNilRightNeutral (ao edge)) $
+           rewriteRight (cong $ appendNilRightNeutral (ai edge)) $
              swap (ai edge) (ao edge)
 
 identity : {s : Type} -> {ai, ao : s -> List o} -> (n : List o) -> Hypergraph s ai ao n n
-identity n = MkHypergraph 0 Nil (rewrite appendNilRightNeutral n in permId n)
+identity n = MkHypergraph 0 Nil (rewriteRight (appendNilRightNeutral n) (rewriteLeft (appendNilRightNeutral n) (permId n)))
 
 coprod
    : {s : Type} -> {h1 : Nat} -> {h2 : Nat}
@@ -150,18 +180,16 @@ compose (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
   where
     helper2 : Perm (m ++ s2) (n ++ f2) -> Perm ((m ++ f1) ++ s2) (n ++ (f2 ++ f1))
     helper2 {s2} {f1} {f2} c2 =
-      rewrite sym $ appendAssociative m f1 s2 in
-      rewrite appendAssociative n f2 f1 in
+      rewriteLeft (sym $ appendAssociative m f1 s2) $
+      rewriteRight (appendAssociative n f2 f1) $
         permComp (permId m `permAdd` swap f1 s2)
-        (rewrite appendAssociative m s2 f1 in
+        (rewriteLeft (appendAssociative m s2 f1) $
           c2 `permAdd` permId f1)
 
     helper : Perm (k ++ s1) (m ++ f1) -> Perm (m ++ s2) (n ++ f2) -> s1 ++ s2 = s12 -> f1 ++ f2 = f12 -> Perm (k ++ s12) (n ++ f12)
-    helper {s1} {s2} {f1} {f2} c1 c2 cps cpf =
-      rewrite sym cps in
-      rewrite sym cpf in
-      rewrite appendAssociative k s1 s2 in
-        (c1 `permAdd` permId s2) `permComp` helper2 c2 `permComp` (permId n `permAdd` swap f2 f1)
+    helper {s1} {s2} {f1} {f2} c1 c2 Refl Refl =
+      rewriteLeft (appendAssociative k s1 s2) $
+        ((c1 `permAdd` permId s2) `permComp` helper2 c2) `permComp` (permId n `permAdd` swap f2 f1)
 
     perm : Perm (k ++ sumArity ao (t1 ++ t2)) (n ++ sumArity ai (t1 ++ t2))
     perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)
@@ -177,17 +205,15 @@ add {k} {l} {m} {n} (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergra
   where
     helper2 : Perm ((a ++ b) ++ (c ++ d)) ((a ++ c) ++ (b ++ d))
     helper2 {a} {b} {c} {d} =
-      rewrite appendAssociative (a ++ b) c d in
-      rewrite appendAssociative (a ++ c) b d in
-      rewrite sym $ appendAssociative a b c in
-      rewrite sym $ appendAssociative a c b in
+      rewriteLeft (appendAssociative (a ++ b) c d) $
+      rewriteRight (appendAssociative (a ++ c) b d) $
+      rewriteLeft (cong {f=\l => l ++ d} $ sym $ appendAssociative a b c) $
+      rewriteRight (cong {f=\l => l ++ d} $ sym $ appendAssociative a c b) $
       (permId a `permAdd` swap b c) `permAdd` permId d
 
     helper : Perm (k ++ s1) (l ++ f1) -> Perm (m ++ s2) (n ++ f2) -> s1 ++ s2 = s12 -> f1 ++ f2 = f12 -> Perm ((k ++ m) ++ s12) ((l ++ n) ++ f12)
-    helper {s1} {s2} {f1} {f2} c1 c2 cps cpf =
-      rewrite sym cps in
-      rewrite sym cpf in
-        helper2 `permComp` ((c1 `permAdd` c2) `permComp` helper2)
+    helper {s1} {s2} {f1} {f2} c1 c2 Refl Refl =
+      helper2 `permComp` ((c1 `permAdd` c2) `permComp` helper2)
 
     perm : Perm ((k ++ m) ++ sumArity ao (t1 ++ t2)) ((l ++ n) ++ sumArity ai (t1 ++ t2))
     perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)
