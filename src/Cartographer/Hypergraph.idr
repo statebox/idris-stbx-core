@@ -1,6 +1,7 @@
 module Cartographer.Hypergraph
 
 import Data.Fin
+import Data.Vect
 import Data.List
 
 %access public export
@@ -73,6 +74,10 @@ permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd       Nil                p  = p
 permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewrite appendAssociative l r ds in permAdd ab cd) (appended sw)
 
+permNilRightNeutral : (p : Perm as bs) -> permAdd p Nil = p
+permNilRightNeutral Nil = Refl
+permNilRightNeutral {as=a::as1} (Ins {l=lx} {r=rx} p s) = ?wat
+
 rewriteRight : cs = bs -> Perm as bs -> Perm as cs
 rewriteRight Refl p = p
 
@@ -108,19 +113,19 @@ permCompRightId {bs} (Ins {l} {r} ab' sw) with (shuffle (permId bs) sw) proof sh
 
 --== Hypergraph ==--
 
-sumArity : {h : Nat} -> (f : Fin h -> List o) -> List o
-sumArity {h=Z}   _ = []
-sumArity {h=S n} f = f FZ ++ sumArity {h=n} (f . FS)
+sumArity : {h : Nat} -> (a : sigma -> List o) -> Vect h sigma -> List o
+sumArity _ Nil = []
+sumArity a (s :: ss) = a s ++ sumArity a ss
 
 record Hypergraph (sigma : Type) (arityIn : sigma -> List o) (arityOut : sigma -> List o) (k : List o) (m : List o) where
   constructor MkHypergraph
   -- HyperEdge count
   h : Nat
-  Typ : Fin h -> sigma
-  wiring : Perm (k ++ sumArity (arityOut . Typ)) (m ++ sumArity (arityIn . Typ))
+  Typ : Vect h sigma
+  wiring : Perm (k ++ sumArity arityOut Typ) (m ++ sumArity arityIn Typ)
 
 singleton : {s : Type} -> {ai, ao : s -> List o} -> (edge : s) -> Hypergraph s ai ao (ai edge) (ao edge)
-singleton edge = MkHypergraph 1 (const edge) perm
+singleton edge = MkHypergraph 1 [edge] perm
   where
     perm : Perm (ai edge ++ ao edge ++ []) (ao edge ++ ai edge ++ [])
     perm = rewrite appendNilRightNeutral (ao edge) in
@@ -128,23 +133,19 @@ singleton edge = MkHypergraph 1 (const edge) perm
              swap (ai edge) (ao edge)
 
 identity : {s : Type} -> {ai, ao : s -> List o} -> (n : List o) -> Hypergraph s ai ao n n
-identity n = MkHypergraph 0 FinZElim (rewrite appendNilRightNeutral n in permId n)
-
-coprodFin : {m : Nat} -> {n : Nat} -> (Fin m -> a) -> (Fin n -> a) -> Fin (m + n) -> a
-coprodFin {m = Z}    _ r   i    = r i
-coprodFin {m = S m'} l r  FZ    = l FZ
-coprodFin {m = S m'} l r (FS i) = coprodFin {m = m'} (l . FS) r i
+identity n = MkHypergraph 0 Nil (rewrite appendNilRightNeutral n in permId n)
 
 coprod
-   : {s : Type} -> {a : s -> List o} -> {h1 : Nat} -> {h2 : Nat} -> {t1 : Fin h1 -> s} -> {t2 : Fin h2 -> s}
-  -> sumArity (a . t1) ++ sumArity (a . t2) = sumArity (a . coprodFin t1 t2)
-coprod {h1=Z}   {a} {t2} = Refl
-coprod {h1=S h}     {t1} = sym (appendAssociative _ _ _) `trans` cong (coprod {h1=h} {t1=t1 . FS})
+   : {s : Type} -> {h1 : Nat} -> {h2 : Nat}
+  -> (a : s -> List o) -> (t1 : Vect h1 s) -> (t2 : Vect h2 s)
+  -> sumArity a t1 ++ sumArity a t2 = sumArity a (t1 ++ t2)
+coprod a Nil     _  = Refl
+coprod a (s::t1) t2 = sym (appendAssociative _ _ _) `trans` cong (coprod a t1 t2)
 
 compose : (g1 : Hypergraph s ai ao k m) -> (g2 : Hypergraph s ai ao m n) -> Hypergraph s ai ao k n
 compose (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
   (h1 + h2)
-  (coprodFin t1 t2)
+  (t1 ++ t2)
   perm
   where
     helper2 : Perm (m ++ s2) (n ++ f2) -> Perm ((m ++ f1) ++ s2) (n ++ (f2 ++ f1))
@@ -162,8 +163,8 @@ compose (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
       rewrite appendAssociative k s1 s2 in
         (c1 `permAdd` permId s2) `permComp` helper2 c2 `permComp` (permId n `permAdd` swap f2 f1)
 
-    perm : Perm (k ++ sumArity (ao . coprodFin t1 t2)) (n ++ sumArity (ai . coprodFin t1 t2))
-    perm = helper c1 c2 coprod coprod
+    perm : Perm (k ++ sumArity ao (t1 ++ t2)) (n ++ sumArity ai (t1 ++ t2))
+    perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)
 
 zero : {s : Type} -> {ai, ao : s -> List o} -> Hypergraph s ai ao [] []
 zero = identity []
@@ -171,7 +172,7 @@ zero = identity []
 add : Hypergraph s ai ao k l -> Hypergraph s ai ao m n -> Hypergraph s ai ao (k ++ m) (l ++ n)
 add {k} {l} {m} {n} (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
   (h1 + h2)
-  (coprodFin t1 t2)
+  (t1 ++ t2)
   perm
   where
     helper2 : Perm ((a ++ b) ++ (c ++ d)) ((a ++ c) ++ (b ++ d))
@@ -188,5 +189,5 @@ add {k} {l} {m} {n} (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergra
       rewrite sym cpf in
         helper2 `permComp` ((c1 `permAdd` c2) `permComp` helper2)
 
-    perm : Perm ((k ++ m) ++ sumArity (ao . coprodFin t1 t2)) ((l ++ n) ++ sumArity (ai . coprodFin t1 t2))
-    perm = helper c1 c2 coprod coprod
+    perm : Perm ((k ++ m) ++ sumArity ao (t1 ++ t2)) ((l ++ n) ++ sumArity ai (t1 ++ t2))
+    perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)
