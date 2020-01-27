@@ -58,11 +58,8 @@ data Perm : {o : Type} -> List o -> List o -> Type where
   Nil : Perm [] []
   Ins : Perm as (l++r) -> Sandwich l a r lar -> Perm (a::as) lar
 
-insInjective1 : Ins p1 s1 = Ins p2 s2 -> p1 = p2
-insInjective1 Refl = Refl
-
-insInjective : Ins p1 s1 = Ins p2 s2 -> (p1 = p2, s1 = s2)
-insInjective Refl = (Refl, Refl)
+insInjective: Ins {l=l1} {r=r1} p1 s1 = Ins {l=l2} {r=r2} p2 s2 -> (l1 = l2, r1 = r2, p1 = p2, s1 = s2)
+insInjective Refl = (Refl, Refl, Refl, Refl)
 
 permId : (as : List o) -> Perm as as
 permId []      = Nil
@@ -100,12 +97,14 @@ shuffleId  HereS      = Refl
 shuffleId (ThereS {ls} {rs} {lars} sw) with (shuffle {l=ls} {r=rs} (permId lars) sw) proof shprf
   shuffleId (ThereS {ls} {rs} {lars} sw) | Ins {l=ll} {r=rr} bc' sa with (swEq sa)
     shuffleId (ThereS {ls} {rs} {lars=ll ++ a :: rr} sw) | Ins {l=ll} {r=rr} bc' sa | Refl =
-      let tt = insInjective1 $ trans shprf (shuffleId sw) in  -- TODO stuck on insInjective
-      ?wat
+      let (Refl, Refl, Refl, Refl) = insInjective $ trans shprf (shuffleId sw) in Refl
 
 permCompRightId : (ab : Perm as bs) -> permComp ab (permId bs) = ab
 permCompRightId  Nil                 = Refl
-permCompRightId (Ins {l} {r} ab' sw) = case shuffleId sw of r => ?q
+permCompRightId {bs} (Ins {l} {r} ab' sw) with (shuffle (permId bs) sw) proof shprf
+  permCompRightId (Ins {l} {r} ab' sw) | Ins bc' sw' =
+    let (Refl, Refl, Refl, Refl) = insInjective $ trans shprf (shuffleId sw) in
+      rewrite permCompRightId ab' in Refl
 
 --== Hypergraph ==--
 
