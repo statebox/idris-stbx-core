@@ -143,19 +143,14 @@ permAddNilRightNeutral {as=a::as1} (Ins {r} p s) =
 
 --== Hypergraph ==--
 
-sumArity : {h : Nat} -> (a : sigma -> List o) -> Vect h sigma -> List o
-sumArity _ Nil = []
-sumArity a (s :: ss) = a s ++ sumArity a ss
-
 record Hypergraph (sigma : Type) (arityIn : sigma -> List o) (arityOut : sigma -> List o) (k : List o) (m : List o) where
   constructor MkHypergraph
-  -- HyperEdge count
-  h : Nat
-  Typ : Vect h sigma
-  wiring : Perm (k ++ sumArity arityOut Typ) (m ++ sumArity arityIn Typ)
+  -- HyperEdges
+  Typ : List sigma
+  wiring : Perm (k ++ concatMap arityOut Typ) (m ++ concatMap arityIn Typ)
 
 singleton : {s : Type} -> {ai, ao : s -> List o} -> (edge : s) -> Hypergraph s ai ao (ai edge) (ao edge)
-singleton edge = MkHypergraph 1 [edge] perm
+singleton edge = MkHypergraph [edge] perm
   where
     perm : Perm (ai edge ++ ao edge ++ []) (ao edge ++ ai edge ++ [])
     perm = rewriteLeft (cong $ appendNilRightNeutral (ao edge)) $
@@ -163,20 +158,16 @@ singleton edge = MkHypergraph 1 [edge] perm
              swap (ai edge) (ao edge)
 
 identity : {s : Type} -> {ai, ao : s -> List o} -> (n : List o) -> Hypergraph s ai ao n n
-identity n = MkHypergraph 0 Nil (rewriteRight (appendNilRightNeutral n) (rewriteLeft (appendNilRightNeutral n) (permId n)))
+identity n = MkHypergraph [] (rewriteRight (appendNilRightNeutral n) (rewriteLeft (appendNilRightNeutral n) (permId n)))
 
 coprod
-   : {s : Type} -> {h1 : Nat} -> {h2 : Nat}
-  -> (a : s -> List o) -> (t1 : Vect h1 s) -> (t2 : Vect h2 s)
-  -> sumArity a t1 ++ sumArity a t2 = sumArity a (t1 ++ t2)
+   : (a : s -> List o) -> (t1 : List s) -> (t2 : List s)
+  -> concatMap a t1 ++ concatMap a t2 = concatMap a (t1 ++ t2)
 coprod a Nil     _  = Refl
 coprod a (s::t1) t2 = sym (appendAssociative _ _ _) `trans` cong (coprod a t1 t2)
 
 compose : (g1 : Hypergraph s ai ao k m) -> (g2 : Hypergraph s ai ao m n) -> Hypergraph s ai ao k n
-compose (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
-  (h1 + h2)
-  (t1 ++ t2)
-  perm
+compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
   where
     helper2 : Perm (m ++ s2) (n ++ f2) -> Perm ((m ++ f1) ++ s2) (n ++ (f2 ++ f1))
     helper2 {s2} {f1} {f2} c2 =
@@ -191,17 +182,14 @@ compose (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
       rewriteLeft (appendAssociative k s1 s2) $
         ((c1 `permAdd` permId s2) `permComp` helper2 c2) `permComp` (permId n `permAdd` swap f2 f1)
 
-    perm : Perm (k ++ sumArity ao (t1 ++ t2)) (n ++ sumArity ai (t1 ++ t2))
+    perm : Perm (k ++ concatMap ao (t1 ++ t2)) (n ++ concatMap ai (t1 ++ t2))
     perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)
 
 zero : {s : Type} -> {ai, ao : s -> List o} -> Hypergraph s ai ao [] []
 zero = identity []
 
 add : Hypergraph s ai ao k l -> Hypergraph s ai ao m n -> Hypergraph s ai ao (k ++ m) (l ++ n)
-add {k} {l} {m} {n} (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergraph
-  (h1 + h2)
-  (t1 ++ t2)
-  perm
+add {k} {l} {m} {n} (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
   where
     helper2 : Perm ((a ++ b) ++ (c ++ d)) ((a ++ c) ++ (b ++ d))
     helper2 {a} {b} {c} {d} =
@@ -215,5 +203,5 @@ add {k} {l} {m} {n} (MkHypergraph h1 t1 c1) (MkHypergraph h2 t2 c2) = MkHypergra
     helper {s1} {s2} {f1} {f2} c1 c2 Refl Refl =
       helper2 `permComp` ((c1 `permAdd` c2) `permComp` helper2)
 
-    perm : Perm ((k ++ m) ++ sumArity ao (t1 ++ t2)) ((l ++ n) ++ sumArity ai (t1 ++ t2))
+    perm : Perm ((k ++ m) ++ concatMap ao (t1 ++ t2)) ((l ++ n) ++ concatMap ai (t1 ++ t2))
     perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)
