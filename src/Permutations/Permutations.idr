@@ -1,0 +1,52 @@
+module Permutations.Permutations
+
+import Permutations.Sandwich
+
+%access public export
+%default total
+
+data Perm : {o : Type} -> List o -> List o -> Type where
+  Nil : Perm [] []
+  Ins : Perm as (l++r) -> Sandwich l a r lar -> Perm (a::as) lar
+
+insInjective: Ins {l=l1} {r=r1} p1 s1 = Ins {l=l2} {r=r2} p2 s2 -> (l1 = l2, r1 = r2, p1 = p2, s1 = s2)
+insInjective Refl = (Refl, Refl, Refl, Refl)
+
+insCong : (as1 = as2) -> (l1 = l2) -> (r1 = r2) -> {p1 : Perm as1 (l1++r1)} -> {p2 : Perm as2 (l2++r2)} -> (p1 = p2)
+       -> {s1 : Sandwich l1 a r1 lar1} -> {s2 : Sandwich l2 a r2 lar2} -> (s1 = s2)
+       -> Ins {l=l1} {r=r1} p1 s1 = Ins {l=l2} {r=r2} p2 s2
+insCong Refl Refl Refl Refl {s1} {s2} s = case (swEq s1, swEq s2, s) of
+  (Refl, Refl, Refl) => Refl
+
+rewriteRight : cs = bs -> Perm as bs -> Perm as cs
+rewriteRight Refl p = p
+
+rewriteRightIgnore : {p1 : Perm as bs} -> {p2 : Perm cs ds} -> p1 = p2 -> rewriteRight prf p1 = p2
+rewriteRightIgnore Refl {prf=Refl} = Refl
+
+rewriteLeft : cs = as -> Perm as bs -> Perm cs bs
+rewriteLeft Refl p = p
+
+permId : (as : List o) -> Perm as as
+permId []      = Nil
+permId (a::as) = Ins (permId as) HereS
+
+swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
+swap []      r = rewriteRight (appendNilRightNeutral r) (permId r)
+swap (l::ls) r = Ins (swap ls r) (sandwich r)
+
+permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
+permAdd       Nil                p  = p
+permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewriteRight (appendAssociative l r ds) $ permAdd ab cd) (appended sw)
+
+shuffle : Perm bs cs -> Sandwich l a r bs -> Perm (a :: l ++ r) cs
+shuffle (Ins bc sw)  HereS      = Ins bc sw
+shuffle (Ins bc sb) (ThereS sw) with (shuffle bc sw)
+  | Ins bc' sa with (swComb sb sa)
+    | BA {lb} {m} {ra} sa' sb' Refl Refl = Ins (Ins (rewriteRight (      appendAssociative lb m ra) bc') sb') sa'
+    | AB {la} {m} {rb} sa' sb' Refl Refl = Ins (Ins (rewriteRight (sym $ appendAssociative la m rb) bc') sb') sa'
+
+permComp : Perm as bs -> Perm bs cs -> Perm as cs
+permComp  Nil         p  = p
+permComp (Ins ab' sw) bc =
+  case shuffle bc sw of Ins bc' sw' => Ins (permComp ab' bc') sw'

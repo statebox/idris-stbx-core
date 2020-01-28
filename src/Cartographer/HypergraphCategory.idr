@@ -3,8 +3,10 @@ module HypergraphCategory
 import Data.List
 import Control.Isomorphism
 
-import Cartographer.Hypergraph as HG
 import Basic.Category
+
+import Permutations.Permutations
+import Cartographer.Hypergraph as HG
 
 hgCons2 : {s : Type} -> {ai, ao : s -> List o} -> {k : List o} -> {l : List o}
        -> {t1 : List s} -> {t2 : List s} -> (t1 = t2)
