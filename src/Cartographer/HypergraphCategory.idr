@@ -8,8 +8,8 @@ import Basic.Category
 
 hgCons2 : {s : Type} -> {ai, ao : s -> List o} -> {k : List o} -> {l : List o}
        -> {t1 : List s} -> {t2 : List s} -> (t1 = t2)
-       -> {w1 : Perm (k ++ concatMap ao t1) (m ++ concatMap ai t1)}
-       -> {w2 : Perm (k ++ concatMap ao t2) (m ++ concatMap ai t2)}
+       -> {w1 : Perm (k ++ sumArity ao t1) (m ++ sumArity ai t1)}
+       -> {w2 : Perm (k ++ sumArity ao t2) (m ++ sumArity ai t2)}
        -> (w1 = w2) -> MkHypergraph t1 w1 = MkHypergraph t2 w2
 hgCons2 Refl Refl = Refl
 

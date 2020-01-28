@@ -143,11 +143,17 @@ permAddNilRightNeutral {as=a::as1} (Ins {r} p s) =
 
 --== Hypergraph ==--
 
+-- equivalent to concatMap, but `concatMap a t` is expanded in holes to this ugly thing:
+-- Prelude.List.List implementation of Prelude.Foldable.Foldable, method foldr (\x, meth => a x ++ meth) [] t
+sumArity : (a : sigma -> List o) -> List sigma -> List o
+sumArity _ Nil = []
+sumArity a (s :: ss) = a s ++ sumArity a ss
+
 record Hypergraph (sigma : Type) (arityIn : sigma -> List o) (arityOut : sigma -> List o) (k : List o) (m : List o) where
   constructor MkHypergraph
   -- HyperEdges
   Typ : List sigma
-  wiring : Perm (k ++ concatMap arityOut Typ) (m ++ concatMap arityIn Typ)
+  wiring : Perm (k ++ sumArity arityOut Typ) (m ++ sumArity arityIn Typ)
 
 singleton : {s : Type} -> {ai, ao : s -> List o} -> (edge : s) -> Hypergraph s ai ao (ai edge) (ao edge)
 singleton edge = MkHypergraph [edge] perm
@@ -162,7 +168,7 @@ identity n = MkHypergraph [] (rewriteRight (appendNilRightNeutral n) (rewriteLef
 
 coprod
    : (a : s -> List o) -> (t1 : List s) -> (t2 : List s)
-  -> concatMap a t1 ++ concatMap a t2 = concatMap a (t1 ++ t2)
+  -> sumArity a t1 ++ sumArity a t2 = sumArity a (t1 ++ t2)
 coprod a Nil     _  = Refl
 coprod a (s::t1) t2 = sym (appendAssociative _ _ _) `trans` cong (coprod a t1 t2)
 
@@ -182,7 +188,7 @@ compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
       rewriteLeft (appendAssociative k s1 s2) $
         ((c1 `permAdd` permId s2) `permComp` helper2 c2) `permComp` (permId n `permAdd` swap f2 f1)
 
-    perm : Perm (k ++ concatMap ao (t1 ++ t2)) (n ++ concatMap ai (t1 ++ t2))
+    perm : Perm (k ++ sumArity ao (t1 ++ t2)) (n ++ sumArity ai (t1 ++ t2))
     perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)
 
 zero : {s : Type} -> {ai, ao : s -> List o} -> Hypergraph s ai ao [] []
@@ -203,5 +209,5 @@ add {k} {l} {m} {n} (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1
     helper {s1} {s2} {f1} {f2} c1 c2 Refl Refl =
       helper2 `permComp` ((c1 `permAdd` c2) `permComp` helper2)
 
-    perm : Perm ((k ++ m) ++ concatMap ao (t1 ++ t2)) ((l ++ n) ++ concatMap ai (t1 ++ t2))
+    perm : Perm ((k ++ m) ++ sumArity ao (t1 ++ t2)) ((l ++ n) ++ sumArity ai (t1 ++ t2))
     perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)
