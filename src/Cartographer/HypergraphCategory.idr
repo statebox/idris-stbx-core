@@ -6,6 +6,9 @@ import Control.Isomorphism
 import Basic.Category
 
 import Permutations.Permutations
+import Permutations.PermutationsCategory
+import Permutations.PermutationsStrictMonoidalCategory
+
 import Cartographer.Hypergraph as HG
 
 hgCons2 : {s : Type} -> {ai, ao : s -> List o} -> {k : List o} -> {l : List o}

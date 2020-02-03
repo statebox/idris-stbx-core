@@ -27,14 +27,19 @@ sandwich : (l : List t) -> Sandwich l a r (l ++ [a] ++ r)
 sandwich []      = HereS
 sandwich (l::ls) = ThereS (sandwich ls)
 
-appended : Sandwich l a r lar -> Sandwich l a (r ++ s) (lar ++ s)
-appended  HereS      = HereS
-appended (ThereS sw) = ThereS (appended sw)
+appended : (s : List t) -> Sandwich l a r lar -> Sandwich l a (r ++ s) (lar ++ s)
+appended _  HereS      = HereS
+appended s (ThereS sw) = ThereS (appended s sw)
 
-appendedNilRightNeutral : (sw: Sandwich l a r lar) -> appended {s=[]} sw = sw
-appendedNilRightNeutral (HereS {rs}) = congHereS (appendNilRightNeutral rs)
-appendedNilRightNeutral (ThereS {lars} {rs} sw) =
-  congThereS Refl (appendNilRightNeutral rs) (appendNilRightNeutral lars) (appendedNilRightNeutral sw)
+appendedNilNeutral : (sw: Sandwich l a r lar) -> appended [] sw = sw
+appendedNilNeutral (HereS {rs}) = congHereS (appendNilRightNeutral rs)
+appendedNilNeutral (ThereS {lars} {rs} sw) =
+  congThereS Refl (appendNilRightNeutral rs) (appendNilRightNeutral lars) (appendedNilNeutral sw)
+
+appendedAppendDistr : (as, bs : List t) -> (sw: Sandwich l a r lar) -> appended (as ++ bs) sw = appended bs (appended as sw)
+appendedAppendDistr as bs (HereS {rs}) = congHereS (appendAssociative rs as bs)
+appendedAppendDistr as bs (ThereS {rs} {lars} sw) =
+  congThereS Refl (appendAssociative rs as bs) (appendAssociative lars as bs) (appendedAppendDistr as bs sw)
 
 -- Sandwich2 lb b rb la a ra cs means lb ++ [b] ++ rb = cs and la ++ [a] ++ ra = lb ++ rb (i.e. cs without b)
 -- It contains 2 sandwiches, one which points to `a` into `cs` and one which points to `b` into `cs` without `a`

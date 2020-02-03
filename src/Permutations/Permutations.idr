@@ -37,7 +37,7 @@ swap (l::ls) r = Ins (swap ls r) (sandwich r)
 
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd       Nil                p  = p
-permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewriteRight (appendAssociative l r ds) $ permAdd ab cd) (appended sw)
+permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewriteRight (appendAssociative l r ds) $ permAdd ab cd) (appended ds sw)
 
 shuffle : Perm bs cs -> Sandwich l a r bs -> Perm (a :: l ++ r) cs
 shuffle (Ins bc sw)  HereS      = Ins bc sw
@@ -48,5 +48,5 @@ shuffle (Ins bc sb) (ThereS sw) with (shuffle bc sw)
 
 permComp : Perm as bs -> Perm bs cs -> Perm as cs
 permComp  Nil         p  = p
-permComp (Ins ab' sw) bc =
-  case shuffle bc sw of Ins bc' sw' => Ins (permComp ab' bc') sw'
+permComp (Ins ab' sw) bc with (shuffle bc sw)
+  | Ins bc' sw' = Ins (permComp ab' bc') sw'
