@@ -50,3 +50,8 @@ permComp : Perm as bs -> Perm bs cs -> Perm as cs
 permComp  Nil         p  = p
 permComp (Ins ab' sw) bc with (shuffle bc sw)
   | Ins bc' sw' = Ins (permComp ab' bc') sw'
+
+congPermComp : (as1 = as2) -> (bs1 = bs2) -> (cs1 = cs2)
+            -> {p1 : Perm as1 bs1} -> {p2 : Perm as2 bs2} -> {p3 : Perm bs1 cs1} -> {p4 : Perm bs2 cs2}
+            -> (p1 = p2) -> (p3 = p4) -> permComp p1 p3 = permComp p2 p4
+congPermComp Refl Refl Refl Refl Refl = Refl

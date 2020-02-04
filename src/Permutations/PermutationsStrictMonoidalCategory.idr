@@ -30,9 +30,14 @@ permPreserveCompose : (a, b, c : (List o, List o))
                    -> (g : ProductMorphism (permutationsCat o) (permutationsCat o) b c)
                    -> permAdd (permComp (pi1 f) (pi1 g)) (permComp (pi2 f) (pi2 g))
                     = permComp (permAdd (pi1 f) (pi2 f)) (permAdd (pi1 g) (pi2 g))
-permPreserveCompose ([], as) ([], bs) ([], cs) (MkProductMorphism Nil f2) (MkProductMorphism Nil g2) = Refl
-permPreserveCompose (as, []) (bs, []) (cs, []) (MkProductMorphism f1 Nil) (MkProductMorphism g1 Nil) =
-  rewrite permAddNilRightNeutral (permComp f1 g1) in ?x
+permPreserveCompose (_, _) (_, _) (_, _) (MkProductMorphism Nil f2) (MkProductMorphism Nil g2) = Refl
+permPreserveCompose (as, _) (bs, _) (cs, _) (MkProductMorphism f1 Nil) (MkProductMorphism g1 Nil) =
+  trans (permAddNilRightNeutral (permComp f1 g1)) $ congPermComp
+    (sym $ appendNilRightNeutral as)
+    (sym $ appendNilRightNeutral bs)
+    (sym $ appendNilRightNeutral cs)
+    (sym $ permAddNilRightNeutral f1)
+    (sym $ permAddNilRightNeutral g1)
 permPreserveCompose (a1::as1, a2::as2) (bs1, bs2) (cs1, cs2)
   (MkProductMorphism (Ins pf1 sf1) (Ins pf2 sf2)) (MkProductMorphism g1 g2) = ?y
 
