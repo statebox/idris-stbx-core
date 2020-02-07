@@ -32,7 +32,7 @@ permPreserveCompose : (a, b, c : (List o, List o))
                     = permComp (permAdd (pi1 f) (pi2 f)) (permAdd (pi1 g) (pi2 g))
 permPreserveCompose (_, _) (_, _) (_, _) (MkProductMorphism Nil f2) (MkProductMorphism Nil g2) = Refl
 permPreserveCompose (as, _) (bs, _) (cs, _) (MkProductMorphism f1 Nil) (MkProductMorphism g1 Nil) =
-  trans (permAddNilRightNeutral (permComp f1 g1)) $ congPermComp
+  trans (permAddNilRightNeutral (permComp f1 g1)) $ permCompCong5
     (sym $ appendNilRightNeutral as)
     (sym $ appendNilRightNeutral bs)
     (sym $ appendNilRightNeutral cs)
