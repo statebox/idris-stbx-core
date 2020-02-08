@@ -41,23 +41,23 @@ wl {ai} {ao} {t} k l {w} = rewriteLeftIgnore $
   step1 : permAdd (rewriteRight (appendNilRightNeutral k) (rewriteLeft (appendNilRightNeutral k) (permId k)))
                   (permId (sumArity ao t))
           = permId (k ++ sumArity ao t)
-  step1 = trans (permAddCong6 (appendNilRightNeutral k)
-                              (appendNilRightNeutral k)
-                              Refl
-                              Refl
-                              (rewriteRightIgnore $ rewriteLeftIgnore Refl)
-                              Refl)
-                (permPreserveId k (sumArity ao t))
+  step1 = permAddCong6 (appendNilRightNeutral k)
+                       (appendNilRightNeutral k)
+                       Refl
+                       Refl
+                       (rewriteRightIgnore $ rewriteLeftIgnore Refl)
+                       Refl
+            `trans` permPreserveId k (sumArity ao t)
   step2 : permAdd (permId k)
                   (rewriteRight (appendNilRightNeutral (sumArity ao t)) (permId (sumArity ao t)))
           = permId (k ++ sumArity ao t)
-  step2 = trans (permAddCong6 Refl
-                              Refl
-                              Refl
-                              (appendNilRightNeutral (sumArity ao t))
-                              Refl
-                              (rewriteRightIgnore Refl))
-                (permPreserveId k (sumArity ao t))
+  step2 = permAddCong6 Refl
+                       Refl
+                       Refl
+                       (appendNilRightNeutral (sumArity ao t))
+                       Refl
+                       (rewriteRightIgnore Refl)
+            `trans` permPreserveId k (sumArity ao t)
   step3 : rewriteLeft (sym (appendAssociative k [] (sumArity ao t)))
                       (rewriteRight (appendAssociative l (sumArity ai t) [])
                                     (permComp (permAdd (permId k)
