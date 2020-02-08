@@ -58,12 +58,12 @@ permComp  Nil         p  = p
 permComp (Ins ab' sw) bc with (shuffle bc sw)
   | Ins bc' sw' = Ins (permComp ab' bc') sw'
 
-permCompCong5 : (as1 = as2) -> (bs1 = bs2) -> (cs1 = cs2)
+permCompCong5 : as1 = as2 -> bs1 = bs2 -> cs1 = cs2
             -> {p1 : Perm as1 bs1} -> {p2 : Perm as2 bs2} -> {p3 : Perm bs1 cs1} -> {p4 : Perm bs2 cs2}
-            -> (p1 = p2) -> (p3 = p4) -> permComp p1 p3 = permComp p2 p4
+            -> p1 = p2 -> p3 = p4 -> permComp p1 p3 = permComp p2 p4
 permCompCong5 Refl Refl Refl Refl Refl = Refl
 
-permAddCong6 : (as1 = as2) -> (bs1 = bs2) -> (cs1 = cs2) -> (ds1 = ds2)
+permAddCong6 : as1 = as2 -> bs1 = bs2 -> cs1 = cs2 -> ds1 = ds2
             -> {p1 : Perm as1 bs1} -> {p2 : Perm as2 bs2} -> {p3 : Perm cs1 ds1} -> {p4 : Perm cs2 ds2}
-            -> (p1 = p2) -> (p3 = p4) -> permAdd p1 p3 = permAdd p2 p4
+            -> p1 = p2 -> p3 = p4 -> permAdd p1 p3 = permAdd p2 p4
 permAddCong6 Refl Refl Refl Refl Refl Refl = Refl
