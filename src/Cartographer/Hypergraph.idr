@@ -37,6 +37,10 @@ coprod
 coprod a Nil     _  = Refl
 coprod a (s::t1) t2 = sym (appendAssociative _ _ _) `trans` cong (coprod a t1 t2)
 
+coprodNilRightNeutral : (a : s -> List o) -> (t : List s) -> sumArity a t ++ sumArity a [] = sumArity a (t ++ [])
+coprodNilRightNeutral {o} a Nil = Refl
+coprodNilRightNeutral {o} a (t::ts) = sym (appendAssociative _ _ _) `trans` cong (coprodNilRightNeutral a ts)
+
 compose : (g1 : Hypergraph s ai ao k m) -> (g2 : Hypergraph s ai ao m n) -> Hypergraph s ai ao k n
 compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
   where
@@ -49,7 +53,9 @@ compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
           c2 `permAdd` permId f1)
 
     helper : Perm (k ++ s1) (m ++ f1) -> Perm (m ++ s2) (n ++ f2) -> s1 ++ s2 = s12 -> f1 ++ f2 = f12 -> Perm (k ++ s12) (n ++ f12)
-    helper {s1} {s2} {f1} {f2} c1 c2 Refl Refl =
+    helper {s1} {s2} {f1} {f2} c1 c2 sEq fEq =
+      rewriteLeft (cong (sym sEq)) $
+      rewriteRight (cong (sym fEq)) $
       rewriteLeft (appendAssociative k s1 s2) $
         ((c1 `permAdd` permId s2) `permComp` helper2 c2) `permComp` (permId n `permAdd` swap f2 f1)
 
