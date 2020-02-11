@@ -38,10 +38,6 @@ swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
 swap []      r = rewriteRight (appendNilRightNeutral r) (permId r)
 swap (l::ls) r = Ins (swap ls r) (sandwich r)
 
-swapNilRightNeutral : (l : List o) -> swap l [] = permId l
-swapNilRightNeutral [] = Refl
-swapNilRightNeutral (l::ls) = insCong (appendNilRightNeutral ls) Refl Refl (swapNilRightNeutral ls) Refl
-
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd       Nil                p  = p
 permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewriteRight (appendAssociative l r ds) $ permAdd ab cd) (appended ds sw)

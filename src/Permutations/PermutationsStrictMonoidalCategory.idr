@@ -67,3 +67,65 @@ permutationsSMC o = MkStrictMonoidalCategory
   (\as => appendNilRightNeutral as)
   appendAssociative
   (\_, _, _, _, _, _ => permAddAssociativeMor)
+
+
+-- for symmetric monoidal category
+
+swapNilRightNeutral : (l : List o) -> swap l [] = permId l
+swapNilRightNeutral [] = Refl
+swapNilRightNeutral (l::ls) = insCong (appendNilRightNeutral ls) Refl Refl (swapNilRightNeutral ls) Refl
+
+swapHexagonal : (as, bs, cs : List o) -> rewriteRight (appendAssociative bs cs as) (swap as (bs ++ cs)) =
+  rewriteRight (appendAssociative bs as cs) (permAdd (swap as bs) (permId cs)) `permComp` permAdd (permId bs) (swap as cs)
+swapHexagonal [] bs cs = rewriteRightIgnore $ rewriteRightIgnore $ sym (trans step2 step3)
+  where
+    step1 : permAdd (permId bs) (rewriteRight (appendNilRightNeutral cs) (permId cs)) = permId (bs ++ cs)
+    step1 = permAddCong6 Refl
+                         Refl
+                         Refl
+                         (appendNilRightNeutral cs)
+                         Refl
+                         (rewriteRightIgnore Refl)
+            `trans` permPreserveId bs cs
+    step2 : permComp (rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs)))
+              (permAdd (permId bs) (rewriteRight (appendNilRightNeutral cs) (permId cs)))
+            = rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs))
+    step2 = permCompCong5 Refl
+                          Refl
+                          (rewrite appendNilRightNeutral cs in Refl)
+                          Refl
+                          step1
+            `trans` permCompRightId _
+    step3 : rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs))
+            = permId (bs ++ cs)
+    step3 = rewriteRightIgnore $
+      permAddCong6 Refl
+                   (appendNilRightNeutral bs)
+                   Refl
+                   Refl
+                   (rewriteRightIgnore Refl)
+                   Refl
+      `trans` permPreserveId bs cs
+swapHexagonal (a::as) [] cs =
+  insCong (rewrite appendNilRightNeutral as in Refl)
+          Refl
+          Refl
+          (sym step2)
+          Refl
+  where
+    step1 : permAdd (swap as []) (permId cs) = permId (as ++ cs)
+    step1 = permAddCong6 (appendNilRightNeutral as)
+                         Refl
+                         Refl
+                         Refl
+                         (swapNilRightNeutral as)
+                         Refl
+            `trans` permPreserveId as cs
+    step2 : permComp (permAdd (swap as []) (permId cs)) (swap as cs) = swap as cs
+    step2 = permCompCong5 (rewrite appendNilRightNeutral as in Refl)
+                          Refl
+                          Refl
+                          step1
+                          Refl
+            `trans` permCompLeftId _
+swapHexagonal {o} (a::as) bs cs = ?ws
