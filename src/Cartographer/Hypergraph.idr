@@ -54,8 +54,9 @@ compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
 
     helper : Perm (k ++ s1) (m ++ f1) -> Perm (m ++ s2) (n ++ f2) -> s1 ++ s2 = s12 -> f1 ++ f2 = f12 -> Perm (k ++ s12) (n ++ f12)
     helper {s1} {s2} {f1} {f2} c1 c2 sEq fEq =
-      rewriteLeft (trans (cong (sym sEq)) (appendAssociative k s1 s2)) $
+      rewriteLeft (cong (sym sEq)) $
       rewriteRight (cong (sym fEq)) $
+      rewriteLeft (appendAssociative k s1 s2) $
         ((c1 `permAdd` permId s2) `permComp` helper2 c2) `permComp` (permId n `permAdd` swap f2 f1)
 
     perm : Perm (k ++ sumArity ao (t1 ++ t2)) (n ++ sumArity ai (t1 ++ t2))

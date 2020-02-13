@@ -33,6 +33,9 @@ rewriteLeft Refl p = p
 rewriteLeftIgnore : {p1 : Perm as bs} -> {p2 : Perm cs ds} -> p1 = p2 -> rewriteLeft prf p1 = p2
 rewriteLeftIgnore Refl {prf=Refl} = Refl
 
+rewriteLeftIgnoreR : {p1 : Perm as bs} -> {p2 : Perm cs ds} -> p1 = p2 -> p1 = rewriteLeft prf p2
+rewriteLeftIgnoreR Refl {prf=Refl} = Refl
+
 permId : (as : List o) -> Perm as as
 permId []      = Nil
 permId (a::as) = Ins (permId as) HereS
