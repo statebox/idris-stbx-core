@@ -24,6 +24,9 @@ rewriteRight Refl p = p
 rewriteRightIgnore : {p1 : Perm as bs} -> {p2 : Perm cs ds} -> p1 = p2 -> rewriteRight prf p1 = p2
 rewriteRightIgnore Refl {prf=Refl} = Refl
 
+rewriteRightIgnoreR : {p1 : Perm as bs} -> {p2 : Perm cs ds} -> p1 = p2 -> p1 = rewriteRight prf p2
+rewriteRightIgnoreR Refl {prf=Refl} = Refl
+
 rewriteLeft : cs = as -> Perm as bs -> Perm cs bs
 rewriteLeft Refl p = p
 
@@ -43,11 +46,11 @@ permAdd       Nil                p  = p
 permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewriteRight (appendAssociative l r ds) $ permAdd ab cd) (appended ds sw)
 
 shuffle : Perm bs cs -> Sandwich l a r bs -> Perm (a :: l ++ r) cs
-shuffle (Ins bc sw)  HereS      = Ins bc sw
+shuffle p            HereS      = p
 shuffle (Ins bc sb) (ThereS sw) with (shuffle bc sw)
   | Ins bc' sa with (swComb sb sa)
-    | BA {lb} {m} {ra} sa' sb' Refl Refl = Ins (Ins (rewriteRight (      appendAssociative lb m ra) bc') sb') sa'
-    | AB {la} {m} {rb} sa' sb' Refl Refl = Ins (Ins (rewriteRight (sym $ appendAssociative la m rb) bc') sb') sa'
+    | BA {lb} {m} {ra} sa' sb' eq Refl = Ins (Ins (rewriteRight (      appendAssociative lb m ra) bc') sb') sa'
+    | AB {la} {m} {rb} sa' sb' eq Refl = Ins (Ins (rewriteRight (sym $ appendAssociative la m rb) bc') sb') sa'
 
 permComp : Perm as bs -> Perm bs cs -> Perm as cs
 permComp  Nil         p  = p

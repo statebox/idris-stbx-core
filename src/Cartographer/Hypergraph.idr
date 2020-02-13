@@ -54,9 +54,8 @@ compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
 
     helper : Perm (k ++ s1) (m ++ f1) -> Perm (m ++ s2) (n ++ f2) -> s1 ++ s2 = s12 -> f1 ++ f2 = f12 -> Perm (k ++ s12) (n ++ f12)
     helper {s1} {s2} {f1} {f2} c1 c2 sEq fEq =
-      rewriteLeft (cong (sym sEq)) $
+      rewriteLeft (trans (cong (sym sEq)) (appendAssociative k s1 s2)) $
       rewriteRight (cong (sym fEq)) $
-      rewriteLeft (appendAssociative k s1 s2) $
         ((c1 `permAdd` permId s2) `permComp` helper2 c2) `permComp` (permId n `permAdd` swap f2 f1)
 
     perm : Perm (k ++ sumArity ao (t1 ++ t2)) (n ++ sumArity ai (t1 ++ t2))
@@ -70,14 +69,14 @@ add {k} {l} {m} {n} (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1
   where
     helper2 : Perm ((a ++ b) ++ (c ++ d)) ((a ++ c) ++ (b ++ d))
     helper2 {a} {b} {c} {d} =
-      rewriteLeft (appendAssociative (a ++ b) c d) $
-      rewriteRight (appendAssociative (a ++ c) b d) $
-      rewriteLeft (cong {f=\l => l ++ d} $ sym $ appendAssociative a b c) $
-      rewriteRight (cong {f=\l => l ++ d} $ sym $ appendAssociative a c b) $
+      rewriteLeft (trans (appendAssociative (a ++ b) c d) (cong {f=\l => l ++ d} $ sym $ appendAssociative a b c)) $
+      rewriteRight (trans (appendAssociative (a ++ c) b d) (cong {f=\l => l ++ d} $ sym $ appendAssociative a c b)) $
       (permId a `permAdd` swap b c) `permAdd` permId d
 
     helper : Perm (k ++ s1) (l ++ f1) -> Perm (m ++ s2) (n ++ f2) -> s1 ++ s2 = s12 -> f1 ++ f2 = f12 -> Perm ((k ++ m) ++ s12) ((l ++ n) ++ f12)
-    helper {s1} {s2} {f1} {f2} c1 c2 Refl Refl =
+    helper {s1} {s2} {f1} {f2} c1 c2 sEq fEq =
+      rewriteLeft (cong (sym sEq)) $
+      rewriteRight (cong (sym fEq)) $
       helper2 `permComp` ((c1 `permAdd` c2) `permComp` helper2)
 
     perm : Perm ((k ++ m) ++ sumArity ao (t1 ++ t2)) ((l ++ n) ++ sumArity ai (t1 ++ t2))

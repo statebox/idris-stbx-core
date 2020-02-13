@@ -1,7 +1,6 @@
-module HypergraphCategory
+module Cartographer.HypergraphCategory
 
 import Data.List
-import Control.Isomorphism
 
 import Basic.Category
 
@@ -10,7 +9,10 @@ import Permutations.Permutations
 import Permutations.PermutationsCategory
 import Permutations.PermutationsStrictMonoidalCategory
 
-import Cartographer.Hypergraph as HG
+import Cartographer.Hypergraph
+
+%access public export
+%default total
 
 hgCong2 : {s : Type} -> {ai, ao : s -> List o} -> {k : List o}
        -> {t1 : List s} -> {t2 : List s} -> (t1 = t2)
