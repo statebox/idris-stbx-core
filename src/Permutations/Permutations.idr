@@ -44,9 +44,17 @@ swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
 swap []      r = rewriteRight (appendNilRightNeutral r) (permId r)
 swap (l::ls) r = Ins (swap ls r) (sandwich r)
 
+swapAddIdR : (l : List o) -> (r : List o) -> (t : List o) -> Perm (l ++ r ++ t) (r ++ l ++ t)
+swapAddIdR []      r t = permId (r ++ t)
+swapAddIdR (l::ls) r t = Ins (swapAddIdR ls r t) (sandwich r)
+
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd       Nil                p  = p
 permAdd {ds} (Ins {l} {r} ab sw) cd = Ins {l=l} {r=r++ds} (rewriteRight (appendAssociative l r ds) $ permAdd ab cd) (appended ds sw)
+
+permAddIdL : (as : List o) -> Perm bs cs -> Perm (as ++ bs) (as ++ cs)
+permAddIdL  []     bc = bc
+permAddIdL (a::as) bc = Ins (permAddIdL as bc) HereS
 
 shuffle : Perm bs cs -> Sandwich l a r bs -> Perm (a :: l ++ r) cs
 shuffle p            HereS      = p

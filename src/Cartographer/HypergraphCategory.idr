@@ -16,180 +16,42 @@ import Cartographer.Hypergraph
 
 hgCong2 : {s : Type} -> {ai, ao : s -> List o} -> {k : List o}
        -> {t1 : List s} -> {t2 : List s} -> (t1 = t2)
-       -> {w1 : Perm (k ++ sumArity ao t1) (m ++ sumArity ai t1)}
-       -> {w2 : Perm (k ++ sumArity ao t2) (m ++ sumArity ai t2)}
+       -> {w1 : Perm (sumArity ao t1 ++ k) (sumArity ai t1 ++ m)}
+       -> {w2 : Perm (sumArity ao t2 ++ k) (sumArity ai t2 ++ m)}
        -> (w1 = w2) -> MkHypergraph t1 w1 = MkHypergraph t2 w2
 hgCong2 Refl Refl = Refl
 
-wl : {ai, ao : s -> List o} -> {t : List s} -> (k, l : List o) -> {w : Perm (k ++ sumArity ao t) (l ++ sumArity ai t)}
-   -> rewriteLeft (appendAssociative k [] (sumArity ao t))
-                  (permComp (permComp (permAdd (rewriteRight (appendNilRightNeutral k) (rewriteLeft (appendNilRightNeutral k) (permId k)))
-                                               (permId (sumArity ao t)))
-                                      (rewriteLeft (sym (appendAssociative k [] (sumArity ao t)))
-                                                   (rewriteRight (appendAssociative l (sumArity ai t) [])
-                                                                 (permComp (permAdd (permId k)
-                                                                                    (rewriteRight (appendNilRightNeutral (sumArity ao t)) (permId (sumArity ao t))))
-                                                                           (rewriteLeft (appendAssociative k (sumArity ao t) []) (permAdd w []))))))
-                            (permAdd (permId l) (swap (sumArity ai t) [])))
-     = w
-wl {ai} {ao} {t} k l {w} = rewriteLeftIgnore $
-                           permCompCong5 (cong {f=\z=>z ++ sumArity ao t} (appendNilRightNeutral k))
-                                         (cong (appendNilRightNeutral (sumArity ai t)))
-                                         Refl
-                                         step4
-                                         step5
-                            `trans` permCompRightId w
-  where
-  step1 : permAdd (rewriteRight (appendNilRightNeutral k) (rewriteLeft (appendNilRightNeutral k) (permId k)))
-                  (permId (sumArity ao t))
-          = permId (k ++ sumArity ao t)
-  step1 = permAddCong6 (appendNilRightNeutral k)
-                       (appendNilRightNeutral k)
-                       Refl
-                       Refl
-                       (rewriteRightIgnore $ rewriteLeftIgnore Refl)
-                       Refl
-            `trans` permPreserveId k (sumArity ao t)
-  step2 : permAdd (permId k)
-                  (rewriteRight (appendNilRightNeutral (sumArity ao t)) (permId (sumArity ao t)))
-          = permId (k ++ sumArity ao t)
-  step2 = permAddCong6 Refl
-                       Refl
-                       Refl
-                       (appendNilRightNeutral (sumArity ao t))
-                       Refl
-                       (rewriteRightIgnore Refl)
-            `trans` permPreserveId k (sumArity ao t)
-  step3 : rewriteLeft (sym (appendAssociative k [] (sumArity ao t)))
-                      (rewriteRight (appendAssociative l (sumArity ai t) [])
-                                    (permComp (permAdd (permId k)
-                                                       (rewriteRight (appendNilRightNeutral (sumArity ao t)) (permId (sumArity ao t))))
-                                              (rewriteLeft (appendAssociative k (sumArity ao t) []) (permAdd w []))))
-          = w
-  step3 = rewriteLeftIgnore $ rewriteRightIgnore $
-          permCompCong5 Refl
-                        (trans (appendAssociative k (sumArity ao t) [])
-                               (appendNilRightNeutral (k ++ sumArity ao t)))
-                        (appendNilRightNeutral $ l ++ sumArity ai t)
-                        step2
-                        (rewriteLeftIgnore $ permAddNilRightNeutral w)
-            `trans` permCompLeftId w
-  step4 : permComp (permAdd (rewriteRight (appendNilRightNeutral k) (rewriteLeft (appendNilRightNeutral k) (permId k)))
-                            (permId (sumArity ao t)))
-                   (rewriteLeft (sym (appendAssociative k [] (sumArity ao t)))
-                                (rewriteRight (appendAssociative l (sumArity ai t) [])
-                                              (permComp (permAdd (permId k)
-                                                                 (rewriteRight (appendNilRightNeutral (sumArity ao t)) (permId (sumArity ao t))))
-                                                        (rewriteLeft (appendAssociative k (sumArity ao t) []) (permAdd w [])))))
-          = w
-  step4 = permCompCong5 (cong {f=\z=>z ++ sumArity ao t} (appendNilRightNeutral k))
-                        (cong {f=\z=>z ++ sumArity ao t} (appendNilRightNeutral k))
-                        (trans (appendAssociative l (sumArity ai t) [])
-                               (appendNilRightNeutral (l ++ sumArity ai t)))
-                        step1
-                        step3
-           `trans` permCompLeftId w
-  step5 : permAdd (permId l) (swap (sumArity ai t) []) = permId (l ++ sumArity ai t)
-  step5 = permAddCong6 Refl
-                       Refl
-                       (appendNilRightNeutral (sumArity ai t))
-                       Refl
-                       Refl
-                       (swapNilRightNeutral (sumArity ai t))
-            `trans` permPreserveId l (sumArity ai t)
-
-wr : {ai, ao : s -> List o} -> {t : List s} -> (k, l : List o) -> {w : Perm (k ++ sumArity ao t) (l ++ sumArity ai t)}
-  -> rewriteLeft (cong (sym (coprod ao t [])))
-                 (rewriteRight (cong (sym (coprod ai t [])))
-                               (rewriteLeft (appendAssociative k (sumArity ao t) [])
-                                            (permComp (permComp (permAdd w [])
-                                                                (rewriteLeft (sym (appendAssociative l (sumArity ai t) []))
-                                                                             (rewriteRight (appendAssociative l [] (sumArity ai t))
-                                                                                           (permComp (permAdd (permId l) (swap (sumArity ai t) []))
-                                                                                                     (rewriteLeft (appendAssociative l [] (sumArity ai t))
-                                                                                                                  (permAdd (rewriteRight (appendNilRightNeutral l)
-                                                                                                                                         (rewriteLeft (appendNilRightNeutral l)
-                                                                                                                                                      (permId l)))
-                                                                                                                           (permId (sumArity ai t))))))))
-                                                      (permAdd (permId l) (rewriteRight (appendNilRightNeutral (sumArity ai t)) (permId (sumArity ai t))))))) =
+wl : {ai, ao : s -> List o} -> {t : List s} -> (k, l : List o) -> {w : Perm (sumArity ao t ++ k) (sumArity ai t ++ l)}
+  -> rewriteLeft (trans (cong {f=\z=>z++k} (sym (appendNilRightNeutral (sumArity ao t)))) (sym (appendAssociative (sumArity ao t) [] k)))
+                 (rewriteRight (trans (cong {f=\z=>z++l} (sym (appendNilRightNeutral (sumArity ai t)))) (sym (appendAssociative (sumArity ai t) [] l)))
+                               (permComp (permComp (permAddIdL (sumArity ao t) (permId k))
+                                                   (swapAddIdR (sumArity ao t) [] k))
+                                         (permComp w (permId (sumArity ai t ++ l))))) =
      w
-wr {ai} {ao} {t} k l {w} = rewriteLeftIgnore $ rewriteRightIgnore $ rewriteLeftIgnore step6
-  where
-  step1 : permAdd (rewriteRight (appendNilRightNeutral l)
-                                (rewriteLeft (appendNilRightNeutral l)
-                                             (permId l)))
-                  (permId (sumArity ai t))
-          = permId (l ++ sumArity ai t)
-  step1 = permAddCong6 (appendNilRightNeutral l)
-                       (appendNilRightNeutral l)
-                       Refl
-                       Refl
-                       (rewriteRightIgnore $ rewriteLeftIgnore Refl)
-                       Refl
-          `trans` permPreserveId l (sumArity ai t)
-  step2 : permAdd (permId l) (swap (sumArity ai t) []) = permId (l ++ sumArity ai t)
-  step2 = permAddCong6 Refl
-                       Refl
-                       (appendNilRightNeutral (sumArity ai t))
-                       Refl
-                       Refl
-                       (swapNilRightNeutral (sumArity ai t))
-          `trans` permPreserveId l (sumArity ai t)
-  step3 : permComp (permAdd (permId l) (swap (sumArity ai t) []))
-                   (rewriteLeft (appendAssociative l [] (sumArity ai t))
-                                (permAdd (rewriteRight (appendNilRightNeutral l)
-                                                       (rewriteLeft (appendNilRightNeutral l)
-                                                                    (permId l)))
-                                         (permId (sumArity ai t))))
-          = permId (l ++ sumArity ai t)
-  step3 = permCompCong5 (rewrite appendNilRightNeutral (sumArity ai t) in Refl)
-                        Refl
-                        (rewrite appendNilRightNeutral l in Refl)
-                        step2
-                        (rewriteLeftIgnore step1)
-          `trans` permCompRightId (permId (l ++ sumArity ai t))
-  step4 : permComp (permAdd w [])
-                   (rewriteLeft (sym (appendAssociative l (sumArity ai t) []))
-                                (rewriteRight (appendAssociative l [] (sumArity ai t))
-                                              (permComp (permAdd (permId l) (swap (sumArity ai t) []))
-                                                        (rewriteLeft (appendAssociative l [] (sumArity ai t))
-                                                                     (permAdd (rewriteRight (appendNilRightNeutral l)
-                                                                                            (rewriteLeft (appendNilRightNeutral l)
-                                                                                                         (permId l)))
-                                                                              (permId (sumArity ai t)))))))
-          = w
-  step4 = permCompCong5 (appendNilRightNeutral (k ++ sumArity ao t))
-                        (appendNilRightNeutral (l ++ sumArity ai t))
-                        Refl
-                        (permAddNilRightNeutral w)
-                        (rewriteLeftIgnore $ rewriteRightIgnore step3)
-          `trans` permCompRightId w
-  step5 : permAdd (permId l) (rewriteRight (appendNilRightNeutral (sumArity ai t)) (permId (sumArity ai t)))
-          = permId (l ++ sumArity ai t)
-  step5 = permAddCong6 Refl
-                       Refl
-                       Refl
-                       (appendNilRightNeutral (sumArity ai t))
-                       Refl
-                       (rewriteRightIgnore Refl)
-          `trans` permPreserveId l (sumArity ai t)
-  step6 : permComp (permComp (permAdd w [])
-                             (rewriteLeft (sym (appendAssociative l (sumArity ai t) []))
-                                          (rewriteRight (appendAssociative l [] (sumArity ai t))
-                                                        (permComp (permAdd (permId l) (swap (sumArity ai t) []))
-                                                                  (rewriteLeft (appendAssociative l [] (sumArity ai t))
-                                                                               (permAdd (rewriteRight (appendNilRightNeutral l)
-                                                                                                      (rewriteLeft (appendNilRightNeutral l)
-                                                                                                                   (permId l)))
-                                                                                        (permId (sumArity ai t))))))))
-                   (permAdd (permId l) (rewriteRight (appendNilRightNeutral (sumArity ai t)) (permId (sumArity ai t))))
-          = w
-  step6 = permCompCong5 (appendNilRightNeutral (k ++ sumArity ao t))
-                        Refl
-                        (rewrite appendNilRightNeutral (sumArity ai t) in Refl)
-                        step4
-                        step5
-          `trans` permCompRightId w
+wl {ao} {t} k _ {w} = rewriteLeftIgnore $ rewriteRightIgnore $
+  permCompCong5 Refl Refl Refl
+    (permCompCong5 Refl Refl Refl
+      (permAddIdLPreserveId (sumArity ao t) k)
+      (swapAddIdRNilRightNeutral (sumArity ao t) k)
+    `trans` permCompLeftId (permId (sumArity ao t ++ k)))
+    (permCompRightId w)
+  `trans` permCompLeftId w
+
+wr : {ai, ao : s -> List o} -> {t : List s} -> (k, l : List o) -> {w : Perm (sumArity ao t ++ k) (sumArity ai t ++ l)}
+  -> rewriteLeft (trans (cong {f=\z=>z++k} (sym (coprod ao t []))) Refl)
+                 (rewriteRight (trans (cong {f=\z=>[]++z++l} (sym (coprod ai t []))) Refl)
+                               (permComp (permComp w (permId (sumArity ai t ++ l)))
+                                         (permComp (permAddIdL (sumArity ai t) (permId l))
+                                                   (swapAddIdR (sumArity ai t) [] l)))) =
+     w
+wr {ai} {t} _ l {w} = rewriteLeftIgnore $ rewriteRightIgnore $
+  permCompCong5 Refl Refl Refl
+    (permCompRightId w)
+    (permCompCong5 Refl Refl Refl
+      (permAddIdLPreserveId (sumArity ai t) l)
+      (swapAddIdRNilRightNeutral (sumArity ai t) l)
+    `trans` permCompRightId (permId (sumArity ai t ++ l)))
+  `trans` permCompRightId w
 
 --      ____                 ____                ____
 -- k --| w1 |-- l ----- l --| w2 |-- m -----m --| w3 |-- n -------------- n --
@@ -205,46 +67,35 @@ wr {ai} {ao} {t} k l {w} = rewriteLeftIgnore $ rewriteRightIgnore $ rewriteLeftI
 -- o3 -------------------------------------o3 -/\-- i2 -------- i2 --/\- i3 --
 --
 assoc : {ai, ao : s -> List o} -> {t1, t2, t3 : List s} -> (k, l, m, n : List o)
-     -> {w1 : Perm (k ++ sumArity ao t1) (l ++ sumArity ai t1)}
-     -> {w2 : Perm (l ++ sumArity ao t2) (m ++ sumArity ai t2)}
-     -> {w3 : Perm (m ++ sumArity ao t3) (n ++ sumArity ai t3)}
-     -> rewriteLeft (cong (sym (coprod ao t1 (t2 ++ t3))))
-                    (rewriteRight (cong (sym (coprod ai t1 (t2 ++ t3))))
-                                  (rewriteLeft (appendAssociative k (sumArity ao t1) (sumArity ao (t2 ++ t3)))
-                                               (permComp (permComp (permAdd w1 (permId (sumArity ao (t2 ++ t3))))
-                                                                   (rewriteLeft (sym (appendAssociative l (sumArity ai t1) (sumArity ao (t2 ++ t3))))
-                                                                                (rewriteRight (appendAssociative n (sumArity ai (t2 ++ t3)) (sumArity ai t1))
-                                                                                              (permComp (permAdd (permId l) (swap (sumArity ai t1) (sumArity ao (t2 ++ t3))))
-                                                                                                        (rewriteLeft (appendAssociative l (sumArity ao (t2 ++ t3)) (sumArity ai t1))
-                                                                                                                     (permAdd (rewriteLeft (cong (sym (coprod ao t2 t3)))
-                                                                                                                                           (rewriteRight (cong (sym (coprod ai t2 t3)))
-                                                                                                                                                         (rewriteLeft (appendAssociative l (sumArity ao t2) (sumArity ao t3))
-                                                                                                                                                                      (permComp (permComp (permAdd w2 (permId (sumArity ao t3)))
-                                                                                                                                                                                          (rewriteLeft (sym (appendAssociative m (sumArity ai t2) (sumArity ao t3)))
-                                                                                                                                                                                                       (rewriteRight (appendAssociative n (sumArity ai t3) (sumArity ai t2))
-                                                                                                                                                                                                                     (permComp (permAdd (permId m) (swap (sumArity ai t2) (sumArity ao t3)))
-                                                                                                                                                                                                                               (rewriteLeft (appendAssociative m (sumArity ao t3) (sumArity ai t2))
-                                                                                                                                                                                                                                            (permAdd w3 (permId (sumArity ai t2))))))))
-                                                                                                                                                                                (permAdd (permId n) (swap (sumArity ai t3) (sumArity ai t2)))))))
-                                                                                                                              (permId (sumArity ai t1))))))))
-                                                         (permAdd (permId n) (swap (sumArity ai (t2 ++ t3)) (sumArity ai t1)))))) =
-        rewriteLeft (cong (sym (coprod ao (t1 ++ t2) t3)))
-                    (rewriteRight (cong (sym (coprod ai (t1 ++ t2) t3)))
-                                  (rewriteLeft (appendAssociative k (sumArity ao (t1 ++ t2)) (sumArity ao t3))
-                                               (permComp (permComp (permAdd (rewriteLeft (cong (sym (coprod ao t1 t2)))
-                                                                                         (rewriteRight (cong (sym (coprod ai t1 t2)))
-                                                                                                       (rewriteLeft (appendAssociative k (sumArity ao t1) (sumArity ao t2))
-                                                                                                                    (permComp (permComp (permAdd w1 (permId (sumArity ao t2)))
-                                                                                                                                        (rewriteLeft (sym (appendAssociative l (sumArity ai t1) (sumArity ao t2)))
-                                                                                                                                                     (rewriteRight (appendAssociative m (sumArity ai t2) (sumArity ai t1))
-                                                                                                                                                                   (permComp (permAdd (permId l) (swap (sumArity ai t1) (sumArity ao t2)))
-                                                                                                                                                                             (rewriteLeft (appendAssociative l (sumArity ao t2) (sumArity ai t1)) (permAdd w2 (permId (sumArity ai t1))))))))
-                                                                                                                              (permAdd (permId m) (swap (sumArity ai t2) (sumArity ai t1)))))))
-                                                                            (permId (sumArity ao t3)))
-                                                                   (rewriteLeft (sym (appendAssociative m (sumArity ai (t1 ++ t2)) (sumArity ao t3)))
-                                                                                (rewriteRight (appendAssociative n (sumArity ai t3) (sumArity ai (t1 ++ t2)))
-                                                                                              (permComp (permAdd (permId m) (swap (sumArity ai (t1 ++ t2)) (sumArity ao t3))) (rewriteLeft (appendAssociative m (sumArity ao t3) (sumArity ai (t1 ++ t2))) (permAdd w3 (permId (sumArity ai (t1 ++ t2)))))))))
-                                                         (permAdd (permId n) (swap (sumArity ai t3) (sumArity ai (t1 ++ t2)))))))
+     -> {w1 : Perm (sumArity ao t1 ++ k) (sumArity ai t1 ++ l)}
+     -> {w2 : Perm (sumArity ao t2 ++ l) (sumArity ai t2 ++ m)}
+     -> {w3 : Perm (sumArity ao t3 ++ m) (sumArity ai t3 ++ n)}
+     -> rewriteLeft (trans (cong {f=\z=>z++k} (sym (coprod ao t1 (t2 ++ t3)))) (sym (appendAssociative (sumArity ao (t2 ++ t3)) (sumArity ao t1) k)))
+                    (rewriteRight (trans (cong {f=\z=>z++n} (sym (coprod ai t1 (t2 ++ t3)))) (sym (appendAssociative (sumArity ai (t2 ++ t3)) (sumArity ai t1) n)))
+                                  (permComp (permComp (permAddIdL (sumArity ao (t2 ++ t3)) w1) (swapAddIdR (sumArity ao (t2 ++ t3)) (sumArity ai t1) l))
+                                            (permComp (permAddIdL (sumArity ai t1)
+                                                                  (rewriteLeft (trans (cong {f=\z=>z++l} (sym (coprod ao t2 t3)))
+                                                                                      (sym (appendAssociative (sumArity ao t3) (sumArity ao t2) l)))
+                                                                               (rewriteRight (trans (cong {f=\z=>z++n} (sym (coprod ai t2 t3)))
+                                                                                                    (sym (appendAssociative (sumArity ai t3) (sumArity ai t2) n)))
+                                                                                             (permComp (permComp (permAddIdL (sumArity ao t3) w2)
+                                                                                                                 (swapAddIdR (sumArity ao t3) (sumArity ai t2) m))
+                                                                                                       (permComp (permAddIdL (sumArity ai t2) w3)
+                                                                                                                 (swapAddIdR (sumArity ai t2) (sumArity ai t3) n))))))
+                                                      (swapAddIdR (sumArity ai t1) (sumArity ai (t2 ++ t3)) n)))) =
+        rewriteLeft (trans (cong {f=\z=>z++k} (sym (coprod ao (t1 ++ t2) t3))) (sym (appendAssociative (sumArity ao t3) (sumArity ao (t1 ++ t2)) k)))
+                    (rewriteRight (trans (cong {f=\z=>z++n} (sym (coprod ai (t1 ++ t2) t3))) (sym (appendAssociative (sumArity ai t3) (sumArity ai (t1 ++ t2)) n)))
+                                  (permComp (permComp (permAddIdL (sumArity ao t3)
+                                                                  (rewriteLeft (trans (cong {f=\z=>z++k} (sym (coprod ao t1 t2)))
+                                                                                      (sym (appendAssociative (sumArity ao t2) (sumArity ao t1) k)))
+                                                                               (rewriteRight (trans (cong {f=\z=>z++m} (sym (coprod ai t1 t2)))
+                                                                                                    (sym (appendAssociative (sumArity ai t2) (sumArity ai t1) m)))
+                                                                                             (permComp (permComp (permAddIdL (sumArity ao t2) w1)
+                                                                                                                 (swapAddIdR (sumArity ao t2) (sumArity ai t1) l))
+                                                                                                       (permComp (permAddIdL (sumArity ai t1) w2)
+                                                                                                                 (swapAddIdR (sumArity ai t1) (sumArity ai t2) m))))))
+                                                      (swapAddIdR (sumArity ao t3) (sumArity ai (t1 ++ t2)) m))
+                                            (permComp (permAddIdL (sumArity ai (t1 ++ t2)) w3) (swapAddIdR (sumArity ai (t1 ++ t2)) (sumArity ai t3) n))))
 
 hgLeftId : {s : Type} -> {ai, ao : s -> List o} -> (k, l : List o)
         -> (hg : Hypergraph s ai ao k l) -> compose (identity k) hg = hg

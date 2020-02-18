@@ -23,60 +23,16 @@ hgPreserveId : {s : Type} -> {ai, ao : s -> List o} -> (as, bs : List o)
 hgPreserveId {s} {ai} {ao} as bs with (identity {s} {ai} {ao} as)
   | MkHypergraph ta pa with (identity {s} {ai} {ao} bs)
     | MkHypergraph tb pb = hgCong2 Refl $
-                           rewriteRightIgnoreR $ rewriteLeftIgnoreR $
-                             (permCompCong5 (appendNilRightNeutral $ as ++ bs)
-                                            (trans (trans (cong {f=\z=>z++bs++[]} $ appendNilRightNeutral $ as)
-                                                          (appendAssociative as bs []))
-                                                   (appendNilRightNeutral $ as ++ bs))
-                                            (appendNilRightNeutral $ as ++ bs)
-                                            step1
-                                            (permCompCong5 (trans (trans (cong {f=\z=>z++bs++[]} $ appendNilRightNeutral $ as)
-                                                                         (appendAssociative as bs []))
-                                                                  (appendNilRightNeutral $ as ++ bs))
-                                                           (trans (trans (cong {f=\z=>z++bs++[]} $ appendNilRightNeutral $ as)
-                                                                         (appendAssociative as bs []))
-                                                                  (appendNilRightNeutral $ as ++ bs))
-                                                           (appendNilRightNeutral $ as ++ bs)
-                                                           step2
-                                                           step3)
-                             `trans`
-                             permCompLeftId _)
-                             `trans`
-                             permCompLeftId _
-      where
-      step1 : rewriteLeft (trans (appendAssociative (as ++ bs) [] []) (cong {f=\z=>z++[]} (sym (appendAssociative as bs []))))
-                          (rewriteRight (trans (appendAssociative (as ++ []) bs []) (cong {f=\z=>z++[]} (sym (appendAssociative as [] bs))))
-                                        (permAdd (permAdd (permId as) (swap bs [])) [])) = permId (as ++ bs)
-      step1 = rewriteLeftIgnore $ rewriteRightIgnore $
-              trans (permAddNilRightNeutral _) $
-              permAddCong6 Refl
-                       Refl
-                       (appendNilRightNeutral bs)
-                       Refl
-                       Refl
-                       (swapNilRightNeutral bs)
-              `trans` permPreserveId as bs
-      step2 : permAdd (rewriteRight (appendNilRightNeutral as) (rewriteLeft (appendNilRightNeutral as) (permId as)))
-                                (rewriteRight (appendNilRightNeutral bs) (rewriteLeft (appendNilRightNeutral bs) (permId bs))) = permId (as ++ bs)
-      step2 = permAddCong6 (appendNilRightNeutral as)
-                           (appendNilRightNeutral as)
-                           (appendNilRightNeutral bs)
-                           (appendNilRightNeutral bs)
-                           (rewriteRightIgnore $ rewriteLeftIgnore Refl)
-                           (rewriteRightIgnore $ rewriteLeftIgnore Refl)
-              `trans` permPreserveId as bs
-      step3 : rewriteLeft (trans (appendAssociative (as ++ []) bs []) (cong {f=\z=>z++[]} (sym (appendAssociative as [] bs))))
-                          (rewriteRight (trans (appendAssociative (as ++ bs) [] []) (cong {f=\z=>z++[]} (sym (appendAssociative as bs []))))
-                                        (permAdd (permAdd (permId as) (rewriteRight (appendNilRightNeutral bs) (permId bs))) [])) = permId (as ++ bs)
-      step3 = rewriteLeftIgnore $ rewriteRightIgnore $
-              trans (permAddNilRightNeutral _) $
-              permAddCong6 Refl
-                           Refl
-                           Refl
-                           (appendNilRightNeutral bs)
-                           Refl
-                           (rewriteRightIgnore Refl)
-              `trans` permPreserveId as bs
+      permCompCong5 Refl Refl Refl
+        (permCompLeftId (permId (as ++ bs)))
+        (permCompCong5 Refl Refl Refl
+          (permPreserveId as bs)
+          (permCompCong5 Refl Refl Refl
+            (swapAddIdRNilRightNeutral as bs)
+            Refl
+          `trans` permCompLeftId (permId (as ++ bs)))
+        `trans` permCompLeftId (permId (as ++ bs)))
+      `trans` permCompLeftId (permId (as ++ bs))
 
 hgPreserveCompose : {s : Type} -> {ai, ao : s -> List o} -> (a, b, c : (List o, List o))
                  -> (f : ProductMorphism (hypergraphCat s ai ao) (hypergraphCat s ai ao) a b)

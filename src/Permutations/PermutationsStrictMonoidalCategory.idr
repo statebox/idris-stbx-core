@@ -12,9 +12,13 @@ import Permutations.PermutationsCategory
 %access public export
 %default total
 
-permPreserveId: (as, bs : List o) -> permAdd (permId as) (permId bs) = permId (as ++ bs)
+permPreserveId : (as, bs : List o) -> permAdd (permId as) (permId bs) = permId (as ++ bs)
 permPreserveId     []  bs = Refl
 permPreserveId (a::as) bs = insCong Refl Refl Refl (permPreserveId as bs) Refl
+
+permAddIdLPreserveId : (as, bs : List o) -> permAddIdL as (permId bs) = permId (as ++ bs)
+permAddIdLPreserveId     []  bs = Refl
+permAddIdLPreserveId (a::as) bs = insCong Refl Refl Refl (permAddIdLPreserveId as bs) Refl
 
 permAddNilRightNeutral : (ab : Perm as bs) -> permAdd ab Nil = ab
 permAddNilRightNeutral              Nil          = Refl
@@ -74,6 +78,10 @@ permutationsSMC o = MkStrictMonoidalCategory
 swapNilRightNeutral : (l : List o) -> swap l [] = permId l
 swapNilRightNeutral [] = Refl
 swapNilRightNeutral (l::ls) = insCong (appendNilRightNeutral ls) Refl Refl (swapNilRightNeutral ls) Refl
+
+swapAddIdRNilRightNeutral : (l : List o) -> (k : List o) -> swapAddIdR l [] k = permId (l ++ k)
+swapAddIdRNilRightNeutral [] k = Refl
+swapAddIdRNilRightNeutral (l::ls) k = insCong Refl Refl Refl (swapAddIdRNilRightNeutral ls k) Refl
 
 swapHexagonal : (as, bs, cs : List o) ->
   rewriteRight (sym $ appendAssociative bs cs as)
