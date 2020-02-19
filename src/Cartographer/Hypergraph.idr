@@ -2,6 +2,7 @@ module Cartographer.Hypergraph
 
 import Data.List
 
+import Permutations.Sandwich
 import Permutations.Permutations
 import Permutations.PermutationsCategory
 
@@ -14,24 +15,43 @@ sumArity : (a : sigma -> List o) -> List sigma -> List o
 sumArity _ Nil = []
 sumArity a (s :: ss) = sumArity a ss ++ a s
 
+coprod
+   : (a : s -> List o) -> (t1 : List s) -> (t2 : List s)
+  -> sumArity a t2 ++ sumArity a t1 = sumArity a (t1 ++ t2)
+coprod a Nil     _  = appendNilRightNeutral _
+coprod a (s::t1) t2 = appendAssociative _ _ _ `trans` cong {f=\z=>z++a s} (coprod a t1 t2)
+
+permArity : (ar : sigma -> List o) -> {s1, s2 : List sigma} -> Perm s1 s2 -> Perm (sumArity ar s1) (sumArity ar s2)
+permArity _   Nil = Nil
+permArity ar (Ins {l} {r} {a} {as} p s) with (swEq s)
+  | Refl = rewriteRight (trans (cong (appendAssociative l [a] r))
+                               (trans (sym $ coprod ar (l ++ [a]) r)
+                                      (cong {f=\z=>sumArity ar r++z} (sym $ coprod ar l [a])))) $
+           permComp (swap (sumArity ar as) (ar a))
+                    (permComp (permAddIdL (ar a) (rewriteRight (coprod ar l r) $ permArity ar p))
+                              (swapAddIdR (ar a) (sumArity ar r) (sumArity ar l)))
+
 record Hypergraph (sigma : Type) (arityIn : sigma -> List o) (arityOut : sigma -> List o) (k : List o) (m : List o) where
   constructor MkHypergraph
   -- HyperEdges
   Typ : List sigma
   wiring : Perm (sumArity arityOut Typ ++ k) (sumArity arityIn Typ ++ m)
 
+postulate
+hypergraphEq :
+     {s : Type}
+  -> {ai, ao : s -> List o}
+  -> {k, m : List o}
+  -> {hg1, hg2 : Hypergraph s ai ao k m}
+  -> (p : Perm (Typ hg1) (Typ hg2))
+  -> (wiring hg1 `permComp` (permArity ai p `permAdd` permId m) = (permArity ao p `permAdd` permId k) `permComp` wiring hg2)
+  -> hg1 = hg2
+
 singleton : {s : Type} -> {ai, ao : s -> List o} -> (edge : s) -> Hypergraph s ai ao (ai edge) (ao edge)
 singleton edge = MkHypergraph [edge] (swap (ao edge) (ai edge))
 
-
 identity : {s : Type} -> {ai, ao : s -> List o} -> (n : List o) -> Hypergraph s ai ao n n
 identity n = MkHypergraph [] (permId n)
-
-coprod
-   : (a : s -> List o) -> (t1 : List s) -> (t2 : List s)
-  -> sumArity a t2 ++ sumArity a t1 = sumArity a (t1 ++ t2)
-coprod a Nil     _  = appendNilRightNeutral _
-coprod a (s::t1) t2 = appendAssociative _ _ _ `trans` cong {f=\z=>z++a s} (coprod a t1 t2)
 
 compose : (g1 : Hypergraph s ai ao k m) -> (g2 : Hypergraph s ai ao m n) -> Hypergraph s ai ao k n
 compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
