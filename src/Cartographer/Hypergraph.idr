@@ -52,19 +52,16 @@ zero = identity []
 add : Hypergraph s ai ao k l -> Hypergraph s ai ao m n -> Hypergraph s ai ao (k ++ m) (l ++ n)
 add {k} {l} {m} {n} (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
   where
-    helper2 : Perm ((a ++ b) ++ (c ++ d)) ((a ++ c) ++ (b ++ d))
-    helper2 {a} {b} {c} {d} =
-      rewriteLeft (sym $ appendAssociative a b (c ++ d)) $
-      rewriteRight (sym $ appendAssociative a c (b ++ d)) $
-        a `permAddIdL` swapAddIdR b c d
+    helper2 : (a: List o) -> (b: List o) -> (c: List o) -> (d: List o) -> (a ++ b) ++ (c ++ d) = a ++ ((b ++ c) ++ d)
+    helper2 a b c d = (sym $ appendAssociative a b (c ++ d)) `trans` (cong $ appendAssociative b c d)
 
-    helper : Perm (s1 ++ k) (f1 ++ l) -> Perm (s2 ++ m) (f2 ++ n) -> s2 ++ s1 = s12 -> f2 ++ f1 = f12 -> Perm (s12 ++ (k ++ m)) (f12 ++ (l ++ n))
-    helper {s1} {s2} {f1} {f2} c1 c2 sEq fEq =
-      rewriteLeft (cong {f=\z=>z++(k++m)} (sym sEq)) $
-      rewriteRight (cong {f=\z=>z++(l++n)} (sym fEq)) $
-        permComp ((swap s2 s1 `permAdd` permId (k++m)) `permComp` helper2)
+    helper : Perm (o1 ++ k) (i1 ++ l) -> Perm (o2 ++ m) (i2 ++ n) -> o2 ++ o1 = o12 -> i2 ++ i1 = i12 -> Perm (o12 ++ (k ++ m)) (i12 ++ (l ++ n))
+    helper {o1} {o2} {i1} {i2} c1 c2 oEq iEq =
+      rewriteLeft (cong {f=\z=>z++(k++m)} (sym oEq) `trans` helper2 o2 o1 k m) $
+      rewriteRight (cong {f=\z=>z++(l++n)} (sym iEq) `trans` helper2 i2 i1 l n) $
+        permComp (swapAddIdR o2 (o1 ++ k) m)
                  (permComp (c1 `permAdd` c2)
-                           (helper2 `permComp` (swap f1 f2 `permAdd` permId (l++n))))
+                           (swapAddIdR (i1 ++ l) i2 n))
 
     perm : Perm (sumArity ao (t1 ++ t2) ++ (k ++ m)) (sumArity ai (t1 ++ t2) ++ (l ++ n))
     perm = helper c1 c2 (coprod ao t1 t2) (coprod ai t1 t2)

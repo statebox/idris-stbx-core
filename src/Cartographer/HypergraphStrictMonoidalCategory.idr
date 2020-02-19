@@ -24,13 +24,10 @@ hgPreserveId {s} {ai} {ao} as bs with (identity {s} {ai} {ao} as)
   | MkHypergraph ta pa with (identity {s} {ai} {ao} bs)
     | MkHypergraph tb pb = hgCong2 Refl $
       permCompCong5 Refl Refl Refl
-        (permCompLeftId (permId (as ++ bs)))
+        Refl
         (permCompCong5 Refl Refl Refl
           (permPreserveId as bs)
-          (permCompCong5 Refl Refl Refl
-            (swapAddIdRNilRightNeutral as bs)
-            Refl
-          `trans` permCompLeftId (permId (as ++ bs)))
+          (swapAddIdRNilRightNeutral as bs)
         `trans` permCompLeftId (permId (as ++ bs)))
       `trans` permCompLeftId (permId (as ++ bs))
 
