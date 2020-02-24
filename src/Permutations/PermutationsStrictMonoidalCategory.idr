@@ -83,59 +83,53 @@ swapAddIdRNilRightNeutral : (l : List o) -> (k : List o) -> swapAddIdR l [] k = 
 swapAddIdRNilRightNeutral [] k = Refl
 swapAddIdRNilRightNeutral (l::ls) k = insCong Refl Refl Refl (swapAddIdRNilRightNeutral ls k) Refl
 
+lemma1 : (a : o) -> (bs, cs, as : List o)
+      -> Ins {a} (permId (bs ++ cs ++ as)) (sandwich bs) `permComp`
+           (permAddIdL bs (Ins {a} (permId (cs ++ as)) (sandwich cs)))
+       = Ins {a} (permId ((bs ++ cs) ++ as)) (sandwich (bs ++ cs))
+lemma1 a     []  cs as = insCong Refl Refl Refl (permCompLeftId (permId (cs ++ as))) Refl
+lemma1 a (b::bs) cs as = let tt = lemma1 a bs cs as in ?wat
+
 swapHexagonal : (as, bs, cs : List o) ->
-  rewriteRight (sym $ appendAssociative bs cs as)
-    (rewriteRight (appendAssociative bs as cs) (permAdd (swap as bs) (permId cs)) `permComp` permAdd (permId bs) (swap as cs))
-  = swap as (bs ++ cs)
-swapHexagonal [] bs cs = rewriteRightIgnore $ rewriteRightIgnoreR $ step2 `trans` step3
-  where
-    step1 : permAdd (permId bs) (rewriteRight (appendNilRightNeutral cs) (permId cs)) = permId (bs ++ cs)
-    step1 = permAddCong6 Refl
-                         Refl
-                         Refl
-                         (appendNilRightNeutral cs)
-                         Refl
-                         (rewriteRightIgnore Refl)
-            `trans` permPreserveId bs cs
-    step2 : permComp (rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs)))
-              (permAdd (permId bs) (rewriteRight (appendNilRightNeutral cs) (permId cs)))
-            = rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs))
-    step2 = permCompCong5 Refl
-                          Refl
-                          (rewrite appendNilRightNeutral cs in Refl)
-                          Refl
-                          step1
-            `trans` permCompRightId _
-    step3 : rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs))
-            = permId (bs ++ cs)
-    step3 = rewriteRightIgnore $
-      permAddCong6 Refl
-                   (appendNilRightNeutral bs)
-                   Refl
-                   Refl
-                   (rewriteRightIgnore Refl)
-                   Refl
-      `trans` permPreserveId bs cs
--- swapHexagonal (a::as) [] cs =
---   insCong (rewrite appendNilRightNeutral as in Refl)
---           Refl
---           Refl
---           step2
---           Refl
+  swapAddIdR as bs cs `permComp` permAddIdL bs (swap as cs)
+  = rewriteRight (appendAssociative bs cs as) $ swap as (bs ++ cs)
+-- swapHexagonal [] bs cs = rewriteRightIgnore $ rewriteRightIgnoreR $ step2 `trans` step3
 --   where
---     step1 : permAdd (swap as []) (permId cs) = permId (as ++ cs)
---     step1 = permAddCong6 (appendNilRightNeutral as)
+--     step1 : permAdd (permId bs) (rewriteRight (appendNilRightNeutral cs) (permId cs)) = permId (bs ++ cs)
+--     step1 = permAddCong6 Refl
 --                          Refl
 --                          Refl
+--                          (appendNilRightNeutral cs)
 --                          Refl
---                          (swapNilRightNeutral as)
---                          Refl
---             `trans` permPreserveId as cs
---     step2 : permComp (permAdd (swap as []) (permId cs)) (swap as cs) = swap as cs
---     step2 = permCompCong5 (rewrite appendNilRightNeutral as in Refl)
+--                          (rewriteRightIgnore Refl)
+--             `trans` permPreserveId bs cs
+--     step2 : permComp (rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs)))
+--               (permAdd (permId bs) (rewriteRight (appendNilRightNeutral cs) (permId cs)))
+--             = rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs))
+--     step2 = permCompCong5 Refl
 --                           Refl
+--                           (rewrite appendNilRightNeutral cs in Refl)
 --                           Refl
 --                           step1
---                           Refl
---             `trans` permCompLeftId _
-swapHexagonal {o} (a::as) bs cs = ?ws
+--             `trans` permCompRightId _
+--     step3 : rewriteRight (appendAssociative bs [] cs) (permAdd (rewriteRight (appendNilRightNeutral bs) (permId bs)) (permId cs))
+--             = permId (bs ++ cs)
+--     step3 = rewriteRightIgnore $
+--       permAddCong6 Refl
+--                    (appendNilRightNeutral bs)
+--                    Refl
+--                    Refl
+--                    (rewriteRightIgnore Refl)
+--                    Refl
+--       `trans` permPreserveId bs cs
+swapHexagonal {o} (a::as) bs cs = let tt =
+  -- where
+  --   step1 : Ins {a} (rewriteRight (sym $ appendAssociative bs cs as)
+  --                 (rewriteRight (appendAssociative bs as cs) (permAdd (swap as bs) (permId cs)) `permComp` permAdd (permId bs) (swap as cs)))
+  --               (sandwich (bs ++ cs))
+  --           = Ins {a} (swap as (bs ++ cs)) (sandwich (bs ++ cs))
+  --   step1 = insCong (sym $ appendAssociative as bs cs) Refl Refl (swapHexagonal as bs cs) Refl
+  --   step2 :
+  --           = Ins {a} (rewriteRight (sym $ appendAssociative bs cs as)
+  --                 (rewriteRight (appendAssociative bs as cs) (permAdd (swap as bs) (permId cs)) `permComp` permAdd (permId bs) (swap as cs)))
+  --               (sandwich (bs ++ cs))
