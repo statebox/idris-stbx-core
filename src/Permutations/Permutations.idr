@@ -60,8 +60,8 @@ shuffle : Perm bs cs -> Sandwich l a r bs -> Perm (a :: l ++ r) cs
 shuffle p            HereS      = p
 shuffle (Ins bc sb) (ThereS sw) with (shuffle bc sw)
   | Ins bc' sa with (swComb sb sa)
-    | BA {lb} {m} {ra} sa' sb' eq Refl = Ins (Ins (rewriteRight (      appendAssociative lb m ra) bc') sb') sa'
-    | AB {la} {m} {rb} sa' sb' eq Refl = Ins (Ins (rewriteRight (sym $ appendAssociative la m rb) bc') sb') sa'
+    | BA {lb} {m} {ra} sa' sb' Refl = Ins (Ins (rewriteRight (      appendAssociative lb m ra) bc') sb') sa'
+    | AB {la} {m} {rb} sa' sb' Refl = Ins (Ins (rewriteRight (sym $ appendAssociative la m rb) bc') sb') sa'
 
 permComp : Perm as bs -> Perm bs cs -> Perm as cs
 permComp  Nil         p  = p

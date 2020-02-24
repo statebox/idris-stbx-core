@@ -48,19 +48,17 @@ data Sandwich2 : List t -> t -> List t -> List t -> t -> List t -> List t -> Typ
   -- cs = lb ++ [b] ++ m ++ [a] ++ ra
   BA : Sandwich (lb ++ [b] ++ m) a ra cs
     -> Sandwich lb b (m ++ ra) ((lb ++ [b] ++ m) ++ ra)
-    -> m ++ [a] ++ ra = rb
     -> lb ++ m = la
     -> Sandwich2 lb b rb la a ra cs
   -- cs = la ++ [a] ++ m ++ [b] ++ rb
   AB : Sandwich la a (m ++ [b] ++ rb) cs
     -> Sandwich (la ++ m) b rb (la ++ (m ++ [b] ++ rb))
-    -> la ++ [a] ++ m = lb
     -> m ++ rb = ra
     -> Sandwich2 lb b rb la a ra cs
 
 swComb : Sandwich lb b rb cs -> Sandwich la a ra (lb ++ rb) -> Sandwich2 lb b rb la a ra cs
-swComb                          HereS       sa         = BA (ThereS sa) HereS (swEq sa) Refl
-swComb {lb=a::lb'}             (ThereS sb)  HereS      = case swEq sb of Refl => AB HereS sb Refl Refl
+swComb                          HereS       sa         = BA (ThereS sa) HereS Refl
+swComb {lb=a::lb'}             (ThereS sb)  HereS      = case swEq sb of Refl => AB HereS sb Refl
 swComb {lb=x::lb'} {la=x::la'} (ThereS sb) (ThereS sa) = case swComb sb sa of
-  BA sa sb Refl Refl => BA (ThereS sa) (ThereS sb) Refl Refl
-  AB sa sb Refl Refl => AB (ThereS sa) (ThereS sb) Refl Refl
+  BA sa sb Refl => BA (ThereS sa) (ThereS sb) Refl
+  AB sa sb Refl => AB (ThereS sa) (ThereS sb) Refl
