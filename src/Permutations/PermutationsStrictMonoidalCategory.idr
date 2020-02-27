@@ -91,11 +91,28 @@ swapAddIdRNilRightNeutral : (l : List o) -> (k : List o) -> swapAddIdR l [] k = 
 swapAddIdRNilRightNeutral [] k = Refl
 swapAddIdRNilRightNeutral (l::ls) k = insCong Refl Refl Refl (swapAddIdRNilRightNeutral ls k) Refl
 
+--\/-----    --\/---}
+--/\-\/-- = {--/\/--}
+-----/\--   {---/\--
 swapHexagonal1 : (as, bs, cs : List o) ->
   swapAddIdR as bs cs `permComp` permAddIdL bs (swap as cs) = swap as (bs ++ cs)
+
+swapHexagonal1' : (as, bs, cs, ds : List o) ->
+  swapAddIdR as bs (cs ++ ds) `permComp` permAddIdL bs (swapAddIdR as cs ds) = swapAddIdR as (bs ++ cs) ds
 
 swapHexagonal2 : (as, bs, cs : List o) ->
   permAddIdL as (swap bs cs) `permComp` swapAddIdR as cs bs = swap (as ++ bs) cs
 
 swapHexagonal2' : (as, bs, cs, ds : List o) ->
   permAddIdL as (swapAddIdR bs cs ds) `permComp` swapAddIdR as cs (bs ++ ds) = swapAddIdR (as ++ bs) cs ds
+
+swapNatural' : (as, bs, cs, ds : List o) -> (p : Perm as bs) ->
+  (p `permAdd` permId (cs ++ ds)) `permComp` swapAddIdR bs cs ds = swapAddIdR as cs ds `permComp` permAddIdL cs (p `permAdd` permId ds)
+
+-- swapHexagonal -> swapNatural swap -> sym swapHexagonal
+-----\/-----   --\/----\/--
+--\/-/\-\/-- = --/\-\/-/\--
+--/\----/\--   -----/\-----
+swap3' : (as, bs, cs, ds : List o)
+  -> (permAddIdL as (swapAddIdR bs cs ds) `permComp` swapAddIdR as cs (bs ++ ds)) `permComp` permAddIdL cs (swapAddIdR as bs ds)
+     = swapAddIdR as bs (cs ++ ds) `permComp` (permAddIdL bs (swapAddIdR as cs ds) `permComp` swapAddIdR bs cs (as ++ ds))

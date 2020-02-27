@@ -77,3 +77,8 @@ permAddCong6 : as1 = as2 -> bs1 = bs2 -> cs1 = cs2 -> ds1 = ds2
             -> {p1 : Perm as1 bs1} -> {p2 : Perm as2 bs2} -> {p3 : Perm cs1 ds1} -> {p4 : Perm cs2 ds2}
             -> p1 = p2 -> p3 = p4 -> permAdd p1 p3 = permAdd p2 p4
 permAddCong6 Refl Refl Refl Refl Refl Refl = Refl
+
+permAddIdLCong4 : as1 = as2 -> bs1 = bs2 -> cs1 = cs2
+               -> {p1 : Perm bs1 cs1} -> {p2 : Perm bs2 cs2}
+               -> p1 = p2 -> permAddIdL as1 p1 = permAddIdL as2 p2
+permAddIdLCong4 Refl Refl Refl Refl = Refl

@@ -51,19 +51,6 @@ wr {ai} {t} _ l {w} = rewriteLeftIgnore $ rewriteRightIgnore $
     `trans` permCompRightId (permId (sumArity ai t ++ l)))
   `trans` permCompRightId w
 
---      ____                 ____                ____
--- k --| w1 |-- l ----- l --| w2 |-- m -----m --| w3 |-- n -------------- n --
--- o1 -|____|- i1 -\/-- o2 -|____|- i2 -\/- o3 -|____|- i3 -\/- i2 --\/- i1 --
--- o2 -------- o2 -/\/- o3 -------- o3 -/\- i2 -------- i2 -/\- i3 -\/\- i2 --
--- o3 -------- o3 --/\- i1 ------------------------------------ i1 -/\-- i3 --
---
---                                    equals
---      ____                ____                         ____
--- k --| w1 |-- l ---- l --| w2 |-- m ------------- m --| w3 |-- n ------ n --
--- o1 -|____|- i1 -\/- o2 -|____|- i2 -\/- i1 --\/- o3 -|____|- i3 -\/-- i1 --
--- o2 -------- o2 -/\- i1 -------- i1 -/\- i2 -\/\- i1 -------- i1 -/\/- i2 --
--- o3 -------------------------------------o3 -/\-- i2 -------- i2 --/\- i3 --
---
 assoc : {ai, ao : s -> List o} -> {t1, t2, t3 : List s} -> (k, l, m, n : List o)
      -> {w1 : Perm (sumArity ao t1 ++ k) (sumArity ai t1 ++ l)}
      -> {w2 : Perm (sumArity ao t2 ++ l) (sumArity ai t2 ++ m)}
@@ -95,9 +82,23 @@ assoc {ai} {ao} {t1} {t2} {t3} k l m n {w1} {w2} {w3} =
         (trans (permAssoc _ _ _)
                (sym $ rewriteLeftIgnore $ rewriteRightIgnore step2))
   where
+    -- b -------------\ /- e --
+    --     +---+       X     --
+    -- c --|   |-- e -/ \- b --
+    --     | w |             --
+    -- d --|   |-- f ----- f --
+    --     +---+             --
     compPart : (b : List o) -> (w : Perm (c ++ d) (e ++ f)) -> Perm (b ++ c ++ d) (e ++ b ++ f)
     compPart b {e} {f} w = permComp (permAddIdL b w) (swapAddIdR b e f)
 
+    -- a ---------------\ /- e --
+    --                   X
+    -- b -------------\ /-\- a --
+    --     +---+       X       --
+    -- c --|   |-- e -/ \--- b --
+    --     | w |               --
+    -- d --|   |-- f ------- f --
+    --     +---+               --
     compPart2 : (a, b : List o) -> {c, d, e, f : List o} -> (w : Perm (c ++ d) (e ++ f)) -> Perm (a ++ b ++ c ++ d) (e ++ a ++ b ++ f)
     compPart2 a b {c} {d} {e} {f} w = compPart a (compPart b w)
 
@@ -117,13 +118,31 @@ assoc {ai} {ao} {t1} {t2} {t3} k l m n {w1} {w2} {w3} =
     step1a : compPart (sumArity ao (t2 ++ t3)) w1 = compPart2 (sumArity ao t3) (sumArity ao t2) w1
     step1a = compPartCong2 (sym $ coprod' ao t2 t3) Refl `trans` compPartDist (sumArity ao t3) (sumArity ao t2) w1
 
+    step2a : compPart (sumArity ai (t1 ++ t2)) w3 = compPart2 (sumArity ai t2) (sumArity ai t1) w3
+    step2a = compPartCong2 (sym $ coprod' ai t1 t2) Refl `trans` compPartDist (sumArity ai t2) (sumArity ai t1) w3
+
     step1b : compPart (sumArity ai t1)
                       (rewriteLeft (sym (coprod ao t2 t3 l))
                                    (rewriteRight (sym (coprod ai t2 t3 n))
                                                  (permComp (compPart (sumArity ao t3) w2)
                                                            (compPart (sumArity ai t2) w3))))
-           = permComp (compPart2 (sumArity ai t1) (sumArity ao t3) w2) (compPart2 (sumArity ai t2) (sumArity ai t1) w3)
-    step1b = ?wat
+           = permComp (compPart2 (sumArity ai t1) (sumArity ao t3) w2)
+                      (compPart2 (sumArity ai t2) (sumArity ai t1) w3)
+    step1b = ?s1b
+    -- step1b = permCompCong5 ?r1
+    --                        ?r2
+    --                        ?r3
+    --                        (permAddIdLCong4 ?a0 ?a1 ?a2 (rewriteLeftIgnore $ rewriteRightIgnore Refl))
+    --                        ?r4
+    --         `trans` ?step1b'
+
+    step2b : compPart (sumArity ao t3)
+                      (rewriteLeft (sym (coprod ao t1 t2 k))
+                                   (rewriteRight (sym (coprod ai t1 t2 m))
+                                                 (permComp (compPart (sumArity ao t2) w1)
+                                                           (compPart (sumArity ai t1) w2))))
+           = permComp (compPart2 (sumArity ao t3) (sumArity ao t2) w1)
+                      (compPart2 (sumArity ai t1) (sumArity ao t3) w2)
 
     step1 : permComp (compPart (sumArity ao (t2 ++ t3)) w1)
                      (compPart (sumArity ai t1)
@@ -149,6 +168,11 @@ assoc {ai} {ao} {t1} {t2} {t3} k l m n {w1} {w2} {w3} =
           = permComp (permComp (compPart2 (sumArity ao t3) (sumArity ao t2) w1)
                                (compPart2 (sumArity ai t1) (sumArity ao t3) w2))
                      (compPart2 (sumArity ai t2) (sumArity ai t1) w3)
+    step2 = permCompCong5 (cong $ sym $ coprod ao t1 t2 k)
+                          (sym $ coprod ai t1 t2 (sumArity ao t3 ++ m))
+                          (cong $ sym $ coprod ai t1 t2 n)
+                          step2b
+                          step2a
 
 hgLeftId : {s : Type} -> {ai, ao : s -> List o} -> (k, l : List o)
         -> (hg : Hypergraph s ai ao k l) -> compose (identity k) hg = hg
