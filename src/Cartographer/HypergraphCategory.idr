@@ -121,6 +121,28 @@ assoc {ai} {ao} {t1} {t2} {t3} k l m n {w1} {w2} {w3} =
     step2a : compPart (sumArity ai (t1 ++ t2)) w3 = compPart2 (sumArity ai t2) (sumArity ai t1) w3
     step2a = compPartCong2 (sym $ coprod' ai t1 t2) Refl `trans` compPartDist (sumArity ai t2) (sumArity ai t1) w3
 
+    --step1b' : permComp (permAddIdL (sumArity ai t1) (permComp (permAddIdL (sumArity ao t3) w2) (swapAddIdR (sumArity ao t3) (sumArity ai t2) m)))
+    --                   (swapAddIdR (sumArity ai t1) (sumArity ai t2) (sumArity ao t3 ++ m)) =
+    --          permAddIdL
+
+    step1b1 : permComp (permAddIdL (sumArity ai t1) (rewriteLeft (sym (coprod ao t2 t3 l))
+                                                                 (rewriteRight (sym (coprod ai t2 t3 n))
+                                                                              (permComp (permComp (permAddIdL (sumArity ao t3) w2) (swapAddIdR (sumArity ao t3) (sumArity ai t2) m))
+                                                                                        (permComp (permAddIdL (sumArity ai t2) w3) (swapAddIdR (sumArity ai t2) (sumArity ai t3) n))))))
+                       (swapAddIdR (sumArity ai t1) (sumArity ai (t2 ++ t3)) n) =
+              permComp (permAddIdL (sumArity ai t1)
+                                    (permComp (permComp (permAddIdL (sumArity ao t3) w2) (swapAddIdR (sumArity ao t3) (sumArity ai t2) m))
+                                              (permComp (permAddIdL (sumArity ai t2) w3) (swapAddIdR (sumArity ai t2) (sumArity ai t3) n))))
+                       (rewriteLeft (cong $ appendAssociative _ _ _) $ swapAddIdR (sumArity ai t1) (sumArity ai t3 ++ sumArity ai t2) n)
+    step1b1 = permCompCong5 (cong {f=\z=>sumArity ai t1 ++ z} $ sym $ coprod ao t2 t3 l)
+                            (cong {f=\z=>sumArity ai t1 ++ z} $ sym $ coprod ai t2 t3 n)
+                            (cong {f=\z=>z ++ sumArity ai t1 ++ n} $ sym $ coprod' ai t2 t3)
+                            (permAddIdLCong4 Refl
+                                             (sym $ coprod ao t2 t3 l)
+                                             (sym $ coprod ai t2 t3 n)
+                                             (rewriteLeftIgnore $ rewriteRightIgnore Refl))
+                            (rewriteLeftIgnoreR $ swapAddIdRCong3 Refl (sym $ coprod' ai t2 t3) Refl)
+
     step1b : compPart (sumArity ai t1)
                       (rewriteLeft (sym (coprod ao t2 t3 l))
                                    (rewriteRight (sym (coprod ai t2 t3 n))
@@ -129,10 +151,23 @@ assoc {ai} {ao} {t1} {t2} {t3} k l m n {w1} {w2} {w3} =
            = permComp (compPart2 (sumArity ai t1) (sumArity ao t3) w2)
                       (compPart2 (sumArity ai t2) (sumArity ai t1) w3)
     step1b = ?s1b
+
+
+   -- s1b : permComp (permAddIdL (sumArity ai t1) (rewriteLeft (sym (coprod ao t2 t3 l))
+   --                            (rewriteRight (sym (coprod ai t2 t3 n))
+   --                                         (permComp (permComp (permAddIdL (sumArity ao t3) w2) (swapAddIdR (sumArity ao t3) (sumArity ai t2) m))
+   --                                                   (permComp (permAddIdL (sumArity ai t2) w3) (swapAddIdR (sumArity ai t2) (sumArity ai t3) n))))))
+   --                (swapAddIdR (sumArity ai t1) (sumArity ai (t2 ++ t3)) n) =
+   --       permComp (permComp (permAddIdL (sumArity ai t1) (permComp (permAddIdL (sumArity ao t3) w2) (swapAddIdR (sumArity ao t3) (sumArity ai t2) m)))
+   --                          (swapAddIdR (sumArity ai t1) (sumArity ai t2) (sumArity ao t3 ++ m)))
+   --                (permComp (permAddIdL (sumArity ai t2) (permComp (permAddIdL (sumArity ai t1) w3) (swapAddIdR (sumArity ai t1) (sumArity ai t3) n)))
+   --                          (swapAddIdR (sumArity ai t2) (sumArity ai t3) (sumArity ai t1 ++ n)))
+
+
     -- step1b = permCompCong5 ?r1
     --                        ?r2
     --                        ?r3
-    --                        (permAddIdLCong4 ?a0 ?a1 ?a2 (rewriteLeftIgnore $ rewriteRightIgnore Refl))
+    --                        (permAddIdLCong4 {as2=sumArity ai t1} {cs1=sumArity ai (t2 ++ t3) ++ n} Refl ?a1 ?a2 (rewriteLeftIgnore $ rewriteRightIgnore Refl))
     --                        ?r4
     --         `trans` ?step1b'
 
