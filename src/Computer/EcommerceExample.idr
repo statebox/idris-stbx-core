@@ -40,9 +40,6 @@ import Util.Elem
 
 %include c "Computer/ecommerceExample.h"
 
--- type definitions
--- these must coincide with the ones defined in tdefs.txt
-
 Natural : TNamed 0
 Natural = TName "Natural" $ TMu [("ZZ", T1), ("SS", TVar 0)]
 
@@ -63,6 +60,27 @@ CartContent = TName "CartContent" $ TMu [("NilN", T1), ("ConsN", TProd [weakenTD
 
 InvoiceId : TNamed 0
 InvoiceId = TName "InvoiceId" $ wrap Natural
+
+-- tdef for transitions
+transition1 : TNamed 0
+transition1 = TName "Login" (TProd [FRef "InitialState", FRef "CartContent"])
+
+transition2 : TNamed 0
+transition2 = TName "AddProduct" (TProd [FRef "CartContent", FRef "CartContent"])
+
+transition3 : TNamed 0
+transition3 = TName "Checkout" (TProd [FRef "CartContent", FRef "InvoiceId"])
+
+checkName : TNamed 0 -> Maybe (String, TDef 0, TDef 0)
+checkName = ?todo
+
+makeMorphisms : List (String, a: TDef 0 ** b : TDef 0 ** Ty [] (unwrap a) -> IO (Ty [] (unwrap b) )
+           -> (Fin lenV, Fin lenV, String)
+           -> Maybe (mor' $ ioClosedTypedefsKleisliCategory FFI_C)
+makeMorphisms transitions (_, _, label) = do
+  (src ** tgt ** func) <- lookup label transitions
+  pure ( (unwrap src) ** (unwrap tgt) ** MkExtensionalTypeMorphism func)
+
 
 -- functions
 
@@ -124,18 +142,14 @@ checkout (Inn cartContent) = do
   randomNat <- generateInvoiceNumber
   pure $ natToNatural randomNat
 
+morphismList : List (String, a : TDef 0 ** b : TDef 0 ** Ty [] (unwrap a) -> IO (Ty [] (unwrap b)))
+morphismList = [ ("login", InitialState ** CartContent ** login)
+               , ("addProduct", CartContent ** CartContent ** addProduct)
+               , ("checkout", CartContent ** InvoiceId ** checkout)
+               ]
+
 edgeAsMorphism : (Fin lenV, Fin lenV, String) -> Maybe (mor' $ ioClosedTypedefsKleisliCategory FFI_C)
-edgeAsMorphism (_, _, label) =
-  if      label == "login"      then Just (  (unwrap InitialState)
-                                          ** (unwrap CartContent)
-                                          ** MkExtensionalTypeMorphism login)
-  else if label == "addProduct" then Just (  (unwrap CartContent)
-                                          ** (unwrap CartContent)
-                                          ** MkExtensionalTypeMorphism addProduct)
-  else if label == "checkout"   then Just (  (unwrap CartContent)
-                                          ** (unwrap InvoiceId)
-                                          ** MkExtensionalTypeMorphism checkout)
-  else Nothing
+edgeAsMorphism label = makeMorphisms morphismList label
 
 edgesAsMorphisms : Vect lenE (Fin lenV, Fin lenV, String)
                 -> Maybe (Vect lenE (mor' $ ioClosedTypedefsKleisliCategory FFI_C))
