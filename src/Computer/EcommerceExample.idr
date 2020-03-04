@@ -74,12 +74,12 @@ transition3 = TName "Checkout" (TProd [FRef "CartContent", FRef "InvoiceId"])
 checkName : TNamed 0 -> Maybe (String, TDef 0, TDef 0)
 checkName = ?todo
 
-makeMorphisms : List (String, a: TDef 0 ** b : TDef 0 ** Ty [] (unwrap a) -> IO (Ty [] (unwrap b) )
-           -> (Fin lenV, Fin lenV, String)
-           -> Maybe (mor' $ ioClosedTypedefsKleisliCategory FFI_C)
+makeMorphisms : List (String, a : TDef 0 ** b : TDef 0 ** Ty [] (unwrap a) -> IO (Ty [] (unwrap b)))
+             -> (Fin lenV, Fin lenV, String)
+             -> Maybe (mor' $ ioClosedTypedefsKleisliCategory FFI_C)
 makeMorphisms transitions (_, _, label) = do
   (src ** tgt ** func) <- lookup label transitions
-  pure ( (unwrap src) ** (unwrap tgt) ** MkExtensionalTypeMorphism func)
+  pure ((unwrap src) ** (unwrap tgt) ** MkExtensionalTypeMorphism func)
 
 
 -- functions
