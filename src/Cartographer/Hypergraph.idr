@@ -55,8 +55,14 @@ hypergraphEq :
 singleton : {s : Type} -> {ai, ao : s -> List o} -> (edge : s) -> Hypergraph s ai ao (ai edge) (ao edge)
 singleton edge = MkHypergraph [edge] (swap (ao edge) (ai edge))
 
+permutation : {s : Type} -> {ai, ao : s -> List o} -> Perm k m -> Hypergraph s ai ao k m
+permutation p = MkHypergraph [] p
+
 identity : {s : Type} -> {ai, ao : s -> List o} -> (n : List o) -> Hypergraph s ai ao n n
-identity n = MkHypergraph [] (permId n)
+identity n = permutation (permId n)
+
+zero : {s : Type} -> {ai, ao : s -> List o} -> Hypergraph s ai ao [] []
+zero = identity []
 
 compose : (g1 : Hypergraph s ai ao k m) -> (g2 : Hypergraph s ai ao m n) -> Hypergraph s ai ao k n
 compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
@@ -70,9 +76,6 @@ compose (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
 
     perm : Perm (sumArity ao (t1 ++ t2) ++ k) (sumArity ai (t1 ++ t2) ++ n)
     perm = helper c1 c2 (coprod ao t1 t2 k) (coprod ai t1 t2 n)
-
-zero : {s : Type} -> {ai, ao : s -> List o} -> Hypergraph s ai ao [] []
-zero = identity []
 
 add : Hypergraph s ai ao k l -> Hypergraph s ai ao m n -> Hypergraph s ai ao (k ++ m) (l ++ n)
 add {k} {l} {m} {n} (MkHypergraph t1 c1) (MkHypergraph t2 c2) = MkHypergraph (t1 ++ t2) perm
