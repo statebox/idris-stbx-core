@@ -52,3 +52,18 @@ hgTensor s ai ao = MkCFunctor
   (\a, b, f => add (pi1 f) (pi2 f) {k=fst a} {l=fst b} {m=snd a} {n=snd b})
   (\a => hgPreserveId (fst a) (snd a))
   hgPreserveCompose
+
+hgTensorAssociative : {s : Type} -> {ai, ao : s -> List o}
+  -> (fi, fo, gi, go, hi, ho: List o)
+  -> (f : Hypergraph s ai ao fi fo) -> (g : Hypergraph s ai ao gi go) -> (h : Hypergraph s ai ao hi ho)
+  -> add f (add g h) = add (add f g) h
+
+hypergraphSMC : (s : Type) -> (ai, ao : s -> List o) -> StrictMonoidalCategory
+hypergraphSMC s ai ao = MkStrictMonoidalCategory
+  (hypergraphCat s ai ao)
+  (hgTensor s ai ao)
+  []
+  (\as => Refl)
+  (\as => appendNilRightNeutral as)
+  appendAssociative
+  hgTensorAssociative
