@@ -4,7 +4,7 @@ module Parser.TGraph
 import Data.Vect
 
 -- idris-ct
---import Graph.Graph
+import Graph.Graph
 --import Graph.Path
 
 -- typedefs
@@ -15,25 +15,6 @@ import Util.Elem
 
 %access public export
 %default total
-
--- (FSM spec, nat, path)
--- -- example: ((5, [(1,2),(4,4),(3,2)]),3,[0,2,1])
--- -- -- FSM spec: (5, [(1,2),(4,4),(3,2)])
--- -- -- -- number of vertexes 5
--- -- -- -- edges: [(1,2),(4,4),(3,2)]
--- -- -- Initial state: 3
--- -- -- Morphisms to compose: 0,2,1 (meaning  (1,2), (3,2), (4,4))
--- fsmspec := (Nat * List (Nat, Nat))
--- (fsmspec * Nat * List Nat)
--- Use  (5, [(1,2),(4,4),(3,2)]) to generate a graph
--- Generate the free category C on this graph
--- Consider functor F from C to terminal cat 1
--- Evaluate: F(id_3;0;2;1)
--- Clearly, either this gives you id_1 or it gives you an error => it's an "oracle"
-
--- For later
---  (FSM spec, functor spec, nat, path) -- "non-oracle case"
--- ((5, [(1,2),(4,4),(3,2)]),[(string, string), (nat, string), (foo, bar)] 3,[0,2,1])
 
 -- Base definitions
 
@@ -59,8 +40,8 @@ ignoreShift {t=TSum (x::y::z::ts)}     (Left ty)  = Left $ ignoreShift ty
 ignoreShift {t=TSum (x::y::z::ts)}     (Right ty) = Right $ ignoreShift {t=TSum (y::z::ts)} ty
 ignoreShift {t=TProd [x,y]}            (ty1,ty2)  = (ignoreShift ty1,ignoreShift ty2)
 ignoreShift {t=TProd (x::y::z::ts)}    (ty1,ty2)  = (ignoreShift ty1,ignoreShift {t=TProd (y::z::ts)} ty2)
-ignoreShift {t=TMu cs}                 (Inn ty)   = Inn ?wat
-ignoreShift {t=TApp (TName nam df) xs}  ty        = ?wat2
+ignoreShift {t=TMu cs}                 (Inn ty)   = Inn ?ignoreShiftMu
+ignoreShift {t=TApp (TName nam df) xs}  ty        = ?ignoreShiftApp
 
 -- Maps TList to List
 toList : Ty [] (TList `ap` [tdef]) -> List (Ty [] tdef)
@@ -107,50 +88,60 @@ FSMCheck = Either FSMError
 
 ||| Functions checking that an execution specification is valid
 
-||| Checks that the edges in a FSM specification aren't
-||| out of range wrt the vertexes of the FSM
-checkFSMSpec : Ty [] FSMSpec -> FSMCheck ()
-checkFSMSpec (num, edges) =
+||| Generic boundedness check for a list of edges
+checkEdgeList : Ty [] FSMVertex -> Ty [] (TList `ap` [FSMEdge]) -> FSMError -> FSMCheck ()
+checkEdgeList num edges err =
   let
     n = toNat num
     ls = the (List (Nat, Nat)) $
          map (\(x,y) => (toNat x, toNat y)) $ toList {tdef = FSMEdge} edges
    in
-  if all (\(a,b) => n < a && n < b) ls   -- TODO should this be `<=` ?
+  if all (\(a,b) => a < n && b < n) ls   -- TODO should this be `<=` ?
     then Right ()
-    else Left InvalidFSM
+    else Left err
 
---------------------------------
---- HIC SUNT LEONES---
---------------------------------
+||| Checks that the edges in a FSM specification aren't
+||| out of range wrt the vertexes of the FSM
+checkFSMSpec : Ty [] FSMSpec -> FSMCheck ()
+checkFSMSpec (num, edges) = checkEdgeList num edges InvalidFSM
 
 ||| Checks that the FSM state in the execution is a valid vertex of the graph
-checkFSMState : Ty [] FSMSpec -> FSMState ->FSMCheck ()
-checkFSM (num, edges) state =
+checkFSMState : Ty [] FSMSpec -> Ty [] FSMState -> FSMCheck ()
+checkFSMState (num, edges) state =
   let
     n = toNat num
     s = toNat state
    in
   if s < n
-    then Left InvalidState
-    else Right()
+    then Right ()
+    else Left InvalidState
 
 ||| Checks that a path in an execution is made of valid edges
-checkFSMPath : Ty [] FSMSpec -> FSMPath ->FSMCheck ()
--- alternatively we could use: checkFSMPath (num, edges) path =checkFSMSpec(num, path)
-checkFSMPath (num, edges) path =
-  let
-    n = toNat num
-    ls = the (List (Nat, Nat)) $
-         map (\(x,y) => (toNat x, toNat y)) $ toList {tdef = FSMEdge} path
-   in
-  if all (\(a,b) => n < a && n < b) ls   -- TODO should this be `<=` ?
-    then Right ()
-    else Left InvalidPath
+checkFSMPath : Ty [] FSMSpec -> Ty [] FSMPath ->FSMCheck ()
+checkFSMPath (num, _) path = checkEdgeList num path InvalidPath
 
 ||| Checks the execution putting the previous functions together
 checkFSMExec : Ty [] FSMExec -> FSMCheck ()
 checkFSMExec (spec, state, path) =
-  checkFSMSpec(spec)
-  checkFSMState(state)
-  checkFSMPath(path)
+  do checkFSMSpec spec
+     checkFSMState spec state
+     checkFSMPath spec path
+
+fromFSMSpecToEdgeList : Ty [] FSMSpec -> (Nat, List (Nat, Nat))
+fromFSMSpecToEdgeList (vertex, edges) =
+  let
+    listEdges = toList {tdef = FSMEdge} edges
+    listPairs = map (\(n1, n2) => (toNat n1, toNat n2)) listEdges
+   in
+  (toNat vertex, listPairs)
+
+convertList : (n : Nat) -> List (Nat, Nat) -> Maybe (List (Fin n, Fin n))
+convertList n edges = traverse (\(x,y) => [| MkPair (natToFin x n) (natToFin y n) |]) edges
+
+--> record Graph vertices where
+-->   constructor MkGraph
+-->   edges : Vect n (vertices, vertices)
+
+mkTGraph : (Nat, List (Nat, Nat)) -> Maybe (DPair Nat (\size => Graph (Fin size)))
+mkTGraph (vertex, edges) = do convertedEdges <- convertList vertex edges
+                              pure (vertex ** MkGraph $ fromList convertedEdges)
