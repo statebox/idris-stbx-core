@@ -69,26 +69,29 @@ toList (Inn (Right (hd, tl))) = ignoreShift hd :: toList tl
 
 -- Graph definitions
 
-||| The type definition for vertices in the graph
-TVertex : TDef 0
-TVertex = TNat
+||| The type definition for vertices in the graph is jsut
+||| A natural enumerating the vertexes. e.g. 5 means
+||| That there are 5 vertexes, denoted 0,1,2,3,4
+FSMVertex : TDef 0
+FSMVertex = TNat
 
-||| The type definition for edges in the graph
-TEdge : TDef 0
-TEdge = TProd [TVertex, TVertex]
+||| The type definition for edges in the graph is just a couple
+||| of vertexes defining the edge source and target
+FSMEdge : TDef 0
+FSMEdge = TProd [FSMVertex, FSMVertex]
 
-||| A Finite State Machine is defined by the number of vertices and a list of edges
+||| A Finite State Machine is defined by its vertices and a list of edges
 ||| The definition might not be valid if edges endpoints are out of range
 FSMSpec : TDef 0
-FSMSpec = TProd [TNat, TList `ap` [TEdge]]
+FSMSpec = TProd [FSMVertex, TList `ap` [FSMEdge]]
 
 ||| A state is a vertex in the graph (might be out of range)
 FSMState : TDef 0
-FSMState = TVertex
+FSMState = FSMVertex
 
 ||| A path is a list of edges (might not be valid)
 FSMPath : TDef 0
-FSMPath = TList `ap` [TEdge]
+FSMPath = TList `ap` [FSMEdge]
 
 ||| An execution is a FSM, a state representing an inital edge and a path from that edge.
 ||| The execution might not be valid.
@@ -96,19 +99,58 @@ FSMExec : TDef 0
 FSMExec = TProd [FSMSpec, FSMState, FSMPath]
 
 ||| Errors related to checking if a FSM description is valid
-data FSMError = InvalidFSM | InvalidPath | InvalidExec
+data FSMError = InvalidFSM | InvalidState | InvalidPath
 
 ||| Monad to check errors when compiling FSMs
 FSMCheck : Type -> Type
 FSMCheck = Either FSMError
 
-checkFSM : Ty [] FSMSpec -> FSMCheck ()
-checkFSM (num, edges) =
+||| Functions checking that an execution specification is valid
+
+||| Checks that the edges in a FSM specification aren't
+||| out of range wrt the vertexes of the FSM
+checkFSMSpec : Ty [] FSMSpec -> FSMCheck ()
+checkFSMSpec (num, edges) =
   let
     n = toNat num
     ls = the (List (Nat, Nat)) $
-         map (\(x,y) => (toNat x, toNat y)) $ toList {tdef = TEdge} edges
+         map (\(x,y) => (toNat x, toNat y)) $ toList {tdef = FSMEdge} edges
    in
   if all (\(a,b) => n < a && n < b) ls   -- TODO should this be `<=` ?
     then Right ()
     else Left InvalidFSM
+
+--------------------------------
+--- HIC SUNT LEONES---
+--------------------------------
+
+||| Checks that the FSM state in the execution is a valid vertex of the graph
+checkFSMState : Ty [] FSMSpec -> FSMState ->FSMCheck ()
+checkFSM (num, edges) state =
+  let
+    n = toNat num
+    s = toNat state
+   in
+  if s < n
+    then Left InvalidState
+    else Right()
+
+||| Checks that a path in an execution is made of valid edges
+checkFSMPath : Ty [] FSMSpec -> FSMPath ->FSMCheck ()
+-- alternatively we could use: checkFSMPath (num, edges) path =checkFSMSpec(num, path)
+checkFSMPath (num, edges) path =
+  let
+    n = toNat num
+    ls = the (List (Nat, Nat)) $
+         map (\(x,y) => (toNat x, toNat y)) $ toList {tdef = FSMEdge} path
+   in
+  if all (\(a,b) => n < a && n < b) ls   -- TODO should this be `<=` ?
+    then Right ()
+    else Left InvalidPath
+
+||| Checks the execution putting the previous functions together
+checkFSMExec : Ty [] FSMExec -> FSMCheck ()
+checkFSMExec (spec, state, path) =
+  checkFSMSpec(spec)
+  checkFSMState(state)
+  checkFSMPath(path)
