@@ -1,4 +1,4 @@
-module Parser.Graph
+module GraphCat
 
 -- base
 import Data.Vect
@@ -31,10 +31,43 @@ import Util.Elem
 -- 7. ???
 -- 8. Profit!
 
-fsmToPathCat : Ty [] FSMSpec -> Maybe Category
-fsmToPathCat fsm = (\(_ ** g) => pathCategory g) <$> mkTGraph (fromFSMSpecToEdgeList fsm)
+-- TODO maybe should be a record
 
-(f : FSMExec) -> Mor (fsmToPathCat (spec f)) a b
+||| The type of categories having Fin n for some n as object type
+FinCat : Type
+FinCat = (n : Nat ** c : Category ** obj c = Fin n)
 
-(spec, state, path)
-(spec, v, [(x,y),(y,z)]) --> Mor v z
+||| Maps a FinCat to its underlying category
+getCat : FinCat -> Category
+getCat (_ ** cat ** _) = cat
+
+||| Builds a path category out of a FSM specification given in TDef format
+fsmToPathCat : Ty [] FSMSpec -> Maybe FinCat
+fsmToPathCat fsm =
+  (\(n ** g) => (n ** pathCategory g ** Refl)) <$> mkTGraph (fromFSMSpecToEdgeList fsm)
+
+decToMaybe : Dec a -> Maybe a
+decToMaybe (No _) = Nothing
+decToMaybe (Yes a) = Just a
+
+constructPath : (g : Graph (Fin n)) -> (path : List ((Fin n), (Fin n))) -> {auto ok : NonEmpty path} ->
+                Maybe (Path g (Basics.fst $ List.head path) (Basics.snd $ List.last path))
+constructPath g [(x, y)] = do el <- decToMaybe $ isElem (x,y) (edges g)
+                              pure [el]
+constructPath g ((x, y) :: xs) = ?wot2
+
+{-
+validateExec : Ty [] FSMExec -> Maybe (cat : Category ** a : obj cat ** b : obj cat ** mor cat a b)
+validateExec (spec, state, path) =
+  do (n ** cat ** prf) <- fsmToPathCat spec
+     let edgeList = fromFSMPathToEdgeList path
+     (hd, _) <- head' edgeList
+     hdF <- natToFin hd n
+     (_, lt) <- last' edgeList
+     ltF <- natToFin lt n
+     -- mor cat = Path
+     pure (cat ** rewrite prf in hdF ** rewrite prf in ltF ** ?wat)
+
+-- (spec, a, [(a,b), (b,c)]) -> Compose (id a) (Compose (a b) (b c))
+-- id state ; path 1st ; .... ; path nth
+-}

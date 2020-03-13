@@ -127,13 +127,14 @@ checkFSMExec (spec, state, path) =
      checkFSMState spec state
      checkFSMPath spec path
 
+convertEdgeList : Ty [] (TList `ap` [FSMEdge]) -> List (Nat, Nat)
+convertEdgeList = map (\(n1, n2) => (toNat n1, toNat n2)) . toList {tdef = FSMEdge}
+
 fromFSMSpecToEdgeList : Ty [] FSMSpec -> (Nat, List (Nat, Nat))
-fromFSMSpecToEdgeList (vertex, edges) =
-  let
-    listEdges = toList {tdef = FSMEdge} edges
-    listPairs = map (\(n1, n2) => (toNat n1, toNat n2)) listEdges
-   in
-  (toNat vertex, listPairs)
+fromFSMSpecToEdgeList (vertex, edges) = (toNat vertex, convertEdgeList edges)
+
+fromFSMPathToEdgeList : Ty [] FSMPath -> List (Nat,Nat)
+fromFSMPathToEdgeList  = convertEdgeList
 
 convertList : (n : Nat) -> List (Nat, Nat) -> Maybe (List (Fin n, Fin n))
 convertList n edges = traverse (\(x,y) => [| MkPair (natToFin x n) (natToFin y n) |]) edges
