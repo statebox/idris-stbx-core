@@ -117,7 +117,7 @@ checkFSMState (num, edges) state =
     else Left InvalidState
 
 ||| Checks that a path in an execution is made of valid edges
-checkFSMPath : Ty [] FSMSpec -> Ty [] FSMPath ->FSMCheck ()
+checkFSMPath : Ty [] FSMSpec -> Ty [] FSMPath -> FSMCheck ()
 checkFSMPath (num, _) path = checkEdgeList num path InvalidPath
 
 ||| Checks the execution putting the previous functions together
