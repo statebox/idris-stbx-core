@@ -82,50 +82,14 @@ FSMExec = TProd [FSMSpec, FSMState, FSMPath]
 ||| Errors related to checking if a FSM description is valid
 data FSMError = InvalidFSM | InvalidState | InvalidPath
 
+Show FSMError where
+  show InvalidFSM   = "Invalid FSM"
+  show InvalidState = "Invalid state"
+  show InvalidPath  = "Invalid path"
+
 ||| Monad to check errors when compiling FSMs
 FSMCheck : Type -> Type
 FSMCheck = Either FSMError
-
-||| Functions checking that an execution specification is valid
-
-||| Generic boundedness check for a list of edges
-checkEdgeList : Ty [] FSMVertex -> Ty [] (TList `ap` [FSMEdge]) -> FSMError -> FSMCheck ()
-checkEdgeList num edges err =
-  let
-    n = toNat num
-    ls = the (List (Nat, Nat)) $
-         map (\(x,y) => (toNat x, toNat y)) $ toList {tdef = FSMEdge} edges
-   in
-  if all (\(a,b) => a < n && b < n) ls   -- TODO should this be `<=` ?
-    then Right ()
-    else Left err
-
-||| Checks that the edges in a FSM specification aren't
-||| out of range wrt the vertexes of the FSM
-checkFSMSpec : Ty [] FSMSpec -> FSMCheck ()
-checkFSMSpec (num, edges) = checkEdgeList num edges InvalidFSM
-
-||| Checks that the FSM state in the execution is a valid vertex of the graph
-checkFSMState : Ty [] FSMSpec -> Ty [] FSMState -> FSMCheck ()
-checkFSMState (num, edges) state =
-  let
-    n = toNat num
-    s = toNat state
-   in
-  if s < n
-    then Right ()
-    else Left InvalidState
-
-||| Checks that a path in an execution is made of valid edges
-checkFSMPath : Ty [] FSMSpec -> Ty [] FSMPath -> FSMCheck ()
-checkFSMPath (num, _) path = checkEdgeList num path InvalidPath
-
-||| Checks the execution putting the previous functions together
-checkFSMExec : Ty [] FSMExec -> FSMCheck ()
-checkFSMExec (spec, state, path) =
-  do checkFSMSpec spec
-     checkFSMState spec state
-     checkFSMPath spec path
 
 convertEdgeList : Ty [] (TList `ap` [FSMEdge]) -> List (Nat, Nat)
 convertEdgeList = map (\(n1, n2) => (toNat n1, toNat n2)) . toList {tdef = FSMEdge}

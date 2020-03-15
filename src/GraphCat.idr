@@ -56,34 +56,47 @@ decToEither _ (Yes a) = Right a
 -- Mor a b, where a b depend on the index in the list.
 -- This requires an helper function to lift (a, b) to Mor a b.
 
-constructPath : (g : Graph (Fin n)) -> (path : List ((Fin n), (Fin n))) -> {auto ok : NonEmpty path} ->
-                FSMCheck (Path g (Basics.fst $ List.head path) (Basics.snd $ List.last path))
-constructPath g [(x, y)] = do el <- decToEither InvalidPath $ isElem (x,y) (edges g)
-                              pure [el]
-constructPath g ((x, y) :: (y',z) :: pt) with (decEq y y')
-  constructPath g ((x, y) :: (y,z) :: pt) | Yes Refl =
-    do el <- decToEither InvalidPath $ isElem (x,y) (edges g)
-       path <- assert_total $ constructPath g ((y,z)::pt)
-       pure $ el :: path
-  constructPath g ((x, y) :: (y',z) :: pt) | No ctra = Left InvalidPath
+-- (spec, a, [(a,b), (b,c)]) -> Compose (id a) (Compose (a b) (b c)) = (Compose (a b) (b c))
 
-validateExec : Ty [] FSMExec -> Maybe (cat : Category ** a : obj cat ** b : obj cat ** mor cat a b)
+constructNEPath : (g : Graph (Fin n)) -> (path : List ((Fin n), (Fin n))) -> {auto ok : NonEmpty path} ->
+                FSMCheck (Path g (Basics.fst $ List.head path) (Basics.snd $ List.last path))
+constructNEPath g [(x, y)] = do el <- decToEither InvalidPath $ isElem (x,y) (edges g)
+                                pure [el]
+constructNEPath g ((x, y) :: (y',z) :: pt) with (decEq y y')
+  constructNEPath g ((x, y) :: (y,z) :: pt) | Yes Refl =
+    do el <- decToEither InvalidPath $ isElem (x,y) (edges g)
+       path <- assert_total $ constructNEPath g ((y,z)::pt)
+       pure $ el :: path
+  constructNEPath g ((x, y) :: (y',z) :: pt) | No ctra = Left InvalidPath
+
+validateExec : Ty [] FSMExec -> FSMCheck (cat : Category ** a : obj cat ** b : obj cat ** mor cat a b)
 validateExec (spec, state, path) =
-  do (n**g) <- mkTGraph $ fromFSMSpecToEdgeList spec
-     edgeList <- traverse {b=(Fin n, Fin n)} (\(x,y) => [| MkPair (natToFin x n) (natToFin y n) |]) $
-                                             fromFSMPathToEdgeList path
+  do -- convert into a graph with `n` being the number of states
+     (n**g) <- maybe (Left InvalidFSM) Right $ mkTGraph $ fromFSMSpecToEdgeList spec
+     -- get the inital state as a fin
+     st <- maybe (Left InvalidState) Right $ natToFin (toNat state) n
+     -- Convert the edge list into fins
+     edgeList <- maybe (Left InvalidPath) Right $ convertList n $ fromFSMPathToEdgeList path
      case nonEmpty edgeList of
-       Yes nel => do path' <- eitherToMaybe $ constructPath g edgeList
-                     pure (pathCategory g ** (fst $ head edgeList) ** (snd $ last edgeList) ** path')
-       No _ => Nothing
+       -- if the path is not valid we need to check the initial state is the first state of the path
+       Yes nel => case decEq (fst $ head edgeList) st of
+                    Yes _ => do path' <- constructNEPath g edgeList
+                                pure (pathCategory g ** (fst $ head edgeList) ** (snd $ last edgeList) ** path')
+                    No _ => Left InvalidPath
+       -- empty path is always valid
+       No _ => pure (pathCategory g ** st  ** st ** [])
 
 -- Next refactoring : We'll have to pass the entire graph
 mkFunctor : (cat : Category) -> CFunctor cat (discreteCategory ())
-mkFunctor (MkCategory o m c a _ _ _) = MkCFunctor
+mkFunctor (MkCategory _ _ _ _ _ _ _) = MkCFunctor
   (\_ => ())
   (\_, _, _ => Refl)
   (\_ => Refl)              -- Refl = Refl
   (\_, _, _, _, _ => Refl)  -- Refl = Refl
+
+lastStep : (cat : Category) -> (a, b : obj cat) -> (m : mor cat a b)
+       -> mor (discreteCategory ()) (mapObj (mkFunctor cat) a) (mapObj (mkFunctor cat) b)
+lastStep (MkCategory _ _ _ _ _ _ _) a b m = Refl
 
 -- (spec, a, [(a,b), (b,c)]) -> Compose (id a) (Compose (a b) (b c))
 -- id state ; path 1st ; .... ; path nth
