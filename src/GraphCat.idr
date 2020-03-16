@@ -100,3 +100,70 @@ lastStep (MkCategory _ _ _ _ _ _ _) a b m = Refl
 
 -- (spec, a, [(a,b), (b,c)]) -> Compose (id a) (Compose (a b) (b c))
 -- id state ; path 1st ; .... ; path nth
+
+
+-- (5, [(1,1),(3,4),(2,1)]) <-- Valid FSM
+-- (3,[]) <-- Valid FSM
+-- (2, [(1,1),(3,4),(2,1)]) <-- Invalid FSM
+
+IdrisExec : Type
+IdrisExec = ((Nat, List (Nat, Nat)), Nat, List (Nat, Nat))
+
+fromIdrisExec : IdrisExec -> Ty [] FSMExec
+fromIdrisExec ((states, trans), init, path) =
+  ( ( fromNat states
+    , fromList {tdef = FSMEdge} $ map (\(a, b) => (fromNat a, fromNat b)) trans)
+  , fromNat init
+  , fromList {tdef = FSMEdge} $ map (\(a, b) => (fromNat a, fromNat b)) path
+  )
+
+-- VALID
+-- ((5, [(1,1),(3,4),(2,1)]) , 3, [(3,4)])
+valid1 : Ty [] FSMExec
+valid1 = fromIdrisExec ((5, [(1,1),(3,4),(2,1)]), 3, [(3,4)])
+
+-- ((5, [(1,1),(3,4),(2,1)]) , 2, [(2,1),(1,1),(1,1)])
+valid2 : Ty [] FSMExec
+valid2 = fromIdrisExec ((5, [(1,1),(3,4),(2,1)]) , 2, [(2,1),(1,1),(1,1)])
+
+-- ((3,[]), 1, [])
+valid3 : Ty [] FSMExec
+valid3 = fromIdrisExec ((3,[]), 1, [])
+
+-- INVALID, MALFORMED
+-- (2, [(1,1),(3,4),(2,1)])
+-- invalid1 : Ty [] FSMExec
+-- invalid1 = fromIdrisExec (2, [(1,1),(3,4),(2,1)])
+-- ((3,[]), 1, [(2)])
+-- invalid2 : Ty [] FSMExec
+-- invalid2 = fromIdrisExec ((3,[]), 1, [(2)])
+
+-- INVALID, INVALID FSM SPEC
+
+-- ((5, [(1,1),(5,4),(2,1)]) , 2, [(2,1),(1,1),(1,1)])
+invalid1 : Ty [] FSMExec
+invalid1 = fromIdrisExec  ((5, [(1,1),(5,4),(2,1)]) , 2, [(2,1),(1,1),(1,1)])
+
+-- INVALID STATE, OUT OF RANGE
+-- ((5, [(1,1),(3,4),(2,1)]) , 6, [(2,1),(1,1),(1,1)])
+invalid2 : Ty [] FSMExec
+invalid2 = fromIdrisExec ((5, [(1,1),(3,4),(2,1)]) , 6, [(2,1),(1,1),(1,1)])
+
+-- ((3,[]), 4, [])
+invalid3 : Ty [] FSMExec
+invalid3 = fromIdrisExec ((3,[]), 4, [])
+
+-- INVALID PATH, OUT OF RANGE
+-- ((5, [(1,1),(3,4),(2,1)]) , 3, [(2,1),(6,1),(1,1)])
+invalid4 : Ty [] FSMExec
+invalid4 = fromIdrisExec  ((5, [(1,1),(3,4),(2,1)]) , 3, [(2,1),(6,1),(1,1)])
+
+--  INVALID, PATH AND STATE OUT OF RANGE
+-- ((3,[]), 1, [(1,1)])
+invalid5 : Ty [] FSMExec
+invalid5 = fromIdrisExec  ((3,[]), 1, [(1,1)])
+
+-- PATH NOT MATCHING WITH STATE
+-- ((5, [(1,1),(3,4),(2,1)]) , 3, [(2,1),(1,1),(1,1)])
+invalid6 : Ty [] FSMExec
+invalid6 = fromIdrisExec  ((5, [(1,1),(3,4),(2,1)]) , 3, [(2,1),(1,1),(1,1)])

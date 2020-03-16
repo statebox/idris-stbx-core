@@ -26,11 +26,16 @@ TNat = TMu [("ZZ", T1), ("SS", TVar 0)]
 TList : TDef 1
 TList = TMu [("Nil", T1), ("Cons", TProd [TVar 1, TVar 0])]
 
--- Maps TNat to Nat
+-- Map TNat to Nat and back
 toNat : Ty [] TNat -> Nat
-toNat (Inn (Left ())) = Z
+toNat (Inn (Left ()))   = Z
 toNat (Inn (Right inn)) = S $ toNat inn
 
+fromNat : Nat -> Ty [] TNat
+fromNat  Z    = Inn (Left ())
+fromNat (S n) = Inn (Right $ fromNat n)
+
+-- TODO add to typdefs?
 ignoreShift : {t : TDef 0} -> Ty [var] (shiftVars t) -> Ty [] t
 ignoreShift {t=T0}                     ty         = absurd ty
 ignoreShift {t=T1}                     ()         = ()
@@ -40,13 +45,33 @@ ignoreShift {t=TSum (x::y::z::ts)}     (Left ty)  = Left $ ignoreShift ty
 ignoreShift {t=TSum (x::y::z::ts)}     (Right ty) = Right $ ignoreShift {t=TSum (y::z::ts)} ty
 ignoreShift {t=TProd [x,y]}            (ty1,ty2)  = (ignoreShift ty1,ignoreShift ty2)
 ignoreShift {t=TProd (x::y::z::ts)}    (ty1,ty2)  = (ignoreShift ty1,ignoreShift {t=TProd (y::z::ts)} ty2)
-ignoreShift {t=TMu cs}                 (Inn ty)   = Inn ?ignoreShiftMu
-ignoreShift {t=TApp (TName nam df) xs}  ty        = ?ignoreShiftApp
+ignoreShift {t=TMu cs}                 (Inn ty)   =
+  --TODO finish
+  Inn $ really_believe_me ty
+ignoreShift {t=TApp (TName nam df) xs}  ty        = really_believe_me ty
 
--- Maps TList to List
+addShift : {t : TDef 0} -> Ty [] t -> Ty [var] (shiftVars t)
+addShift {t=T0}                     ty         = absurd ty
+addShift {t=T1}                     ()         = ()
+addShift {t=TSum [x,y]}             (Left ty)  = Left $ addShift ty
+addShift {t=TSum [x,y]}             (Right ty) = Right $ addShift ty
+addShift {t=TSum (x::y::z::ts)}     (Left ty)  = Left $ addShift ty
+addShift {t=TSum (x::y::z::ts)}     (Right ty) = Right $ addShift {t=TSum (y::z::ts)} ty
+addShift {t=TProd [x,y]}            (ty1,ty2)  = (addShift ty1,addShift ty2)
+addShift {t=TProd (x::y::z::ts)}    (ty1,ty2)  = (addShift ty1,addShift {t=TProd (y::z::ts)} ty2)
+addShift {t=TMu cs}                 (Inn ty)   =
+  --TODO finish
+  Inn $ really_believe_me ty
+addShift {t=TApp (TName nam df) xs}  ty        = really_believe_me ty
+
+-- Map TList to List and back
 toList : Ty [] (TList `ap` [tdef]) -> List (Ty [] tdef)
-toList (Inn (Left ())) = Nil
+toList (Inn (Left ()))        = Nil
 toList (Inn (Right (hd, tl))) = ignoreShift hd :: toList tl
+
+fromList : List (Ty [] tdef) -> Ty [] (TList `ap` [tdef])
+fromList  Nil      = Inn (Left ())
+fromList (x :: xs) = Inn (Right (addShift x, fromList xs))
 
 -- Graph definitions
 

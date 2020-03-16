@@ -14,6 +14,7 @@ import Discrete.DiscreteCategory
 -- typedefs
 import Typedefs.Typedefs
 import Typedefs.TermParse
+import Typedefs.TermWrite
 
 -- tparsec
 import Relation.Indexed
@@ -27,13 +28,14 @@ import GraphCat
 
 partial
 main : IO ()
-main = do [_,filename] <- getArgs
-            | _ => putStrLn "Wrong cmdline args"
-          Right content <- readFile filename
-            | Left err => putStrLn ("Filesystem error: " ++ show err)
-          let Just fsm = Typedefs.TermParse.deserialize [] [] FSMExec content
-            | Nothing => putStrLn "invalid FSM termdef"
-          let Right (cat ** a ** b ** m) = validateExec fsm
-            | (Left err) => putStrLn ("go away it doesnt work because " ++ show err)
+main = do --[_,filename] <- getArgs
+          --  | _ => putStrLn "Wrong cmdline args"
+          --Right content <- readFile filename
+          --  | Left err => putStrLn ("Filesystem error: " ++ show err)
+          --let Just fsm = Typedefs.TermParse.deserialize [] [] FSMExec content
+          --  | Nothing => putStrLn "invalid FSM termdef"
+          putStrLn (TermWrite.serialize [] [] FSMExec valid2)
+          let Right (cat ** a ** b ** m) = validateExec invalid2
+            | (Left err) => putStrLn ("fail because: " ++ show err)
           let v = lastStep cat a b m
           putStrLn "FSM is valid"

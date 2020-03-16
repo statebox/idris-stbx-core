@@ -5,7 +5,7 @@ sourcedir = src
 modules =
   Main
 
-main = Main
+main = MainOracle
 
 executable = fficat
 
