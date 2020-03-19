@@ -3,62 +3,40 @@ module Permutations.Sandwich
 %access public export
 %default total
 
-data Sandwich : List t -> t -> List t -> List t -> Type where
-  HereS  : Sandwich [] a rs (a::rs)
-  ThereS : Sandwich ls a rs lars -> Sandwich (l::ls) a rs (l::lars)
+data Sandwich : List t -> List t -> Type where
+  HereS  : Sandwich (a::as) (a::as)
+  ThereS : Sandwich (a::as) bs -> Sandwich (a::b::as) (b::bs)
 
-Uninhabited (Sandwich ls a rs []) where
-  uninhabited HereS impossible
-  uninhabited (ThereS s) impossible
-
-swEq : Sandwich l a r lar -> l ++ [a] ++ r = lar
-swEq  HereS      = Refl
-swEq (ThereS sw) = cong (swEq sw)
-
-congHereS : (rs1 = rs2) -> (HereS {a} {rs=rs1} = HereS {a} {rs=rs2})
+congHereS : (as1 = as2) -> (HereS {a} {as=as1} = HereS {a} {as=as2})
 congHereS Refl = Refl
 
-congThereS : {t : Type} -> {l : t} -> (ls1 = ls2) -> (rs1 = rs2) -> (lars1 = lars2)
-          -> {sw1 : Sandwich ls1 a rs1 lars1} -> {sw2 : Sandwich ls2 a rs2 lars2}
-          -> (sw1 = sw2) -> ThereS {ls=ls1} {a} {rs=rs1} {lars=lars1} {l} sw1 = ThereS {ls=ls2} {a} {rs=rs2} {lars=lars2} {l} sw2
-congThereS Refl Refl Refl Refl = Refl
+congThereS : {t : Type} -> {b : t} -> (as1 = as2) -> (bs1 = bs2)
+          -> {sw1 : Sandwich (a::as1) bs1} -> {sw2 : Sandwich (a::as2) bs2}
+          -> (sw1 = sw2) -> ThereS {a} {b} {as=as1} {bs=bs1} sw1 = ThereS {a} {b} {as=as2} {bs=bs2} sw2
+congThereS Refl Refl Refl = Refl
 
-sandwich : (l : List t) -> Sandwich l a r (l ++ [a] ++ r)
+sandwich : (l : List t) -> Sandwich ([a] ++ l ++ r) (l ++ [a] ++ r)
 sandwich []      = HereS
 sandwich (l::ls) = ThereS (sandwich ls)
 
-appended : (s : List t) -> Sandwich l a r lar -> Sandwich l a (r ++ s) (lar ++ s)
+appended : (s : List t) -> Sandwich as bs -> Sandwich (as ++ s) (bs ++ s)
 appended _  HereS      = HereS
 appended s (ThereS sw) = ThereS (appended s sw)
 
-appendedNilNeutral : (sw: Sandwich l a r lar) -> appended [] sw = sw
-appendedNilNeutral (HereS {rs}) = congHereS (appendNilRightNeutral rs)
-appendedNilNeutral (ThereS {lars} {rs} sw) =
-  congThereS Refl (appendNilRightNeutral rs) (appendNilRightNeutral lars) (appendedNilNeutral sw)
+appendedNilNeutral : (sw: Sandwich as bs) -> appended [] sw = sw
+appendedNilNeutral (HereS {as}) = congHereS (appendNilRightNeutral as)
+appendedNilNeutral (ThereS {as} {bs} sw) =
+  congThereS (appendNilRightNeutral as) (appendNilRightNeutral bs) (appendedNilNeutral sw)
 
-appendedAppendDistr : (as, bs : List t) -> (sw: Sandwich l a r lar) -> appended (as ++ bs) sw = appended bs (appended as sw)
-appendedAppendDistr as bs (HereS {rs}) = congHereS (appendAssociative rs as bs)
-appendedAppendDistr as bs (ThereS {rs} {lars} sw) =
-  congThereS Refl (appendAssociative rs as bs) (appendAssociative lars as bs) (appendedAppendDistr as bs sw)
+appendedAppendDistr : (xs, ys : List t) -> (sw: Sandwich as bs) -> appended (xs ++ ys) sw = appended ys (appended xs sw)
+appendedAppendDistr xs ys (HereS {as}) = congHereS (appendAssociative as xs ys)
+appendedAppendDistr xs ys (ThereS {as} {bs} sw) =
+  congThereS (appendAssociative as xs ys) (appendAssociative bs xs ys) (appendedAppendDistr xs ys sw)
 
--- Sandwich2 lb b rb la a ra cs means lb ++ [b] ++ rb = cs and la ++ [a] ++ ra = lb ++ rb (i.e. cs without b)
--- It contains 2 sandwiches, one which points to `a` into `cs` and one which points to `b` into `cs` without `a`
--- So it swaps the order of inserting of `b` and `a`
-data Sandwich2 : List t -> t -> List t -> List t -> t -> List t -> List t -> Type where
-  -- cs = lb ++ [b] ++ m ++ [a] ++ ra
-  BA : Sandwich (lb ++ [b] ++ m) a ra cs
-    -> Sandwich lb b (m ++ ra) ((lb ++ [b] ++ m) ++ ra)
-    -> lb ++ m = la
-    -> Sandwich2 lb b rb la a ra cs
-  -- cs = la ++ [a] ++ m ++ [b] ++ rb
-  AB : Sandwich la a (m ++ [b] ++ rb) cs
-    -> Sandwich (la ++ m) b rb (la ++ (m ++ [b] ++ rb))
-    -> m ++ rb = ra
-    -> Sandwich2 lb b rb la a ra cs
+data Sandwich2 : t -> t -> List t -> List t -> Type where
+  SW2 : Sandwich (b :: xs) ys -> Sandwich (a :: ys) zs -> Sandwich2 a b xs zs
 
-swComb : Sandwich lb b rb cs -> Sandwich la a ra (lb ++ rb) -> Sandwich2 lb b rb la a ra cs
-swComb                          HereS       sa         = BA (ThereS sa) HereS Refl
-swComb {lb=a::lb'}             (ThereS sb)  HereS      = case swEq sb of Refl => AB HereS sb Refl
-swComb {lb=x::lb'} {la=x::la'} (ThereS sb) (ThereS sa) = case swComb sb sa of
-  BA sa sb Refl => BA (ThereS sa) (ThereS sb) Refl
-  AB sa sb Refl => AB (ThereS sa) (ThereS sb) Refl
+swComb : Sandwich (a :: xs) ys -> Sandwich (b :: ys) zs -> Sandwich2 a b xs zs
+swComb         axy   HereS       = SW2 HereS (ThereS axy)
+swComb  HereS       (ThereS bxy) = SW2 bxy    HereS
+swComb (ThereS axy) (ThereS byz) = let SW2 bxy ayz = swComb axy byz in SW2 (ThereS bxy) (ThereS ayz)

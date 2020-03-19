@@ -22,7 +22,8 @@ permAddIdLPreserveId (a::as) bs = insCong Refl Refl Refl (permAddIdLPreserveId a
 
 permAddIdLAppend : (as, bs : List o) -> (p : Perm cs ds) -> permAddIdL (as ++ bs) p = permAddIdL as (permAddIdL bs p)
 permAddIdLAppend [] bs p = Refl
-permAddIdLAppend (a::as) bs p {cs} {ds} = insCong (sym $ appendAssociative as bs cs) Refl (sym $ appendAssociative as bs ds) (permAddIdLAppend as bs p) ?sRefl -- should be Refl
+permAddIdLAppend (a::as) bs p {cs} {ds} = let abd = sym $appendAssociative as bs ds in
+  insCong (sym $ appendAssociative as bs cs) abd (cong abd) (permAddIdLAppend as bs p) (congHereS abd)
 
 permAddIdLCompDist : (as : List o) -> (p : Perm bs cs) -> (q : Perm cs ds) -> permAddIdL as (p `permComp` q) = permAddIdL as p `permComp` permAddIdL as q
 permAddIdLCompDist [] p q = Refl
@@ -30,11 +31,11 @@ permAddIdLCompDist (a::as) p q = insCong Refl Refl Refl (permAddIdLCompDist as p
 
 permAddNilRightNeutral : (ab : Perm as bs) -> permAdd ab Nil = ab
 permAddNilRightNeutral              Nil          = Refl
-permAddNilRightNeutral {as=a::as1} (Ins {r} p s) =
+permAddNilRightNeutral {as=a::as1} {bs} (Ins {ys} p s) =
   insCong (appendNilRightNeutral as1)
-          Refl
-          (appendNilRightNeutral r)
-          (rewriteRightIgnore (permAddNilRightNeutral p))
+          (appendNilRightNeutral ys)
+          (appendNilRightNeutral bs)
+          (permAddNilRightNeutral p)
           (appendedNilNeutral s)
 
 permPreserveCompose : (a, b, c : (List o, List o))
@@ -63,11 +64,11 @@ permTensor _ = MkCFunctor
 permAddAssociativeMor : (pab : Perm as bs) -> (pcd : Perm cs ds) -> (pef : Perm es fs)
                      -> permAdd pab (permAdd pcd pef) = permAdd (permAdd pab pcd) pef
 permAddAssociativeMor Nil _ _ = Refl
-permAddAssociativeMor {as=a::as} {bs} {cs} {ds} {es} {fs} (Ins {r} pab s) pcd pef = insCong
+permAddAssociativeMor {as=a::as} {bs} {cs} {ds} {es} {fs} (Ins {ys} pab s) pcd pef = insCong
   (appendAssociative as cs es)
-  Refl
-  (appendAssociative r ds fs)
-  ?z
+  (appendAssociative ys ds fs)
+  (appendAssociative bs ds fs)
+  (permAddAssociativeMor pab pcd pef)
   (appendedAppendDistr ds fs s)
 
 permutationsSMC : (o : Type) -> StrictMonoidalCategory

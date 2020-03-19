@@ -27,14 +27,15 @@ coprod'
 coprod' a Nil     _  = appendNilRightNeutral _
 coprod' a (s::t1) t2 = appendAssociative _ _ _ `trans` cong {f=\z=>z++a s} (coprod' a t1 t2)
 
-permArity : (ar : sigma -> List o) -> {s1, s2 : List sigma} -> Perm s1 s2 -> (k : List o) -> Perm (sumArity ar s1 ++ k) (sumArity ar s2 ++ k)
-permArity _   Nil k = permId k
-permArity ar (Ins {l} {r} {a} {as} p s) k with (swEq s)
-  | Refl = rewriteLeft (sym $ appendAssociative (sumArity ar as) (ar a) k) $
-           rewriteRight (sym $ appendAssociative (sumArity ar r) (ar a) (sumArity ar l ++ k) `trans` coprod ar l (a::r) k) $
-             permComp (swapAddIdR (sumArity ar as) (ar a) k)
-                      (permComp (permAddIdL (ar a) $ rewriteRight (coprod ar l r k) $ permArity ar p k)
-                                (swapAddIdR (ar a) (sumArity ar r) (sumArity ar l ++ k)))
+swArity : (ar : sigma -> List o) -> {s1, s2 : List sigma} -> Sandwich s1 s2 -> Perm (sumArity ar s1) (sumArity ar s2)
+swArity ar (HereS {a} {as}) = permId (sumArity ar as ++ ar a)
+swArity ar (ThereS {a} {b} {as} {bs} sw) = rewriteLeft (sym $ appendAssociative (sumArity ar as) (ar b) (ar a)) $
+  permComp (permAddIdL (sumArity ar as) (swap (ar b) (ar a)))
+           (rewriteLeft (appendAssociative _ _ _) $ permAdd (swArity ar sw) (permId (ar b)))
+
+permArity : (ar : sigma -> List o) -> {s1, s2 : List sigma} -> Perm s1 s2 -> Perm (sumArity ar s1) (sumArity ar s2)
+permArity _   Nil = Nil
+permArity ar (Ins {a} {xs=as} {ys} p s) = permComp (permArity ar p `permAdd` permId (ar a)) (swArity ar s)
 
 record Hypergraph (sigma : Type) (arityIn : sigma -> List o) (arityOut : sigma -> List o) (k : List o) (m : List o) where
   constructor MkHypergraph
@@ -49,7 +50,7 @@ hypergraphEq :
   -> {k, m : List o}
   -> {hg1, hg2 : Hypergraph s ai ao k m}
   -> (p : Perm (Typ hg1) (Typ hg2))
-  -> (wiring hg1 `permComp` (permArity ai p m) = (permArity ao p k) `permComp` wiring hg2)
+  -> (wiring hg1 `permComp` (permArity ai p `permAdd` permId m) = (permArity ao p `permAdd` permId k) `permComp` wiring hg2)
   -> hg1 = hg2
 
 singleton : {s : Type} -> {ai, ao : s -> List o} -> (edge : s) -> Hypergraph s ai ao (ai edge) (ao edge)
