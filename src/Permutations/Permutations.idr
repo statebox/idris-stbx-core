@@ -58,12 +58,15 @@ permAddIdL (a::as) bc = Ins (permAddIdL as bc) HereS
 shuffle : Sandwich as bs -> Perm bs cs -> Perm as cs
 shuffle HereS p = p
 shuffle (ThereS aab) (Ins by byc) =
-  let Ins ax axy = shuffle aab by in
-    let SW2 bxu auc = swComb axy byc in Ins (Ins ax bxu) auc
+  case shuffle aab by of
+    Ins ax axy => case swComb axy byc of
+      SW2 bxu auc => Ins (Ins ax bxu) auc
 
 permComp : Perm as bs -> Perm bs cs -> Perm as cs
 permComp  Nil         p  = p
-permComp (Ins ab' sw) bc = let Ins bc' sw' = shuffle sw bc in Ins (permComp ab' bc') sw'
+permComp (Ins ab' sw) bc =
+  case shuffle sw bc of
+    Ins bc' sw' => Ins (permComp ab' bc') sw'
 
 permCompCong5 : as1 = as2 -> bs1 = bs2 -> cs1 = cs2
             -> {p1 : Perm as1 bs1} -> {p2 : Perm as2 bs2} -> {p3 : Perm bs1 cs1} -> {p4 : Perm bs2 cs2}

@@ -23,50 +23,35 @@ permCompRightId {bs} (Ins ab' sw) with (shuffle sw (permId bs)) proof shprf
   | Ins bc' sw' = case insInjective $ trans shprf (shuffleId sw) of
     (Refl, Refl, Refl) => rewrite permCompRightId ab' in Refl
 
-shuffleComp : (ab : Sandwich as bs) -> (bc : Perm bs cs) -> (cd : Perm cs ds)
-           -> Ins bc' acc = shuffle abb bc
-           -> Ins {ys=ds1} cd' ad'd = shuffle acc cd
-           -> Ins {ys=ds2} bd' add = shuffle abb (permComp bc cd)
-           -> (ds1 = ds2, bd' = permComp bc' cd', add = ad'd)
--- shuffleComp HereS       (Ins _ HereS)        (Ins _ _)    Refl Refl Refl = (Refl, Refl, Refl)
--- shuffleComp HereS       (Ins _ (ThereS swx)) (Ins cd1 sc) Refl eq1  eq2 with (shuffle cd1 swx)
---   | Ins _ sb with (swComb sc sb)
---     | BA _ _ Refl with (eq1, eq2)
---       | (Refl, Refl) = (Refl, Refl, Refl, Refl)
---     | AB _ _ Refl with (eq1, eq2)
---       | (Refl, Refl) = (Refl, Refl, Refl, Refl)
--- shuffleComp (ThereS swx) (Ins bc1 HereS)       (Ins cd1 sc) eq1  eq2  eq3 with (shuffle bc1 swx) proof bcPrf
---   | Ins bc2 swbc1 with (swEq swbc1)
---     | Refl with (eq1)
---       | Refl with (shuffle cd1 swbc1) proof cdPrf
---         | Ins cd2 swcd1 with (swComb sc swcd1)
---           | BA _ _ Refl Refl with (eq2)
---             -- | Refl with (shuffle (permComp bc1 cd1) swx) proof bdPrf
---             --   | Ins bd2 sw2 with (permComp bc1 cd1)
---             --     | Ins bd3 sw3 with (swComb sc sw2)
---             --       | BA _ _ refl Refl = ?dd11
---             --       | AB _ _ Refl Refl with (eq3)
---                     | Refl = ?dd12
---           | AB _ _ Refl Refl = ?dd2
--- shuffleComp (ThereS swx) (Ins bc1 HereS)       (Ins cd1 sc) eq1  eq2  eq3 {cd'} with (shuffle bc1 swx) proof bcPrf
---   | Ins bc2 swbc1 with (shuffle cd1 swbc1) proof cdPrf
---     | Ins cd2 swcd1 with (shuffle (permComp bc1 cd1) swx) proof bdPrf
---       | Ins bd2 sw2 with (swComb sc sw2)
---         | BA sa sb Refl Refl with (eq3)
---           | Refl with (swEq swbc1)
---             | Refl with (eq1)
---               | Refl with (cd')
---                 | Ins cd'' swcd'' = let (Refl, Refl, Refl, Refl) = shuffleComp swx bc1 cd1 bcPrf cdPrf bdPrf in ?dd
---         | AB sa sb Refl Refl with (eq3)
---           | Refl with (swEq swbc1)
---             | Refl with (eq1)
---               | Refl with (cd')
---                 | Ins cd'' swcd'' = ?dd1
--- shuffleComp {swbc} (ThereS sw1) (Ins bc1 swx) (Ins cd1 sc) eq1    eq2    eq3    with (shuffle bc1 sw1) proof bcPrf
---   | Ins bc2 swbc1 with (swComb swx swbc1)
---     | BA _ _ Refl Refl with (eq1)
---       | Refl = ?dd2
---     | AB _ _ Refl Refl = ?dd3
+shuffleComp : (abb : Sandwich as bs) -> (bc : Perm bs cs) -> (cd : Perm cs ds)
+           -> Ins bc' ayc = shuffle abb bc
+           -> Ins {ys=ds1} cd' ad1d = shuffle ayc cd
+           -> Ins {ys=ds2} bd' ad2d = shuffle abb (permComp bc cd)
+           -> (ds1 = ds2, ad1d = ad2d, bd' = permComp bc' cd')
+shuffleComp  HereS       (Ins _ swx)   cd Refl eq2 eq3 with (shuffle swx cd)
+  | Ins bc' sw' with (eq2, eq3)
+    | (Refl, Refl) = (Refl, Refl, Refl)
+shuffleComp {ds} (ThereS aab) (Ins {ys=zs} bz bzc) cd eq1  eq2 eq3 with (shuffle aab bz) proof bcPrf
+  | Ins {ys=xs} ax axz with (shuffle bzc cd)
+    | Ins {ys=us} zu bud with (shuffle aab (permComp bz zu)) proof bdPrf
+      | Ins {ys=ts} at atu with (shuffle axz zu) proof cdPrf
+        | Ins {ys=qs} xq aqu with (shuffleComp aab bz zu bcPrf cdPrf bdPrf)
+          | (r1, r2, r3) with (swComb axz bzc)
+            | SW2 {ys=ws} bxw awc with (eq1)
+              | Refl with (shuffle awc cd)
+                | Ins {ys=vs} wv avd with (eq2)
+                  | Refl with (swComb atu bud)
+                    | SW2 {ys=ss} bts asd with (eq3)
+                      | Refl with (shuffle bxw wv)
+                        | Ins {ys=rs} xr brv = ?wat
+-- vs = ss
+-- avd = asd
+-- rs = ts
+-- brv = bts
+
+-- need to proof something about swComb...
+-- swComb axz bzc = SW2 bxw awc, shuffle awc cd = Ins wv avd
+-- swComb atu bud = SW2 bts asd, shuffle bxw wv = Ins xr brv
 
 -- shuffleComp  _ _ _  _    _    _    = ?catchall
 
@@ -76,9 +61,9 @@ permAssoc Nil bc cd = Refl
 permAssoc (Ins {xs=as} {ys=bs} ab' abb) bc cd with (shuffle abb (permComp bc cd)) proof bdPrf
   | Ins {ys=ds} bd' add with (shuffle abb bc) proof bcPrf
     | Ins {ys=cs} bc' acc with (shuffle acc cd) proof cdPrf
-      | Ins {ys=ds1} cd1 ad1d =
+      | Ins {ys=ds'} cd' ad'd =
         let (Refl, Refl, Refl) = shuffleComp abb bc cd bcPrf cdPrf bdPrf in
-        insCong Refl Refl Refl (permAssoc ab' bc' cd1) Refl
+        insCong Refl Refl Refl (permAssoc ab' bc' cd') Refl
 
 permutationsCat : (o : Type) -> Category
 permutationsCat o = MkCategory
