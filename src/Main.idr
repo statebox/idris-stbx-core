@@ -62,7 +62,7 @@ Show ComputeError where
 
 computeOnPath : {vs : NEList (Nat, String)}
              -> (graph : Graph (Fin $ length vs))
-             -> (verticesTypedefs : Vect (length vs) (TDef 0))
+             -> (verticesTypedefs : Vect (length vs) (TDefR 0))
              -> Vect (numEdges graph) (mor' $ ioClosedTypedefsKleisliCategory FFI_C)
              -> Path graph initialVertex finalVertex
              -> Either ComputeError (IO (Ty [] (Vect.index finalVertex verticesTypedefs)))

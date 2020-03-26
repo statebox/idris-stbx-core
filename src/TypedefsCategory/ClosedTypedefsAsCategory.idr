@@ -39,21 +39,21 @@ import Typedefs.Typedefs
 %default total
 
 infixr 5 -&>
-(-&>) : (a, b : TDef 0) -> Type
+(-&>) : (a, b : TDefR 0) -> Type
 (-&>) a b = Ty [] a -> Ty [] b
 
 infixr 7 -*-
-(-*-) : {a, b, c  : TDef 0} -> (a -&> b) -> (b -&> c) -> a -&> c
+(-*-) : {a, b, c  : TDefR 0} -> (a -&> b) -> (b -&> c) -> a -&> c
 (-*-) ab bc = bc . ab
 
-tdefId : (t : TDef 0) -> t -&> t
+tdefId : (t : TDefR 0) -> t -&> t
 tdefId t = Basics.id
 
 ||| The category of typedefs without free variables.
 ||| Objects are typedefs, morphisms are Natural transformations between typedefs.
 closedTypedefsAsCategory : Category
 closedTypedefsAsCategory = MkCategory
-  (TDef 0)
+  (TDefR 0)
   (-&>)
   tdefId
   (\a,b,c => (-*-) {a} {b} {c})
@@ -70,7 +70,7 @@ closedTypedefsFunctor = MkCFunctor
 
 closedTypedefsAsKleisliCategory : Monad TypesAsCategoryExtensional.typesAsCategoryExtensional -> Category
 closedTypedefsAsKleisliCategory monad = MkCategory
-  (TDef 0)
+  (TDefR 0)
   (\a, b => mor (kleisliCategory monad) (Ty [] a) (Ty [] b))
   (\a => identity (kleisliCategory monad) (Ty [] a))
   (\a, b, c, f, g => compose (kleisliCategory monad) (Ty [] a) (Ty [] b) (Ty [] c) f g)

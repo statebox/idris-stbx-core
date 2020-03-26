@@ -59,7 +59,7 @@ CartItem : TNamed 0
 CartItem = TName "CartItem" $ TProd [wrap ProductId, wrap Quantity]
 
 CartContent : TNamed 0
-CartContent = TName "CartContent" $ TMu [("NilN", T1), ("ConsN", TProd [weakenTDef (TApp CartItem []) 1 LTEZero, TVar 0])]
+CartContent = TName "CartContent" $ TMu [("NilN", T1), ("ConsN", TProd [weakenTDefR (TApp CartItem []) 1 LTEZero, TVar 0])]
 
 InvoiceId : TNamed 0
 InvoiceId = TName "InvoiceId" $ wrap Natural

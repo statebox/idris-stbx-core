@@ -67,12 +67,12 @@ firingPath g (e::es) = firingPath g es >>= go
       Yes eq => Just (i ** t ** el :: (rewrite eq in p))
       No _ => Nothing
 
-vertexAsTypedefs : List (TNamed 0) -> (Nat, String) -> Maybe (Nat, TDef 0)
+vertexAsTypedefs : List (TNamed 0) -> (Nat, String) -> Maybe (Nat, TDefR 0)
 vertexAsTypedefs availableTypedefs (n, label) =
   let tnamed = find (\(TName name def) => name == label) availableTypedefs
   in (\(TName _ def) => (n, def)) <$> tnamed
 
-verticesAsTypedefs : List (TNamed 0) -> Vect l (Nat, String) -> Maybe (Vect l (Nat, TDef 0))
+verticesAsTypedefs : List (TNamed 0) -> Vect l (Nat, String) -> Maybe (Vect l (Nat, TDefR 0))
 verticesAsTypedefs availableTypedefs vertices = traverse (vertexAsTypedefs availableTypedefs) vertices
 
 buildPath : (graph : Graph (Fin lenV))

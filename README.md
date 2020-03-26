@@ -88,7 +88,7 @@ You need to pass three arguments to the executable:
 For example, run
 
 ```
-./fficat --tdef tdefs.txt --fsm fsm.txt -f login,addProduct,addProduct,checkout
+./fficat --TDefR tdefs.txt --fsm fsm.txt -f login,addProduct,addProduct,checkout
 ```
 
 ### Format of the Typedefs definitions

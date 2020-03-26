@@ -19,24 +19,22 @@ import Util.Elem
 -- Base definitions
 
 -- Defines naturals
-TNat : TDef 0
-TNat = TMu [("ZZ", T1), ("SS", TVar 0)]
+TNat : TDefR 1
+TNat = RRef 0
 
 -- Defines Lists of some type
-TList : TDef 1
+TList : TDefR 1
 TList = TMu [("Nil", T1), ("Cons", TProd [TVar 1, TVar 0])]
 
 -- Map TNat to Nat and back
-toNat : Ty [] TNat -> Nat
-toNat (Inn (Left ()))   = Z
-toNat (Inn (Right inn)) = S $ toNat inn
+toNat : Ty [Nat] TNat -> Nat
+toNat n = n
 
-fromNat : Nat -> Ty [] TNat
-fromNat  Z    = Inn (Left ())
-fromNat (S n) = Inn (Right $ fromNat n)
+fromNat : Nat -> Ty [Nat] TNat
+fromNat n = n
 
 -- TODO add to typdefs?
-ignoreShift : {t : TDef 0} -> Ty [var] (shiftVars t) -> Ty [] t
+ignoreShift : {t : TDefR l} -> {rest : Vect l Type} -> Ty (var :: rest) (shiftVars t) -> Ty rest t
 ignoreShift {t=T0}                     ty         = absurd ty
 ignoreShift {t=T1}                     ()         = ()
 ignoreShift {t=TSum [x,y]}             (Left ty)  = Left $ ignoreShift ty
@@ -49,8 +47,10 @@ ignoreShift {t=TMu cs}                 (Inn ty)   =
   --TODO finish
   Inn $ really_believe_me ty
 ignoreShift {t=TApp (TName nam df) xs}  ty        = really_believe_me ty
+ignoreShift {t=TVar x}                  ty        = ty
+ignoreShift {t=RRef x}                  ty        = ty
 
-addShift : {t : TDef 0} -> Ty [] t -> Ty [var] (shiftVars t)
+addShift : {t : TDefR l} -> Ty vars t -> Ty (var :: vars) (shiftVars t)
 addShift {t=T0}                     ty         = absurd ty
 addShift {t=T1}                     ()         = ()
 addShift {t=TSum [x,y]}             (Left ty)  = Left $ addShift ty
@@ -62,14 +62,16 @@ addShift {t=TProd (x::y::z::ts)}    (ty1,ty2)  = (addShift ty1,addShift {t=TProd
 addShift {t=TMu cs}                 (Inn ty)   =
   --TODO finish
   Inn $ really_believe_me ty
-addShift {t=TApp (TName nam df) xs}  ty        = really_believe_me ty
+addShift {t=(TApp x xs)} ty = really_believe_me ty
+addShift {t=(RRef x)} ty = ty
+addShift {t=(TVar i)} ty = ty
 
 -- Map TList to List and back
-toList : Ty [] (TList `ap` [tdef]) -> List (Ty [] tdef)
-toList (Inn (Left ()))        = Nil
-toList (Inn (Right (hd, tl))) = ignoreShift hd :: toList tl
+toList : {tdef : TDefR n} -> {x : Vect n Type} -> Ty x (TList `ap` [tdef]) -> List (Ty x tdef)
+toList (Inn (Left ())) = Nil
+toList (Inn (Right (hs, tl))) = (assert_total $ ignoreShift hs) :: toList tl
 
-fromList : List (Ty [] tdef) -> Ty [] (TList `ap` [tdef])
+fromList : {tdef : TDefR n} -> {x : Vect n Type} -> List (Ty x tdef) -> Ty x (TList `ap` [tdef])
 fromList  Nil      = Inn (Left ())
 fromList (x :: xs) = Inn (Right (addShift x, fromList xs))
 
@@ -78,34 +80,42 @@ fromList (x :: xs) = Inn (Right (addShift x, fromList xs))
 ||| The type definition for vertices in the graph is jsut
 ||| A natural enumerating the vertexes. e.g. 5 means
 ||| That there are 5 vertexes, denoted 0,1,2,3,4
-FSMVertex : TDef 0
+FSMVertex : TDefR 1
 FSMVertex = TNat
 
 ||| The type definition for edges in the graph is just a couple
 ||| of vertexes defining the edge source and target
-FSMEdge : TDef 0
+FSMEdge : TDefR 1
 FSMEdge = TProd [FSMVertex, FSMVertex]
 
 ||| A Finite State Machine is defined by its vertices and a list of edges
 ||| The definition might not be valid if edges endpoints are out of range
-FSMSpec : TDef 0
+FSMSpec : TDefR 1
 FSMSpec = TProd [FSMVertex, TList `ap` [FSMEdge]]
 
 ||| A state is a vertex in the graph (might be out of range)
-FSMState : TDef 0
+FSMState : TDefR 1
 FSMState = FSMVertex
 
 ||| A path is a list of edges (might not be valid)
-FSMPath : TDef 0
+FSMPath : TDefR 1
 FSMPath = TList `ap` [FSMEdge]
 
 ||| An execution is a FSM, a state representing an inital edge and a path from that edge.
 ||| The execution might not be valid.
-FSMExec : TDef 0
+FSMExec : TDefR 1
 FSMExec = TProd [FSMSpec, FSMState, FSMPath]
 
 ||| Errors related to checking if a FSM description is valid
 data FSMError = InvalidFSM | InvalidState | InvalidPath
+
+TFSMErr : TDefR 1
+TFSMErr = TMu [("InvalidFSM", T1), ("InvalidState", T1), ("InvalidPath", T1)]
+
+toTDefErr : FSMError -> Ty [Nat] TFSMErr
+toTDefErr InvalidFSM = Inn (Left ())
+toTDefErr InvalidState = Inn (Right  (Left ()))
+toTDefErr InvalidPath = Inn (Right (Right ()))
 
 Show FSMError where
   show InvalidFSM   = "Invalid FSM"
@@ -116,21 +126,21 @@ Show FSMError where
 FSMCheck : Type -> Type
 FSMCheck = Either FSMError
 
-convertEdgeList : Ty [] (TList `ap` [FSMEdge]) -> List (Nat, Nat)
-convertEdgeList = map (\(n1, n2) => (toNat n1, toNat n2)) . toList {tdef = FSMEdge}
+convertEdgeList : Ty [Nat] (TList `ap` [FSMEdge]) -> List (Nat, Nat)
+convertEdgeList val =  TGraph.toList {tdef = FSMEdge} val
 
-fromFSMSpecToEdgeList : Ty [] FSMSpec -> (Nat, List (Nat, Nat))
-fromFSMSpecToEdgeList (vertex, edges) = (toNat vertex, convertEdgeList edges)
+fromFSMSpecToEdgeList : Ty [Nat] FSMSpec -> (Nat, List (Nat, Nat))
+fromFSMSpecToEdgeList (vertex, edges) = (TGraph.toNat vertex, convertEdgeList edges)
 
-fromFSMPathToEdgeList : Ty [] FSMPath -> List (Nat,Nat)
+fromFSMPathToEdgeList : Ty [Nat] FSMPath -> List (Nat,Nat)
 fromFSMPathToEdgeList  = convertEdgeList
 
 convertList : (n : Nat) -> List (Nat, Nat) -> Maybe (List (Fin n, Fin n))
 convertList n edges = traverse (\(x,y) => [| MkPair (natToFin x n) (natToFin y n) |]) edges
 
---> record Graph vertices where
--->   constructor MkGraph
--->   edges : Vect n (vertices, vertices)
+-- > record Graph vertices where
+-- >   constructor MkGraph
+-- >   edges : Vect n (vertices, vertices)
 
 mkTGraph : (Nat, List (Nat, Nat)) -> Maybe (DPair Nat (\size => Graph (Fin size)))
 mkTGraph (vertex, edges) = do convertedEdges <- convertList vertex edges
