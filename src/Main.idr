@@ -81,7 +81,7 @@ computeOnPath {vs} {initialVertex} graph verticesTypedefs edgesMorphisms path wi
 runWithOptions : CoreOpts -> IO ()
 runWithOptions (MkCoreOpts (TDFile tdf) (FSMFile fsmf) firings) = do
   disableBuffering  -- don't remove this!
-  Right tdef <- Input.readTypedefs tdf
+  Right TDefR <- Input.readTypedefs tdf
     | Left err => putStrLn ("Typedefs read error: " ++ show err)
   Right (vs, es) <- readFSM fsmf
     | Left err => putStrLn ("FSM read error:" ++ show err)

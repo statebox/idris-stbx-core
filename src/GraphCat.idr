@@ -2,6 +2,7 @@ module GraphCat
 
 -- base
 import Data.Vect
+import Data.Fin
 
 -- idris-ct
 import Basic.Category
@@ -69,7 +70,7 @@ constructNEPath g ((x, y) :: (y',z) :: pt) with (decEq y y')
        pure $ el :: path
   constructNEPath g ((x, y) :: (y',z) :: pt) | No ctra = Left InvalidPath
 
-validateExec : Ty [Nat] FSMExec -> FSMCheck (cat : Category ** a : obj cat ** b : obj cat ** mor cat a b)
+validateExec : Ty [Nat, List (Nat, Nat)] FSMExec -> FSMCheck (cat : Category ** a : obj cat ** b : obj cat ** mor cat a b)
 validateExec (spec, state, path) =
   do -- convert into a graph with `n` being the number of states
      (n**g) <- maybe (Left InvalidFSM) Right $ mkTGraph $ fromFSMSpecToEdgeList spec
@@ -109,25 +110,25 @@ lastStep (MkCategory _ _ _ _ _ _ _) a b m = Refl
 IdrisExec : Type
 IdrisExec = ((Nat, List (Nat, Nat)), Nat, List (Nat, Nat))
 
-fromIdrisExec : IdrisExec -> Ty [Nat] FSMExec
+fromIdrisExec : IdrisExec -> Ty [Nat, List (Nat, Nat)] FSMExec
 fromIdrisExec ((states, trans), init, path) =
   ( ( states
-    , TGraph.fromList {tdef = FSMEdge} $ map (\(a, b) => (TGraph.fromNat a, TGraph.fromNat b)) trans)
-  , TGraph.fromNat init
-  , TGraph.fromList {tdef = FSMEdge} $ map (\(a, b) => (TGraph.fromNat a, TGraph.fromNat b)) path
+    ,  trans)
+  , init
+  , path
   )
 
 -- VALID
 -- ((5, [(1,1),(3,4),(2,1)]) , 3, [(3,4)])
-valid1 : Ty [Nat] FSMExec
+valid1 : Ty [Nat, List (Nat, Nat)] FSMExec
 valid1 = fromIdrisExec ((5, [(1,1),(3,4),(2,1)]), 3, [(3,4)])
 
 -- ((5, [(1,1),(3,4),(2,1)]) , 2, [(2,1),(1,1),(1,1)])
-valid2 : Ty [Nat] FSMExec
+valid2 : Ty [Nat, List (Nat, Nat)] FSMExec
 valid2 = fromIdrisExec ((5, [(1,1),(3,4),(2,1)]) , 2, [(2,1),(1,1),(1,1)])
 
 -- ((3,[]), 1, [])
-valid3 : Ty [Nat] FSMExec
+valid3 : Ty [Nat, List (Nat, Nat)] FSMExec
 valid3 = fromIdrisExec ((3,[]), 1, [])
 
 -- INVALID, MALFORMED
@@ -141,29 +142,29 @@ valid3 = fromIdrisExec ((3,[]), 1, [])
 -- INVALID, INVALID FSM SPEC
 
 -- ((5, [(1,1),(5,4),(2,1)]) , 2, [(2,1),(1,1),(1,1)])
-invalid1 : Ty [Nat] FSMExec
+invalid1 : Ty [Nat, List (Nat, Nat)] FSMExec
 invalid1 = fromIdrisExec  ((5, [(1,1),(5,4),(2,1)]) , 2, [(2,1),(1,1),(1,1)])
 
 -- INVALID STATE, OUT OF RANGE
 -- ((5, [(1,1),(3,4),(2,1)]) , 6, [(2,1),(1,1),(1,1)])
-invalid2 : Ty [Nat] FSMExec
+invalid2 : Ty [Nat, List (Nat, Nat)] FSMExec
 invalid2 = fromIdrisExec ((5, [(1,1),(3,4),(2,1)]) , 6, [(2,1),(1,1),(1,1)])
 
--- ((3,[Nat]), 4, [Nat])
-invalid3 : Ty [Nat] FSMExec
+-- ((3,[Nat, List (Nat, Nat)]), 4, [Nat, List (Nat, Nat)])
+invalid3 : Ty [Nat, List (Nat, Nat)] FSMExec
 invalid3 = fromIdrisExec ((3,[]), 4, [])
 
 -- INVALID PATH, OUT OF RANGE
 -- ((5, [(1,1),(3,4),(2,1)]) , 3, [(2,1),(6,1),(1,1)])
-invalid4 : Ty [Nat] FSMExec
+invalid4 : Ty [Nat, List (Nat, Nat)] FSMExec
 invalid4 = fromIdrisExec  ((5, [(1,1),(3,4),(2,1)]) , 3, [(2,1),(6,1),(1,1)])
 
 --  INVALID, PATH AND STATE OUT OF RANGE
--- ((3,[Nat]), 1, [(1,1)])
-invalid5 : Ty [Nat] FSMExec
+-- ((3,[Nat, List (Nat, Nat)]), 1, [(1,1)])
+invalid5 : Ty [Nat, List (Nat, Nat)] FSMExec
 invalid5 = fromIdrisExec  ((3,[]), 1, [(1,1)])
 
 -- PATH NOT MATCHING WITH STATE
 -- ((5, [(1,1),(3,4),(2,1)]) , 3, [(2,1),(1,1),(1,1)])
-invalid6 : Ty [Nat] FSMExec
+invalid6 : Ty [Nat, List (Nat, Nat)] FSMExec
 invalid6 = fromIdrisExec  ((5, [(1,1),(3,4),(2,1)]) , 3, [(2,1),(1,1),(1,1)])

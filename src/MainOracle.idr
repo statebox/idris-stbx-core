@@ -28,6 +28,10 @@ import Language.JSON.Data
 %access public export
 %default total
 
+listPairToJSON : List (Nat, Nat) -> JSON
+listPairToJSON xs = JArray $ map
+  (\(a, b) => JObject [("_0", JNumber $ cast a), ("_1", JNumber $ cast b)]) xs
+
 partial
 main : IO ()
 main = do
@@ -38,7 +42,7 @@ main = do
           --  | Left err => putStrLn ("Filesystem error: " ++ show err)
           -- let Just fsm = Typedefs.TermParse.deserialize [] [] FSMExec content
           --  | Nothing => putStrLn "invalid FSM termdef"
-          printLn (TermWrite.serializeJSON [Nat] [JNumber . cast] FSMExec valid2)
+          printLn (TermWrite.serializeJSON [Nat, List (Nat, Nat)] [JNumber . cast, listPairToJSON] FSMExec valid2)
           let Right (cat ** a ** b ** m) = validateExec invalid2
             | Left err => putStrLn "fail" -- printLn (TermWrite.serializeJSON [] [] TFSMErr (toTDefErr err))
           let v = lastStep cat a b m
