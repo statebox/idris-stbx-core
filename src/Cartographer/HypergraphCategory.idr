@@ -4,7 +4,7 @@ import Data.List
 
 import Basic.Category
 
-import Permutations.Sandwich
+import Permutations.SwapDown
 import Permutations.Permutations
 import Permutations.PermutationsCategory
 import Permutations.PermutationsStrictMonoidalCategory

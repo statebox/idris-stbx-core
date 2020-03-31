@@ -2,7 +2,7 @@ module Cartographer.Hypergraph
 
 import Data.List
 
-import Permutations.Sandwich
+import Permutations.SwapDown
 import Permutations.Permutations
 import Permutations.PermutationsCategory
 
@@ -27,7 +27,7 @@ coprod'
 coprod' a Nil     _  = appendNilRightNeutral _
 coprod' a (s::t1) t2 = appendAssociative _ _ _ `trans` cong {f=\z=>z++a s} (coprod' a t1 t2)
 
-swArity : (ar : sigma -> List o) -> {s1, s2 : List sigma} -> Sandwich s1 s2 -> Perm (sumArity ar s1) (sumArity ar s2)
+swArity : (ar : sigma -> List o) -> {s1, s2 : List sigma} -> SwapDown s1 s2 -> Perm (sumArity ar s1) (sumArity ar s2)
 swArity ar (HereS {a} {as}) = permId (sumArity ar as ++ ar a)
 swArity ar (ThereS {a} {b} {as} {bs} sw) = rewriteLeft (sym $ appendAssociative (sumArity ar as) (ar b) (ar a)) $
   permComp (permAddIdL (sumArity ar as) (swap (ar b) (ar a)))

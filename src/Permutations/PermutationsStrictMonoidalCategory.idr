@@ -5,7 +5,7 @@ import Basic.Functor
 import MonoidalCategory.StrictMonoidalCategory
 import Product.ProductCategory
 
-import Permutations.Sandwich
+import Permutations.SwapDown
 import Permutations.Permutations
 import Permutations.PermutationsCategory
 
@@ -101,11 +101,19 @@ swapHexagonal1 : (as, bs, cs : List o) ->
 swapHexagonal1' : (as, bs, cs, ds : List o) ->
   swapAddIdR as bs (cs ++ ds) `permComp` permAddIdL bs (swapAddIdR as cs ds) = swapAddIdR as (bs ++ cs) ds
 
+-----\/--   {---\/--
+--\/-/\-- = {--\/\--}
+--/\-----    --/\---}
 swapHexagonal2 : (as, bs, cs : List o) ->
   permAddIdL as (swap bs cs) `permComp` swapAddIdR as cs bs = swap (as ++ bs) cs
 
 swapHexagonal2' : (as, bs, cs, ds : List o) ->
   permAddIdL as (swapAddIdR bs cs ds) `permComp` swapAddIdR as cs (bs ++ ds) = swapAddIdR (as ++ bs) cs ds
+
+--p-\/-- = --\/----
+----/\--   --/\-p--
+swapNatural : (as, bs, cs : List o) -> (p : Perm as bs) ->
+  (p `permAdd` permId cs) `permComp` swap bs cs = swap as cs `permComp` permAddIdL cs p
 
 swapNatural' : (as, bs, cs, ds : List o) -> (p : Perm as bs) ->
   (p `permAdd` permId (cs ++ ds)) `permComp` swapAddIdR bs cs ds = swapAddIdR as cs ds `permComp` permAddIdL cs (p `permAdd` permId ds)

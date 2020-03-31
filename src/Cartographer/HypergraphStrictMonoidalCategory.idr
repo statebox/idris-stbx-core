@@ -7,7 +7,7 @@ import Basic.Functor
 import MonoidalCategory.StrictMonoidalCategory
 import Product.ProductCategory
 
-import Permutations.Sandwich
+import Permutations.SwapDown
 import Permutations.Permutations
 import Permutations.PermutationsCategory
 import Permutations.PermutationsStrictMonoidalCategory

@@ -1,19 +1,19 @@
 module Permutations.Permutations
 
-import Permutations.Sandwich
+import Permutations.SwapDown
 
 %access public export
 %default total
 
 data Perm : {o : Type} -> List o -> List o -> Type where
   Nil : Perm [] []
-  Ins : Perm xs ys -> Sandwich (a::ys) zs -> Perm (a::xs) zs
+  Ins : Perm xs ys -> SwapDown (a::ys) zs -> Perm (a::xs) zs
 
 insInjective: Ins {ys=ys1} p1 s1 = Ins {ys=ys2} p2 s2 -> (ys1 = ys2, p1 = p2, s1 = s2)
 insInjective Refl = (Refl, Refl, Refl)
 
 insCong : (xs1 = xs2) -> (ys1 = ys2) -> (zs1 = zs2) -> {p1 : Perm xs1 ys1} -> {p2 : Perm xs2 ys2} -> (p1 = p2)
-       -> {s1 : Sandwich (a::ys1) zs1} -> {s2 : Sandwich (a::ys2) zs2} -> (s1 = s2)
+       -> {s1 : SwapDown (a::ys1) zs1} -> {s2 : SwapDown (a::ys2) zs2} -> (s1 = s2)
        -> Ins {ys=ys1} p1 s1 = Ins {ys=ys2} p2 s2
 insCong Refl Refl Refl Refl Refl = Refl
 
@@ -41,11 +41,11 @@ permId (a::as) = Ins (permId as) HereS
 
 swap : (l : List o) -> (r : List o) -> Perm (l ++ r) (r ++ l)
 swap []      r = rewriteRight (appendNilRightNeutral r) (permId r)
-swap (l::ls) r = Ins (swap ls r) (sandwich r)
+swap (l::ls) r = Ins (swap ls r) (swapDown r)
 
 swapAddIdR : (l : List o) -> (r : List o) -> (t : List o) -> Perm (l ++ r ++ t) (r ++ l ++ t)
 swapAddIdR []      r t = permId (r ++ t)
-swapAddIdR (l::ls) r t = Ins (swapAddIdR ls r t) (sandwich r)
+swapAddIdR (l::ls) r t = Ins (swapAddIdR ls r t) (swapDown r)
 
 permAdd : Perm as bs -> Perm cs ds -> Perm (as ++ cs) (bs ++ ds)
 permAdd       Nil        cd = cd
@@ -55,7 +55,7 @@ permAddIdL : (as : List o) -> Perm bs cs -> Perm (as ++ bs) (as ++ cs)
 permAddIdL  []     bc = bc
 permAddIdL (a::as) bc = Ins (permAddIdL as bc) HereS
 
-shuffle : Sandwich as bs -> Perm bs cs -> Perm as cs
+shuffle : SwapDown as bs -> Perm bs cs -> Perm as cs
 shuffle HereS p = p
 shuffle (ThereS aab) (Ins by byc) =
   case shuffle aab by of

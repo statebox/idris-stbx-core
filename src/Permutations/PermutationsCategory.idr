@@ -2,7 +2,7 @@ module Permutations.PermutationsCategory
 
 import Basic.Category
 
-import Permutations.Sandwich
+import Permutations.SwapDown
 import Permutations.Permutations
 
 %access public export
@@ -12,7 +12,7 @@ permCompLeftId : (ab : Perm as bs) -> permComp (permId as) ab = ab
 permCompLeftId  Nil         = Refl
 permCompLeftId (Ins ab' sw) = cong {f=\p => Ins p sw} (permCompLeftId ab')
 
-shuffleId : (aab : Sandwich (a::as) bs) -> shuffle aab (permId bs) = Ins (permId as) aab
+shuffleId : (aab : SwapDown (a::as) bs) -> shuffle aab (permId bs) = Ins (permId as) aab
 shuffleId  HereS      = Refl
 shuffleId (ThereS {bs} aab) with (shuffle aab (permId bs)) proof shprf
   | Ins ay ayb = case insInjective $ trans shprf (shuffleId aab) of (Refl, Refl, Refl) => Refl
@@ -23,7 +23,7 @@ permCompRightId {bs} (Ins ab' sw) with (shuffle sw (permId bs)) proof shprf
   | Ins bc' sw' = case insInjective $ trans shprf (shuffleId sw) of
     (Refl, Refl, Refl) => rewrite permCompRightId ab' in Refl
 
-shuffleComp : (abb : Sandwich as bs) -> (bc : Perm bs cs) -> (cd : Perm cs ds)
+shuffleComp : (abb : SwapDown as bs) -> (bc : Perm bs cs) -> (cd : Perm cs ds)
            -> Ins bc' ayc = shuffle abb bc
            -> Ins {ys=ds1} cd' ad1d = shuffle ayc cd
            -> Ins {ys=ds2} bd' ad2d = shuffle abb (permComp bc cd)
