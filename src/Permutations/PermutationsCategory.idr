@@ -63,7 +63,7 @@ permAssoc (Ins {xs=as} {ys=bs} ab' abb) bc cd with (shuffle abb (permComp bc cd)
     | Ins {ys=cs} bc' acc with (shuffle acc cd) proof cdPrf
       | Ins {ys=ds'} cd' ad'd =
         let (Refl, Refl, Refl) = shuffleComp abb bc cd bcPrf cdPrf bdPrf in
-        insCong Refl Refl Refl (permAssoc ab' bc' cd') Refl
+        insCong5 Refl Refl Refl (permAssoc ab' bc' cd') Refl
 
 permutationsCat : (o : Type) -> Category
 permutationsCat o = MkCategory

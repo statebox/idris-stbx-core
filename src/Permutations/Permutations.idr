@@ -12,10 +12,10 @@ data Perm : {o : Type} -> List o -> List o -> Type where
 insInjective: Ins {ys=ys1} p1 s1 = Ins {ys=ys2} p2 s2 -> (ys1 = ys2, p1 = p2, s1 = s2)
 insInjective Refl = (Refl, Refl, Refl)
 
-insCong : (xs1 = xs2) -> (ys1 = ys2) -> (zs1 = zs2) -> {p1 : Perm xs1 ys1} -> {p2 : Perm xs2 ys2} -> (p1 = p2)
+insCong5 : (xs1 = xs2) -> (ys1 = ys2) -> (zs1 = zs2) -> {p1 : Perm xs1 ys1} -> {p2 : Perm xs2 ys2} -> (p1 = p2)
        -> {s1 : SwapDown (a::ys1) zs1} -> {s2 : SwapDown (a::ys2) zs2} -> (s1 = s2)
        -> Ins {ys=ys1} p1 s1 = Ins {ys=ys2} p2 s2
-insCong Refl Refl Refl Refl Refl = Refl
+insCong5 Refl Refl Refl Refl Refl = Refl
 
 rewriteRight : cs = bs -> Perm as bs -> Perm as cs
 rewriteRight Refl p = p

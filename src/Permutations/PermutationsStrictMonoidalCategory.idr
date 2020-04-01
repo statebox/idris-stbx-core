@@ -14,25 +14,25 @@ import Permutations.PermutationsCategory
 
 permPreserveId : (as, bs : List o) -> permAdd (permId as) (permId bs) = permId (as ++ bs)
 permPreserveId     []  bs = Refl
-permPreserveId (a::as) bs = insCong Refl Refl Refl (permPreserveId as bs) Refl
+permPreserveId (a::as) bs = insCong5 Refl Refl Refl (permPreserveId as bs) Refl
 
 permAddIdLPreserveId : (as, bs : List o) -> permAddIdL as (permId bs) = permId (as ++ bs)
 permAddIdLPreserveId     []  bs = Refl
-permAddIdLPreserveId (a::as) bs = insCong Refl Refl Refl (permAddIdLPreserveId as bs) Refl
+permAddIdLPreserveId (a::as) bs = insCong5 Refl Refl Refl (permAddIdLPreserveId as bs) Refl
 
 permAddIdLAppend : (as, bs : List o) -> (p : Perm cs ds) -> permAddIdL (as ++ bs) p = permAddIdL as (permAddIdL bs p)
 permAddIdLAppend [] bs p = Refl
 permAddIdLAppend (a::as) bs p {cs} {ds} = let abd = sym $appendAssociative as bs ds in
-  insCong (sym $ appendAssociative as bs cs) abd (cong abd) (permAddIdLAppend as bs p) (congHereS abd)
+  insCong5 (sym $ appendAssociative as bs cs) abd (cong abd) (permAddIdLAppend as bs p) (congHereS abd)
 
 permAddIdLCompDist : (as : List o) -> (p : Perm bs cs) -> (q : Perm cs ds) -> permAddIdL as (p `permComp` q) = permAddIdL as p `permComp` permAddIdL as q
 permAddIdLCompDist [] p q = Refl
-permAddIdLCompDist (a::as) p q = insCong Refl Refl Refl (permAddIdLCompDist as p q) Refl
+permAddIdLCompDist (a::as) p q = insCong5 Refl Refl Refl (permAddIdLCompDist as p q) Refl
 
 permAddNilRightNeutral : (ab : Perm as bs) -> permAdd ab Nil = ab
 permAddNilRightNeutral              Nil          = Refl
 permAddNilRightNeutral {as=a::as1} {bs} (Ins {ys} p s) =
-  insCong (appendNilRightNeutral as1)
+  insCong5 (appendNilRightNeutral as1)
           (appendNilRightNeutral ys)
           (appendNilRightNeutral bs)
           (permAddNilRightNeutral p)
@@ -64,7 +64,7 @@ permTensor _ = MkCFunctor
 permAddAssociativeMor : (pab : Perm as bs) -> (pcd : Perm cs ds) -> (pef : Perm es fs)
                      -> permAdd pab (permAdd pcd pef) = permAdd (permAdd pab pcd) pef
 permAddAssociativeMor Nil _ _ = Refl
-permAddAssociativeMor {as=a::as} {bs} {cs} {ds} {es} {fs} (Ins {ys} pab s) pcd pef = insCong
+permAddAssociativeMor {as=a::as} {bs} {cs} {ds} {es} {fs} (Ins {ys} pab s) pcd pef = insCong5
   (appendAssociative as cs es)
   (appendAssociative ys ds fs)
   (appendAssociative bs ds fs)
@@ -83,14 +83,18 @@ permutationsSMC o = MkStrictMonoidalCategory
 
 
 -- for symmetric monoidal category
+swapAddEq : (as, bs, cs : List o) -> swapAddIdR as bs cs = swap as bs `permAdd` permId cs
+swapAddEq [] [] cs = Refl
+swapAddEq [] bs cs = sym (permPreserveId bs cs) `trans` permAddCong6 Refl (sym $ appendNilRightNeutral bs) Refl Refl (rewriteRightIgnoreR Refl) Refl
+swapAddEq (a::as) bs cs = insCong5 (appendAssociative as bs cs) (appendAssociative bs as cs) (appendAssociative bs (a::as) cs) (swapAddEq as bs cs) (swapDownAppendedNeutral bs _ cs)
 
 swapNilRightNeutral : (l : List o) -> swap l [] = permId l
 swapNilRightNeutral [] = Refl
-swapNilRightNeutral (l::ls) = insCong (appendNilRightNeutral ls) Refl Refl (swapNilRightNeutral ls) Refl
+swapNilRightNeutral (l::ls) = insCong5 (appendNilRightNeutral ls) Refl Refl (swapNilRightNeutral ls) Refl
 
 swapAddIdRNilRightNeutral : (l : List o) -> (k : List o) -> swapAddIdR l [] k = permId (l ++ k)
 swapAddIdRNilRightNeutral [] k = Refl
-swapAddIdRNilRightNeutral (l::ls) k = insCong Refl Refl Refl (swapAddIdRNilRightNeutral ls k) Refl
+swapAddIdRNilRightNeutral (l::ls) k = insCong5 Refl Refl Refl (swapAddIdRNilRightNeutral ls k) Refl
 
 --\/-----    --\/---}
 --/\-\/-- = {--/\/--}
@@ -118,10 +122,24 @@ swapNatural : (as, bs, cs : List o) -> (p : Perm as bs) ->
 swapNatural' : (as, bs, cs, ds : List o) -> (p : Perm as bs) ->
   (p `permAdd` permId (cs ++ ds)) `permComp` swapAddIdR bs cs ds = swapAddIdR as cs ds `permComp` permAddIdL cs (p `permAdd` permId ds)
 
--- swapHexagonal -> swapNatural swap -> sym swapHexagonal
 -----\/-----   --\/----\/--
 --\/-/\-\/-- = --/\-\/-/\--
 --/\----/\--   -----/\-----
 swap3' : (as, bs, cs, ds : List o)
   -> (permAddIdL as (swapAddIdR bs cs ds) `permComp` swapAddIdR as cs (bs ++ ds)) `permComp` permAddIdL cs (swapAddIdR as bs ds)
      = swapAddIdR as bs (cs ++ ds) `permComp` (permAddIdL bs (swapAddIdR as cs ds) `permComp` swapAddIdR bs cs (as ++ ds))
+swap3' as bs cs ds =
+  trans (permCompCong5 (appendAssociative as bs (cs ++ ds))
+                       (cong {f=\z=>cs++z} (appendAssociative as bs ds))
+                       (cong {f=\z=>cs++z} (appendAssociative bs as ds))
+                       (swapHexagonal2' as bs cs ds)
+                       (permAddIdLCong4 Refl
+                                        (appendAssociative as bs ds)
+                                        (appendAssociative bs as ds)
+                                        (swapAddEq as bs ds)))
+        (trans (sym $ swapNatural' (as ++ bs) (bs ++ as) cs ds (swap as bs))
+               (permCompCong5 (sym $ appendAssociative as bs (cs ++ ds))
+                              (sym $ appendAssociative bs as (cs ++ ds))
+                              (cong {f=\z=>cs++z} (sym $ appendAssociative bs as ds))
+                              (sym $ swapAddEq as bs (cs ++ ds))
+                              (sym $ swapHexagonal2' bs as cs ds)))

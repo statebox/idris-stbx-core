@@ -33,6 +33,10 @@ appendedAppendDistr xs ys (HereS {as}) = congHereS (appendAssociative as xs ys)
 appendedAppendDistr xs ys (ThereS {as} {bs} sw) =
   congThereS (appendAssociative as xs ys) (appendAssociative bs xs ys) (appendedAppendDistr xs ys sw)
 
+swapDownAppendedNeutral : (as, bs, cs : List t) -> {a:t} -> swapDown as {a} {r=bs++cs} = appended cs (swapDown as {a} {r=bs})
+swapDownAppendedNeutral [] bs cs = congHereS Refl
+swapDownAppendedNeutral (a::as) bs cs = congThereS (appendAssociative as bs cs) (appendAssociative as (_::bs) cs) (swapDownAppendedNeutral as bs cs)
+
 data SwapDown2 : t -> t -> List t -> List t -> Type where
   SW2 : SwapDown (b :: xs) ys -> SwapDown (a :: ys) zs -> SwapDown2 a b xs zs
 
